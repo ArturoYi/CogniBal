@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.CogniBal" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.CogniBal.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/icon_black</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_icon</item>
+        <item name="postSplashScreenTheme">@style/Theme.CogniBal</item>
+    </style>
+</resources>

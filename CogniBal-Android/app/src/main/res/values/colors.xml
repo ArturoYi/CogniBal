@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="icon_black_deep">#FF050505</color>
+    <color name="icon_black">#FF141414</color>
+    <color name="icon_black_light">#FF2A2A2A</color>
+    <color name="icon_card_back">#FFC4C4C4</color>
+    <color name="icon_card_mid">#FFE6E6E6</color>
+    <color name="icon_card_front">#FFFFFFFF</color>
+</resources>
