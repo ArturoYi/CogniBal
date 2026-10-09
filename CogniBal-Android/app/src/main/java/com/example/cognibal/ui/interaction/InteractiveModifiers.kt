@@ -31,6 +31,7 @@ private val FocusOutlineWidth = 2.dp
 @Composable
 fun Modifier.interactiveClick(
     enabled: Boolean = true,
+    role: Role = Role.Button,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     onClick: () -> Unit,
 ): Modifier {
@@ -46,7 +47,7 @@ fun Modifier.interactiveClick(
             interactionSource = interactionSource,
             indication = ripple(),
             enabled = enabled,
-            role = Role.Button,
+            role = role,
             onClick = onClick,
         )
         .minimumInteractiveComponentSize()

@@ -1,12 +1,15 @@
 package com.example.cognibal
 
+import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -15,7 +18,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.example.cognibal.ui.navigation.CogniBalScaffold
+import com.example.cognibal.index.ui.IndexScreen
+import com.example.cognibal.settings.data.LocalThemeStateController
+import com.example.cognibal.settings.data.rememberThemeStateController
+import com.example.cognibal.settings.model.DarkModePreference
+import com.example.cognibal.ui.splash.ApplyAppWindowBackground
 import com.example.cognibal.ui.splash.SplashExit
 import com.example.cognibal.ui.splash.StartupSplash
 import com.example.cognibal.ui.theme.CogniBalTheme
@@ -36,6 +43,8 @@ class MainActivity : ComponentActivity() {
      * 所以不能放进组合里。对齐完成、动画被跳过，或 Activity 销毁时，都通过它调用 [SplashExit.release]。
      */
     private val splashExit = SplashExit()
+    private var appLightStatusBars = true
+    private var appLightNavigationBars = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // 必须在 super.onCreate 之前调用。否则窗口会先切到 postSplashScreenTheme，
@@ -49,34 +58,58 @@ class MainActivity : ComponentActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }
-        // 默认退出是整页淡出。这里改成挂起：handoff 保留系统视图，并在下一帧读出图标矩形。
+        val insets = WindowCompat.getInsetsController(window, window.decorView)
+        appLightStatusBars = insets.isAppearanceLightStatusBars
+        appLightNavigationBars = insets.isAppearanceLightNavigationBars
+        // 默认退出是整页淡出。这里改成挂起：handoff 保留系统视图，并在布局完成后读出图标矩形。
         // 若此时启动动画已经结束（例如配置变更后恢复），handoff 会立刻 remove，避免挡住界面。
+        //
+        // androidx 会在这个回调的开头按浅色主题重刷系统栏（深色图标、导航栏对比度遮罩）。
+        // 回调返回前就会画到屏幕上，所以要在 handoff 之前改回启动页的浅色图标。
         splashScreen.setOnExitAnimationListener { provider ->
+            keepSplashSystemBars()
             splashExit.handoff(provider)
         }
         setContent {
-            CogniBalTheme {
-                // rememberSaveable 把“是否还在播启动动画”写进 SavedState。
-                // 旋转、分屏、深色模式等配置变更会重建 Activity，但不能从头再播一遍。
-                var showSplash by rememberSaveable { mutableStateOf(true) }
-                // 系统图标的窗口坐标；布局完成前为 null，StartupSplash 会等它再对齐。
-                val iconBounds by splashExit.iconBounds
-                Box(modifier = Modifier.fillMaxSize()) {
-                    if (showSplash) {
-                        StartupSplash(
-                            iconBounds = iconBounds,
-                            // 图标中心重合（约 2px）或等待超时后撤掉系统层，避免两层图标错位。
-                            onMatchedFrameDrawn = { revealStartupFrame() },
-                            // 扇形动画结束，或用户点击跳过、系统关闭动效时，卸下 Compose 覆盖层。
-                            onFinished = { showSplash = false },
-                        )
-                    } else {
-                        // 从已结束状态恢复时不会进入 StartupSplash，但系统仍会回调退出动画。
-                        // release 与 handoff 谁先发生都可以：已 release 则 handoff 直接移除，否则这里摘掉挂住的系统页。
-                        LaunchedEffect(Unit) {
-                            splashExit.release()
+            val themeController = rememberThemeStateController()
+            val isDark = when (themeController.darkMode) {
+                DarkModePreference.FOLLOW_SYSTEM -> isSystemInDarkTheme()
+                DarkModePreference.LIGHT -> false
+                DarkModePreference.DARK -> true
+            }
+
+            CogniBalTheme(
+                themeStyle = themeController.themeStyle,
+                darkTheme = isDark,
+            ) {
+                CompositionLocalProvider(
+                    LocalThemeStateController provides themeController,
+                ) {
+                    // rememberSaveable 把“是否还在播启动动画”写进 SavedState。
+                    // 旋转、分屏、深色模式等配置变更会重建 Activity，但不能从头再播一遍。
+                    var showSplash by rememberSaveable { mutableStateOf(true) }
+                    // 系统图标的窗口坐标；布局完成前为 null，StartupSplash 会等它再对齐。
+                    val iconBounds by splashExit.iconBounds
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        if (showSplash) {
+                            StartupSplash(
+                                iconBounds = iconBounds,
+                                // 图标中心重合（约 2px）或等待超时后，再等这一帧画完才撤系统层。
+                                onMatchedFrameDrawn = { revealStartupFrame() },
+                                // 扇形动画结束，或用户点击跳过、系统关闭动效时，卸下 Compose 覆盖层。
+                                onFinished = { showSplash = false },
+                            )
+                        } else {
+                            // 从已结束状态恢复时不会进入 StartupSplash，但系统仍会回调退出动画。
+                            // release 与 handoff 谁先发生都可以：已 release 则 handoff 直接移除，否则这里摘掉挂住的系统页。
+                            // 主题窗口背景是启动页的黑色，主界面要改回自己的底色，状态栏渐变才不会透出黑底。
+                            ApplyAppWindowBackground()
+                            LaunchedEffect(isDark) {
+                                splashExit.release()
+                                restoreAppSystemBars(!isDark)
+                            }
+                            IndexScreen(Modifier.fillMaxSize())
                         }
-                        CogniBalScaffold(Modifier.fillMaxSize())
                     }
                 }
             }
@@ -97,10 +130,31 @@ class MainActivity : ComponentActivity() {
      * [StartupSplash] 结束时会按进入前的值还原，主界面仍跟随 `Theme.CogniBal`。
      */
     private fun revealStartupFrame() {
+        // remove() 会再次按主题把系统栏改回深色图标，覆盖层还在，要马上改回来。
         splashExit.release()
+        keepSplashSystemBars()
+    }
+
+    @Suppress("DEPRECATION")
+    private fun keepSplashSystemBars() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
+        window.statusBarColor = Color.TRANSPARENT
+        window.navigationBarColor = Color.TRANSPARENT
         WindowCompat.getInsetsController(window, window.decorView).apply {
             isAppearanceLightStatusBars = false
             isAppearanceLightNavigationBars = false
+        }
+    }
+
+    private fun restoreAppSystemBars(lightBars: Boolean = appLightStatusBars) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = lightBars
+            isAppearanceLightNavigationBars = lightBars
         }
     }
 }

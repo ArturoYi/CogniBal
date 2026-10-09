@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -27,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.WindowInsetsRulers
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
+import com.example.cognibal.ui.background.currentPageBackgroundColor
 import com.example.cognibal.ui.scaffold.LocalCogniBalScaffold
 
 /**
@@ -46,8 +46,7 @@ fun screenContentWindowInsets(): WindowInsets {
 /**
  * 屏幕根节点的安全区。已经包含输入法。
  *
- * 放在 [androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold] 的内容里，
- * 底栏或侧栏占用的 inset 会被骨架消费，这里只会补上剩余部分。
+ * 放在 Index 内容槽里。底栏或侧栏占用的系统栏 inset 已由内容槽消费，这里只会补上剩余部分。
  * 输入区若改走 [imeFit]，这条链上就只保留其中一种。
  */
 fun Modifier.screenSafeDrawing(): Modifier = safeDrawingPadding()
@@ -101,10 +100,11 @@ fun Modifier.floatingActionInsets(): Modifier =
  * 盖住状态栏的渐变，让滚到状态栏后面的内容仍能看清系统图标。
  *
  * 画在屏幕内容之上、导航条之外。高度比状态栏略高，渐变才会收进内容区。
+ * 不传 [color] 时跟当前页面底色走，自定义纯色才不会在状态栏下露出一条主题灰。
  */
 @Composable
 fun StatusBarProtection(
-    color: Color = MaterialTheme.colorScheme.background,
+    color: Color = currentPageBackgroundColor(),
     modifier: Modifier = Modifier,
 ) {
     val density = LocalDensity.current

@@ -12,7 +12,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 /**
  * 顶层窗口与导航骨架的共享状态。
  *
- * [windowAdaptiveInfo] 在 [com.example.cognibal.ui.navigation.CogniBalScaffold] 里用
+ * [windowAdaptiveInfo] 在 [com.example.cognibal.index.ui.IndexScreen] 里用
  * `currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)` 算一次。后续屏幕读这里，
  * 这样 large / extra-large 宽度断点全应用一致。
  *

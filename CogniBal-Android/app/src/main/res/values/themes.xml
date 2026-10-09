@@ -1,7 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.CogniBal" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      windowBackground 必须和启动页同色。installSplashScreen 会在第一帧之前切到这个主题，
+      系统启动图卸下、Compose 黑底画上之前会空出一帧，浅色背景就会闪一下。
+      启动页盖住窗口后再改回应用底色，结束时的淡出仍然落到主界面。
+    -->
+    <style name="Theme.CogniBal.Window" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/icon_black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Theme.CogniBal" parent="Theme.CogniBal.Window" />
 
     <style name="Theme.CogniBal.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/icon_black</item>

@@ -1,6 +1,7 @@
 package com.example.cognibal.ui.splash
 
 import android.app.Activity
+import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.provider.Settings
 import android.view.View
@@ -16,11 +17,14 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,6 +38,7 @@ import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.graphicsLayer
@@ -54,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.lerp
 import androidx.core.splashscreen.SplashScreenViewProvider
 import androidx.core.view.WindowCompat
+import androidx.core.view.doOnLayout
 import com.example.cognibal.R
 import kotlin.math.abs
 import kotlin.math.min
@@ -95,10 +101,40 @@ internal class SplashExit {
             return
         }
         this.provider = provider
-        provider.view.post {
-            if (released) return@post
-            iconBounds.value = provider.readIconBounds() ?: provider.view.fallbackIconBounds()
+        // A posted runnable can run before the icon is measured and then lock in the wrong
+        // fallback size. Wait until the splash view lays out, and once more for the icon child.
+        provider.view.doOnLayout {
+            if (released) return@doOnLayout
+            publishIconBounds(provider, waitForIcon = true)
         }
+    }
+
+    private fun publishIconBounds(provider: SplashScreenViewProvider, waitForIcon: Boolean) {
+        val measured = provider.readIconBounds()
+        if (measured != null) {
+            iconBounds.value = measured
+            return
+        }
+        val icon = provider.iconView
+        if (waitForIcon && !icon.isLaidOut) {
+            icon.doOnLayout {
+                if (!released) publishIconBounds(provider, waitForIcon = false)
+            }
+            // A post can run before this layout pass gives the icon a size. Only fill in
+            // after it has laid out; if it never does, fall back later so the splash cannot stick.
+            icon.post {
+                if (!released && iconBounds.value == null && icon.isLaidOut) {
+                    publishIconBounds(provider, waitForIcon = false)
+                }
+            }
+            icon.postDelayed({
+                if (!released && iconBounds.value == null) {
+                    publishIconBounds(provider, waitForIcon = false)
+                }
+            }, 100)
+            return
+        }
+        iconBounds.value = provider.view.fallbackIconBounds()
     }
 
     fun release() {
@@ -125,13 +161,36 @@ private fun SplashScreenViewProvider.readIconBounds(): SplashIconBounds? {
 }
 
 private fun View.fallbackIconBounds(): SplashIconBounds {
-    val size = (108f * 1.2f * resources.displayMetrics.density).roundToInt().coerceAtLeast(1)
+    // API 31+ icon view is starting_surface_icon_size (160dp) * 192/160 when the theme has no
+    // icon background. The compat ImageView is splashscreen_icon_size_no_background (288dp).
+    val sizeDp = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) 192f else 288f
+    val size = (sizeDp * resources.displayMetrics.density).roundToInt().coerceAtLeast(1)
     return SplashIconBounds(
         left = (width - size) / 2,
         top = (height - size) / 2,
         width = size,
         height = size,
     )
+}
+
+/**
+ * Replaces [android.R.attr.windowBackground] once the startup overlay is gone.
+ *
+ * The activity theme keeps a black window so the splash handoff cannot flash the light
+ * theme color. The status-bar scrim fades to transparent, so the main UI needs the window
+ * behind it to match [MaterialTheme.colorScheme.background].
+ */
+@Composable
+internal fun ApplyAppWindowBackground() {
+    val view = LocalView.current
+    val color = MaterialTheme.colorScheme.background.toArgb()
+    val applied = remember { mutableIntStateOf(Int.MIN_VALUE) }
+    if (applied.intValue == color) return
+    SideEffect {
+        val window = (view.context as? Activity)?.window ?: return@SideEffect
+        window.setBackgroundDrawable(ColorDrawable(color))
+        applied.intValue = color
+    }
 }
 
 @Composable
@@ -153,23 +212,35 @@ fun StartupSplash(
     val progress = remember { Animatable(previewProgress ?: 0f) }
     val view = LocalView.current
     var rootInWindow by remember { mutableStateOf<Offset?>(null) }
-    var aligned by remember { mutableStateOf(false) }
+    var aligned by remember(iconBounds) { mutableStateOf(false) }
     val cardPath = remember { balanceCardPath() }
 
     DisposableEffect(view, reduceMotion, previewProgress) {
-        if (reduceMotion || previewProgress != null) {
+        if (previewProgress != null) {
             return@DisposableEffect onDispose {}
         }
         val window = (view.context as Activity).window
         val controller = WindowCompat.getInsetsController(window, view)
         val lightStatus = controller.isAppearanceLightStatusBars
         val lightNavigation = controller.isAppearanceLightNavigationBars
-        controller.isAppearanceLightStatusBars = false
-        controller.isAppearanceLightNavigationBars = false
+        if (!reduceMotion) {
+            controller.isAppearanceLightStatusBars = false
+            controller.isAppearanceLightNavigationBars = false
+        }
         onDispose {
             controller.isAppearanceLightStatusBars = lightStatus
             controller.isAppearanceLightNavigationBars = lightNavigation
         }
+    }
+
+    val appBackground = MaterialTheme.colorScheme.background.toArgb()
+    LaunchedEffect(appBackground, previewProgress) {
+        if (previewProgress != null) return@LaunchedEffect
+        // Theme window background stays black for the gap frame. After this black overlay
+        // has been drawn, switch back so the later fade reveals the app color.
+        withFrameNanos { }
+        val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
+        window.setBackgroundDrawable(ColorDrawable(appBackground))
     }
 
     LaunchedEffect(iconBounds, previewProgress) {
@@ -177,8 +248,10 @@ fun StartupSplash(
         withTimeoutOrNull(500) {
             snapshotFlow { aligned }.first { it }
         }
-        onMatchedFrameDrawn()
+        // `aligned` flips during layout, before draw. Removing the system splash there
+        // presents a frame without either icon. Wait until the matched frame is drawn.
         withFrameNanos { }
+        onMatchedFrameDrawn()
         if (reduceMotion) {
             onFinished()
             return@LaunchedEffect
