@@ -1,27 +1,41 @@
+# 版本目录。模块用 libs.xxx 引用，避免在 build.gradle.kts 里散落版本号。
 [versions]
+# Android Gradle Plugin 9。compileSdk { version = release(...) } 依赖这一代 DSL。
 agp = "9.3.3"
+# Kotlin 与 Compose 编译器插件。
+kotlin = "2.2.10"
+# Compose 组件的版本平台。下面没写 version.ref 的 androidx.compose 库都跟它走。
+composeBom = "2026.02.01"
+
+# 以下库不在 Compose BOM 里，版本写在这里。
 coreKtx = "1.10.1"
 splashscreen = "1.0.1"
 activityCompose = "1.8.0"
-kotlin = "2.2.10"
-composeBom = "2026.02.01"
+# viewModel()、collectAsStateWithLifecycle()。
+lifecycle = "2.11.0"
+# Preferences DataStore，设置项的本地存储。
+datastore = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "splashscreen" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+
+# 平台依赖，本身不含代码，只约束下面这组库的版本。
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
-# 版本由 compose-bom 统一管理。
 androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+# 窗口尺寸与导航套件：手机底栏、宽屏侧栏。
 androidx-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive" }
 androidx-adaptive-navigation-suite = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-

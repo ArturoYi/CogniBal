@@ -9,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -18,10 +17,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import com.example.cognibal.index.ui.IndexScreen
-import com.example.cognibal.settings.data.LocalThemeStateController
-import com.example.cognibal.settings.data.rememberThemeStateController
-import com.example.cognibal.settings.model.DarkModePreference
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cognibal.screen.index.ui.IndexScreen
+import com.example.cognibal.screen.settings.viewmodel.SettingsViewModel
 import com.example.cognibal.ui.splash.ApplyAppWindowBackground
 import com.example.cognibal.ui.splash.SplashExit
 import com.example.cognibal.ui.splash.StartupSplash
@@ -71,45 +70,41 @@ class MainActivity : ComponentActivity() {
             splashExit.handoff(provider)
         }
         setContent {
-            val themeController = rememberThemeStateController()
-            val isDark = when (themeController.darkMode) {
-                DarkModePreference.FOLLOW_SYSTEM -> isSystemInDarkTheme()
-                DarkModePreference.LIGHT -> false
-                DarkModePreference.DARK -> true
-            }
+            val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
+            val preferences by settingsViewModel.preferences.collectAsStateWithLifecycle()
+            val isDark = preferences.useDarkTheme(isSystemInDarkTheme())
 
             CogniBalTheme(
-                themeStyle = themeController.themeStyle,
+                themeStyle = preferences.themeStyle,
                 darkTheme = isDark,
             ) {
-                CompositionLocalProvider(
-                    LocalThemeStateController provides themeController,
-                ) {
-                    // rememberSaveable 把“是否还在播启动动画”写进 SavedState。
-                    // 旋转、分屏、深色模式等配置变更会重建 Activity，但不能从头再播一遍。
-                    var showSplash by rememberSaveable { mutableStateOf(true) }
-                    // 系统图标的窗口坐标；布局完成前为 null，StartupSplash 会等它再对齐。
-                    val iconBounds by splashExit.iconBounds
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        if (showSplash) {
-                            StartupSplash(
-                                iconBounds = iconBounds,
-                                // 图标中心重合（约 2px）或等待超时后，再等这一帧画完才撤系统层。
-                                onMatchedFrameDrawn = { revealStartupFrame() },
-                                // 扇形动画结束，或用户点击跳过、系统关闭动效时，卸下 Compose 覆盖层。
-                                onFinished = { showSplash = false },
-                            )
-                        } else {
-                            // 从已结束状态恢复时不会进入 StartupSplash，但系统仍会回调退出动画。
-                            // release 与 handoff 谁先发生都可以：已 release 则 handoff 直接移除，否则这里摘掉挂住的系统页。
-                            // 主题窗口背景是启动页的黑色，主界面要改回自己的底色，状态栏渐变才不会透出黑底。
-                            ApplyAppWindowBackground()
-                            LaunchedEffect(isDark) {
-                                splashExit.release()
-                                restoreAppSystemBars(!isDark)
-                            }
-                            IndexScreen(Modifier.fillMaxSize())
+                // rememberSaveable 把“是否还在播启动动画”写进 SavedState。
+                // 旋转、分屏、深色模式等配置变更会重建 Activity，但不能从头再播一遍。
+                var showSplash by rememberSaveable { mutableStateOf(true) }
+                // 系统图标的窗口坐标；布局完成前为 null，StartupSplash 会等它再对齐。
+                val iconBounds by splashExit.iconBounds
+                Box(modifier = Modifier.fillMaxSize()) {
+                    if (showSplash) {
+                        StartupSplash(
+                            iconBounds = iconBounds,
+                            // 图标中心重合（约 2px）或等待超时后，再等这一帧画完才撤系统层。
+                            onMatchedFrameDrawn = { revealStartupFrame() },
+                            // 扇形动画结束，或用户点击跳过、系统关闭动效时，卸下 Compose 覆盖层。
+                            onFinished = { showSplash = false },
+                        )
+                    } else {
+                        // 从已结束状态恢复时不会进入 StartupSplash，但系统仍会回调退出动画。
+                        // release 与 handoff 谁先发生都可以：已 release 则 handoff 直接移除，否则这里摘掉挂住的系统页。
+                        // 主题窗口背景是启动页的黑色，主界面要改回自己的底色，状态栏渐变才不会透出黑底。
+                        ApplyAppWindowBackground()
+                        LaunchedEffect(isDark) {
+                            splashExit.release()
+                            restoreAppSystemBars(!isDark)
                         }
+                        IndexScreen(
+                            dynamicBlooms = preferences.dynamicBlooms,
+                            modifier = Modifier.fillMaxSize(),
+                        )
                     }
                 }
             }
