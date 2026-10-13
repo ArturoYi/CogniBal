@@ -2,6 +2,10 @@ plugins {
     alias(libs.plugins.android.application)
     // 处理 @Composable。需要下面的 buildFeatures.compose。
     alias(libs.plugins.kotlin.compose)
+    // JSON 备份的 @Serializable。
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -41,6 +45,13 @@ android {
     }
 }
 
+// Room 把当前表结构导出到 app/schemas，供以后手写 Migration 对照。
+// 不开启 autoMigrations。
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.generateKotlin", "true")
+}
+
 dependencies {
     // 只提供版本约束。后面没写版本号的 Compose 库跟它对齐。
     implementation(platform(libs.androidx.compose.bom))
@@ -48,7 +59,8 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.core)
+    // 界面图标统一用 Material Icons Extended，风格为 Rounded。
+    implementation(libs.androidx.compose.material.icons.extended)
     // 按窗口宽度在底栏和侧栏之间切换。
     implementation(libs.androidx.adaptive)
     implementation(libs.androidx.adaptive.navigation.suite)
@@ -68,4 +80,14 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     // 设置项的本地存储，由 AppPreferencesRepository 封装。
     implementation(libs.androidx.datastore.preferences)
+
+    // 账单库。查询走 Room 自带的后台线程，仓库入口再切到 Dispatchers.IO。
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
+
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+
+    // 业务 JSON 导入导出，不负责 SQLite 文件本身。
+    implementation(libs.kotlinx.serialization.json)
 }

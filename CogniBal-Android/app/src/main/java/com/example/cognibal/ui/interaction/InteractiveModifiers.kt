@@ -36,11 +36,16 @@ fun Modifier.interactiveClick(
     onClick: () -> Unit,
 ): Modifier {
     val focused by interactionSource.collectIsFocusedAsState()
-    val outlined = border(
-        width = if (focused && enabled) FocusOutlineWidth else 0.dp,
-        color = MaterialTheme.colorScheme.secondary,
-        shape = MaterialTheme.shapes.small,
-    )
+    // 未聚焦时不要挂 border。宽度写成 0.dp 仍会按发丝线描一圈，设置行会一直带着边框。
+    val outlined = if (focused && enabled) {
+        border(
+            width = FocusOutlineWidth,
+            color = MaterialTheme.colorScheme.secondary,
+            shape = MaterialTheme.shapes.small,
+        )
+    } else {
+        this
+    }
     val withPointer = if (enabled) outlined.pointerHoverIcon(PointerIcon.Hand) else outlined
     return withPointer
         .clickable(

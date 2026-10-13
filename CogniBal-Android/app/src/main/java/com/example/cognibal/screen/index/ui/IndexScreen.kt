@@ -27,7 +27,6 @@ import com.example.cognibal.screen.settings.ui.SettingsRoute
 import com.example.cognibal.ui.background.LocalPageBackgroundController
 import com.example.cognibal.ui.background.PageBackground
 import com.example.cognibal.ui.background.PageBackgroundController
-import com.example.cognibal.ui.background.PageBackgroundStyle
 import com.example.cognibal.ui.insets.StatusBarProtection
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.scaffold.CogniBalScaffoldInfo
@@ -37,7 +36,7 @@ import com.example.cognibal.ui.theme.CogniBalTheme
 /**
  * 主页。账单和设置共用白底导航：窄窗口在底部，中间按钮向上凸起；更宽的窗口挪到起始侧。
  *
- * 整页底色由 [PageBackground] 铺在导航下面。各页面用 `RequestPageBackground` 换颜色或弥散光斑，
+ * 整页底色由 [PageBackground] 铺在导航下面。各页面用 `RequestPageBackground` 换颜色，
  * 不要在自己的内容里再铺一层，否则底栏凸起旁边的缝会对不上。
  *
  * 内容槽不把安全区 padding 传给页面，各页面用 `screenSafeDrawing` 或 `listContentPadding`。
@@ -45,7 +44,6 @@ import com.example.cognibal.ui.theme.CogniBalTheme
  */
 @Composable
 fun IndexScreen(
-    dynamicBlooms: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val windowAdaptiveInfo = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)
@@ -84,11 +82,6 @@ fun IndexScreen(
     }
 
     val pageBackgroundController = remember { PageBackgroundController() }
-    val backgroundStyle = if (dynamicBlooms) {
-        pageBackgroundController.style
-    } else {
-        PageBackgroundStyle.Solid()
-    }
 
     CompositionLocalProvider(
         LocalCogniBalScaffold provides scaffoldInfo,
@@ -96,7 +89,7 @@ fun IndexScreen(
     ) {
         PageBackground(
             modifier = modifier,
-            style = backgroundStyle,
+            style = pageBackgroundController.style,
         ) {
             NavigationSuiteScaffoldLayout(
                 navigationSuite = {

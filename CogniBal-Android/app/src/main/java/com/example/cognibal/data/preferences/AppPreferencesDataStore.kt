@@ -36,14 +36,12 @@ val Context.appPreferencesDataStore: DataStore<Preferences> by preferencesDataSt
 internal object Keys {
     val themeStyle = stringPreferencesKey("key_theme_style")
     val darkMode = stringPreferencesKey("key_dark_mode")
-    val dynamicBlooms = booleanPreferencesKey("key_dynamic_blooms")
     val hapticFeedback = booleanPreferencesKey("key_haptic_feedback")
     val currency = stringPreferencesKey("key_currency")
 
     val legacyKeyNames: Set<String> = setOf(
         themeStyle.name,
         darkMode.name,
-        dynamicBlooms.name,
         hapticFeedback.name,
         currency.name,
     )

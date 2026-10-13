@@ -44,10 +44,6 @@ internal class AppPreferencesRepository(
         update { it[Keys.darkMode] = mode.id }
     }
 
-    suspend fun setDynamicBlooms(enabled: Boolean) {
-        update { it[Keys.dynamicBlooms] = enabled }
-    }
-
     suspend fun setHapticFeedback(enabled: Boolean) {
         update { it[Keys.hapticFeedback] = enabled }
     }
@@ -77,7 +73,6 @@ private fun Preferences.toAppPreferences(): AppPreferences {
     return AppPreferences(
         themeStyle = enumValueOrDefault(this[Keys.themeStyle], AppThemeStyle.WarmCream),
         darkMode = DarkModePreference.fromId(this[Keys.darkMode]),
-        dynamicBlooms = this[Keys.dynamicBlooms] ?: true,
         hapticFeedback = this[Keys.hapticFeedback] ?: true,
         currency = enumValueOrDefault(this[Keys.currency], CurrencyPreference.CNY),
     )

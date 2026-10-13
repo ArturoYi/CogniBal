@@ -102,7 +102,6 @@ class MainActivity : ComponentActivity() {
                             restoreAppSystemBars(!isDark)
                         }
                         IndexScreen(
-                            dynamicBlooms = preferences.dynamicBlooms,
                             modifier = Modifier.fillMaxSize(),
                         )
                     }

@@ -34,7 +34,7 @@ import androidx.core.view.WindowCompat
  * 主题风格枚举
  *
  * - [WarmCream] 方案一：暖奶油青绿（温润护眼、低刺眼、暖调奶油米底）
- * - [Monochrome] 方案二：黑白色（极简黑白灰高级美学、纯粹克制、高对比度）
+ * - [Monochrome] 方案二：黑白色（极简墨灰纸色、低刺眼对比、浅色暗色均可长时间阅读）
  */
 enum class AppThemeStyle(val displayName: String) {
     WarmCream("暖奶油青绿"),
@@ -244,7 +244,7 @@ private fun MonochromeLightPreview() {
     }
 }
 
-@Preview(name = "方案二：黑白色 (暗色模式)", showBackground = true, backgroundColor = 0xFF0C0C0D)
+@Preview(name = "方案二：黑白色 (暗色模式)", showBackground = true, backgroundColor = 0xFF1A1A1C)
 @Composable
 private fun MonochromeDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = true) {

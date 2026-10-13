@@ -11,7 +11,6 @@ import com.example.cognibal.ui.theme.AppThemeStyle
 data class AppPreferences(
     val themeStyle: AppThemeStyle = AppThemeStyle.WarmCream,
     val darkMode: DarkModePreference = DarkModePreference.FOLLOW_SYSTEM,
-    val dynamicBlooms: Boolean = true,
     val hapticFeedback: Boolean = true,
     val currency: CurrencyPreference = CurrencyPreference.CNY,
 ) {

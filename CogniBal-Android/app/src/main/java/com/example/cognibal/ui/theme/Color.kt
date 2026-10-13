@@ -43,37 +43,37 @@ val WarmCreamDark_NavBar = Color(0xFF1F2321)            // 导航底栏底色
 
 // =========================================================================
 // 方案二：黑白色（Monochrome）调色板
-// 极简黑白灰高级美学，纯粹、沉稳、层次分明、极高对比度与辨识度
+// 极简墨灰纸色，避开纯黑与纯白。对比足够阅读，长时间看不刺眼
 // =========================================================================
 
 // --- 方案二 浅色（Light）原色常量 ---
-val MonochromeLight_Background = Color(0xFFF5F5F7)       // 页面背景（高级极简浅灰白）
-val MonochromeLight_CardBackground = Color(0xFFFFFFFF)   // 卡片背景（纯白模块容器，悬浮层次清晰）
-val MonochromeLight_Primary = Color(0xFF141414)          // 主色（极简深黑）：主按钮、核心焦点、正数金额
-val MonochromeLight_OnPrimary = Color(0xFFFFFFFF)        // 主色上的文字与图标
-val MonochromeLight_Secondary = Color(0xFFEBEBEF)        // 辅助浅冷灰：标签背景、次要区块
-val MonochromeLight_OnSecondary = Color(0xFF18181B)      // 辅助色上的文字
-val MonochromeLight_Expense = Color(0xFFD32F2F)          // 强调红：支出超标、负数金额
-val MonochromeLight_TextPrimary = Color(0xFF141414)      // 一级文字（账单金额、标题，深邃黑）
-val MonochromeLight_TextSecondary = Color(0xFF666668)    // 二级文字（分类、日期）
-val MonochromeLight_TextTertiary = Color(0xFFA1A1AA)     // 三级弱化文字（备注、占位提示）
-val MonochromeLight_Divider = Color(0xFFE4E4E7)          // 细分割线
-val MonochromeLight_NavBar = Color(0xFFFFFFFF)           // 导航底栏底色
+val MonochromeLight_Background = Color(0xFFF0EEEA)       // 页面背景（暖灰纸色，避开冷白）
+val MonochromeLight_CardBackground = Color(0xFFF8F7F4)   // 卡片背景（柔和米白，非纯白）
+val MonochromeLight_Primary = Color(0xFF3E3E40)          // 主色（柔炭灰）：主按钮、核心焦点、正数金额
+val MonochromeLight_OnPrimary = Color(0xFFF7F6F3)        // 主色上的文字与图标（暖米白）
+val MonochromeLight_Secondary = Color(0xFFE6E4DE)        // 辅助暖灰：标签背景、次要区块
+val MonochromeLight_OnSecondary = Color(0xFF3A3A3C)      // 辅助色上的文字
+val MonochromeLight_Expense = Color(0xFFC45C58)          // 强调红：压低饱和，支出仍可辨
+val MonochromeLight_TextPrimary = Color(0xFF2C2C2E)      // 一级文字（墨灰，非纯黑）
+val MonochromeLight_TextSecondary = Color(0xFF6A6A6C)    // 二级文字（分类、日期）
+val MonochromeLight_TextTertiary = Color(0xFF989896)     // 三级弱化文字（备注、占位提示）
+val MonochromeLight_Divider = Color(0xFFDDDBD5)          // 细分割线
+val MonochromeLight_NavBar = Color(0xFFF6F5F2)           // 导航底栏底色
 
 // --- 方案二 暗色（Dark）适配原色常量 ---
-// 纯粹深邃的极简黑基调，白字与明晰中性灰阶
-val MonochromeDark_Background = Color(0xFF0C0C0D)        // 页面背景（OLED 友好深黑基调）
-val MonochromeDark_CardBackground = Color(0xFF18181A)    // 卡片背景（暗调炭灰模块容器）
-val MonochromeDark_Primary = Color(0xFFFFFFFF)           // 主色（高亮纯白，白底黑字主按钮）
-val MonochromeDark_OnPrimary = Color(0xFF0C0C0D)         // 主色上的文字
-val MonochromeDark_Secondary = Color(0xFF27272A)         // 辅助暗灰（次级色块与标签容器）
-val MonochromeDark_OnSecondary = Color(0xFFF4F4F5)       // 辅助块上的文字
-val MonochromeDark_Expense = Color(0xFFEF5350)           // 强调红（明快警示红）
-val MonochromeDark_TextPrimary = Color(0xFFF4F4F5)       // 一级文字（近纯白，清晰锐利）
-val MonochromeDark_TextSecondary = Color(0xFFA1A1AA)     // 二级文字（中性灰）
-val MonochromeDark_TextTertiary = Color(0xFF52525B)      // 三级弱化文字
-val MonochromeDark_Divider = Color(0xFF27272A)           // 细分割线
-val MonochromeDark_NavBar = Color(0xFF121214)            // 导航底栏底色
+// 抬高的炭灰底，暖灰白文字，避免纯黑底上的纯白光晕
+val MonochromeDark_Background = Color(0xFF1A1A1C)        // 页面背景（抬高炭灰，避免纯黑）
+val MonochromeDark_CardBackground = Color(0xFF242426)    // 卡片背景（略抬高的炭灰容器）
+val MonochromeDark_Primary = Color(0xFFD8D6D1)           // 主色（暖灰白，非纯白高光）
+val MonochromeDark_OnPrimary = Color(0xFF1E1E20)         // 主色上的文字
+val MonochromeDark_Secondary = Color(0xFF323234)         // 辅助暗灰（次级色块与标签容器）
+val MonochromeDark_OnSecondary = Color(0xFFE4E2DD)       // 辅助块上的文字
+val MonochromeDark_Expense = Color(0xFFE08A84)           // 强调红（降低亮度，仍作警示）
+val MonochromeDark_TextPrimary = Color(0xFFE4E2DD)       // 一级文字（暖米灰，非近纯白）
+val MonochromeDark_TextSecondary = Color(0xFFA3A19C)     // 二级文字（中性灰）
+val MonochromeDark_TextTertiary = Color(0xFF6E6C68)      // 三级弱化文字
+val MonochromeDark_Divider = Color(0xFF333331)           // 细分割线
+val MonochromeDark_NavBar = Color(0xFF1E1E20)            // 导航底栏底色
 
 // =========================================================================
 // 语义化扩展色彩系统（AppColors）
@@ -264,8 +264,8 @@ val MonochromeLightColorScheme: ColorScheme = lightColorScheme(
     onPrimaryContainer = MonochromeLight_OnSecondary,
     secondary = MonochromeLight_Secondary,
     onSecondary = MonochromeLight_OnSecondary,
-    secondaryContainer = Color(0xFFF0F0F2),
-    onSecondaryContainer = Color(0xFF18181B),
+    secondaryContainer = Color(0xFFEAE8E2),
+    onSecondaryContainer = Color(0xFF2C2C2E),
     background = MonochromeLight_Background,
     onBackground = MonochromeLight_TextPrimary,
     surface = MonochromeLight_CardBackground,
@@ -273,15 +273,15 @@ val MonochromeLightColorScheme: ColorScheme = lightColorScheme(
     surfaceVariant = MonochromeLight_Secondary,
     onSurfaceVariant = MonochromeLight_TextSecondary,
     surfaceContainerLowest = MonochromeLight_NavBar,
-    surfaceContainerLow = Color(0xFFF7F7F8),
+    surfaceContainerLow = Color(0xFFF4F3F0),
     surfaceContainer = MonochromeLight_CardBackground,
-    surfaceContainerHigh = Color(0xFFEFEFEF),
-    surfaceContainerHighest = Color(0xFFE5E5E7),
+    surfaceContainerHigh = Color(0xFFE8E6E0),
+    surfaceContainerHighest = Color(0xFFDEDBD4),
     surfaceTint = Color.Transparent,
     error = MonochromeLight_Expense,
-    onError = Color.White,
-    errorContainer = Color(0xFFFDE8E8),
-    onErrorContainer = Color(0xFF5B1616),
+    onError = Color(0xFFF7F6F3),
+    errorContainer = Color(0xFFF6E6E4),
+    onErrorContainer = Color(0xFF5C2422),
     outline = MonochromeLight_TextTertiary,
     outlineVariant = MonochromeLight_Divider,
 )
@@ -302,16 +302,16 @@ val MonochromeDarkColorScheme: ColorScheme = darkColorScheme(
     onSurface = MonochromeDark_TextPrimary,
     surfaceVariant = MonochromeDark_Secondary,
     onSurfaceVariant = MonochromeDark_TextSecondary,
-    surfaceContainerLowest = Color(0xFF080809),
-    surfaceContainerLow = Color(0xFF121214),
+    surfaceContainerLowest = Color(0xFF141416),
+    surfaceContainerLow = Color(0xFF1E1E20),
     surfaceContainer = MonochromeDark_CardBackground,
-    surfaceContainerHigh = Color(0xFF222225),
-    surfaceContainerHighest = Color(0xFF2C2C30),
+    surfaceContainerHigh = Color(0xFF2E2E30),
+    surfaceContainerHighest = Color(0xFF38383A),
     surfaceTint = Color.Transparent,
     error = MonochromeDark_Expense,
-    onError = Color(0xFF4A1010),
-    errorContainer = Color(0xFF602323),
-    onErrorContainer = Color(0xFFFCD4D4),
+    onError = Color(0xFF3A1614),
+    errorContainer = Color(0xFF5A3030),
+    onErrorContainer = Color(0xFFF3D6D4),
     outline = MonochromeDark_TextTertiary,
     outlineVariant = MonochromeDark_Divider,
 )

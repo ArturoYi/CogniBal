@@ -15,6 +15,14 @@ activityCompose = "1.8.0"
 lifecycle = "2.11.0"
 # Preferences DataStore，设置项的本地存储。
 datastore = "1.2.1"
+# Room 2.8。协程和 Flow 已包含在 room-runtime 里，不再单独依赖 room-ktx。
+room = "2.8.5"
+# 适配 AGP 9 内置 Kotlin 的 KSP。Room、Hilt 都用它生成代码，不用 kapt。
+ksp = "2.3.6"
+# 适配 AGP 9 的 Hilt。
+hilt = "2.59.2"
+# JSON 业务备份。1.9.0 按 Kotlin 2.2 构建。
+serialization = "1.9.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -23,6 +31,11 @@ androidx-activity-compose = { group = "androidx.activity", name = "activity-comp
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+hilt-android = { group = "com.google.dagger", name = "hilt-android", version.ref = "hilt" }
+hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.ref = "hilt" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 
 # 平台依赖，本身不含代码，只约束下面这组库的版本。
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
@@ -31,7 +44,8 @@ androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graph
 androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
 androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
 androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
-androidx-compose-material-icons-core = { group = "androidx.compose.material", name = "material-icons-core" }
+# 全量 Material Icons。版本由 Compose BOM 约束，并会带上其中的 core 图标。
+androidx-compose-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended" }
 # 窗口尺寸与导航套件：手机底栏、宽屏侧栏。
 androidx-adaptive = { group = "androidx.compose.material3.adaptive", name = "adaptive" }
 androidx-adaptive-navigation-suite = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite" }
@@ -39,3 +53,7 @@ androidx-adaptive-navigation-suite = { group = "androidx.compose.material3", nam
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# 版本号跟 Kotlin 对齐，不跟 kotlinx-serialization 库的版本走。
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
