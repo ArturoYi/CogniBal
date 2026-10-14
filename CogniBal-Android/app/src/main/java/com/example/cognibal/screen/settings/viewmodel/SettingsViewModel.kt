@@ -44,9 +44,6 @@ internal class SettingsViewModel(
             totalRecordsCount = extra.totalRecordsCount,
             totalSurplus = extra.totalSurplus,
             isSurplusVisible = extra.isSurplusVisible,
-            showAppearanceDialog = extra.showAppearanceDialog,
-            showBackupDialog = extra.showBackupDialog,
-            showSecurityDialog = extra.showSecurityDialog,
             showMoreDialog = extra.showMoreDialog,
             showCurrencyDialog = extra.showCurrencyDialog,
             showClearCacheDialog = extra.showClearCacheDialog,
@@ -60,8 +57,6 @@ internal class SettingsViewModel(
 
     fun onEvent(event: SettingsUiEvent) {
         when (event) {
-            is SettingsUiEvent.DarkModeChanged -> persist { repository.setDarkMode(event.mode) }
-            is SettingsUiEvent.ThemeStyleChanged -> persist { repository.setThemeStyle(event.style) }
             is SettingsUiEvent.HapticFeedbackChanged -> persist { repository.setHapticFeedback(event.enabled) }
             is SettingsUiEvent.CurrencySelected -> {
                 transient.update { it.copy(showCurrencyDialog = false) }
@@ -69,18 +64,6 @@ internal class SettingsViewModel(
             }
             SettingsUiEvent.ToggleSurplusVisibility ->
                 transient.update { it.copy(isSurplusVisible = !it.isSurplusVisible) }
-            SettingsUiEvent.OpenAppearanceDialog ->
-                transient.update { it.copy(showAppearanceDialog = true) }
-            SettingsUiEvent.DismissAppearanceDialog ->
-                transient.update { it.copy(showAppearanceDialog = false) }
-            SettingsUiEvent.OpenBackupDialog ->
-                transient.update { it.copy(showBackupDialog = true) }
-            SettingsUiEvent.DismissBackupDialog ->
-                transient.update { it.copy(showBackupDialog = false) }
-            SettingsUiEvent.OpenSecurityDialog ->
-                transient.update { it.copy(showSecurityDialog = true) }
-            SettingsUiEvent.DismissSecurityDialog ->
-                transient.update { it.copy(showSecurityDialog = false) }
             SettingsUiEvent.OpenMoreDialog ->
                 transient.update { it.copy(showMoreDialog = true) }
             SettingsUiEvent.DismissMoreDialog ->
@@ -112,9 +95,6 @@ internal class SettingsViewModel(
         val totalRecordsCount: Int = 42,
         val totalSurplus: Double = 12850.00,
         val isSurplusVisible: Boolean = false,
-        val showAppearanceDialog: Boolean = false,
-        val showBackupDialog: Boolean = false,
-        val showSecurityDialog: Boolean = false,
         val showMoreDialog: Boolean = false,
         val showCurrencyDialog: Boolean = false,
         val showClearCacheDialog: Boolean = false,

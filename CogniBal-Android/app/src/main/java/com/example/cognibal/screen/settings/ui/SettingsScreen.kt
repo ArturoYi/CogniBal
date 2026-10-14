@@ -3,8 +3,10 @@ package com.example.cognibal.screen.settings.ui
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -27,13 +29,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
@@ -44,8 +45,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavKey
 import androidx.window.core.layout.WindowSizeClass
+import com.example.cognibal.navigation.AppearanceSettings
+import com.example.cognibal.navigation.BackupSettings
+import com.example.cognibal.navigation.SecuritySettings
 import com.example.cognibal.screen.settings.viewmodel.SettingsUiEvent
 import com.example.cognibal.screen.settings.viewmodel.SettingsUiState
 import com.example.cognibal.screen.settings.viewmodel.SettingsViewModel
@@ -57,33 +63,32 @@ import com.example.cognibal.ui.theme.CogniBalTheme
 import com.example.cognibal.ui.theme.appColors
 
 /**
- * 设置页入口。向 [SettingsViewModel] 收集状态，把操作转成 [SettingsUiEvent] 交回去。
+ * 设置列表。跳转由全局路由表处理，这里只把目的地交出去。
  */
 @Composable
-internal fun SettingsRoute(
+internal fun SettingsListRoute(
+    onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-
+    val onEvent = { event: SettingsUiEvent ->
+        viewModel.onEvent(event)
+        if (event == SettingsUiEvent.ConfirmClearCache) {
+            Toast.makeText(context, "缓存已成功清理", Toast.LENGTH_SHORT).show()
+        }
+    }
     SettingsScreen(
         uiState = uiState,
-        onEvent = { event ->
-            viewModel.onEvent(event)
-            if (event == SettingsUiEvent.ConfirmClearCache) {
-                Toast.makeText(context, "缓存已成功清理", Toast.LENGTH_SHORT).show()
-            }
-        },
-        onExportData = {
-            Toast.makeText(context, "数据导出功能已就绪", Toast.LENGTH_SHORT).show()
-        },
+        onEvent = onEvent,
         onOpenShortcut = { shortcut ->
             Toast.makeText(context, "${shortcut.label}即将开放", Toast.LENGTH_SHORT).show()
         },
         onOpenSourceLicenses = {
             Toast.makeText(context, "CogniBal 遵循 Apache 2.0 开源许可", Toast.LENGTH_SHORT).show()
         },
+        onNavigate = onNavigate,
         modifier = modifier,
     )
 }
@@ -101,166 +106,20 @@ internal fun SettingsRoute(
 internal fun SettingsScreen(
     uiState: SettingsUiState,
     onEvent: (SettingsUiEvent) -> Unit,
-    onExportData: () -> Unit,
     onOpenShortcut: (SettingsShortcut) -> Unit,
     onOpenSourceLicenses: () -> Unit,
+    onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val preferences = uiState.preferences
     val colors = MaterialTheme.appColors
-    val contentPadding = listContentPadding()
-    val layoutDirection = LocalLayoutDirection.current
-    val versionName = appVersionName()
-    val layout = settingsLayoutSpec()
-    val scrollState = rememberScrollState()
-
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = layout.maxContentWidth)
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(
-                    start = contentPadding.calculateLeftPadding(layoutDirection),
-                    end = contentPadding.calculateRightPadding(layoutDirection),
-                    top = contentPadding.calculateTopPadding(),
-                    bottom = contentPadding.calculateBottomPadding(),
-                )
-                .consumeWindowInsets(contentPadding)
-                .padding(
-                    horizontal = layout.horizontalPadding,
-                    vertical = if (layout.compactHeight) 8.dp else 14.dp,
-                ),
-            verticalArrangement = Arrangement.spacedBy(if (layout.compactHeight) 8.dp else 12.dp),
-        ) {
-            if (layout.isWide) {
-                // 宽屏模式（折叠屏展开、平板、桌面）：左右双栏平衡排布
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    // 左栏：财务概览与分析工具
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        UserStatsHeader(
-                            daysInUse = uiState.daysInUse,
-                            totalRecords = uiState.totalRecordsCount,
-                        )
-                        SurplusCard(
-                            surplus = uiState.totalSurplus,
-                            isVisible = uiState.isSurplusVisible,
-                            currencySymbol = preferences.currency.symbol,
-                            onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        SettingsSectionTitle("常用工具与分析")
-                        SettingsShortcutBar(
-                            onShortcutClick = onOpenShortcut,
-                            columns = 2,
-                        )
-                    }
-
-                    // 右栏：系统设置与信息
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                    ) {
-                        SettingsSectionTitle("偏好与安全")
-                        SettingsCardGroup(
-                            entries = preferenceAndSecurityEntries,
-                            onEvent = onEvent,
-                        )
-                        Spacer(modifier = Modifier.height(2.dp))
-                        SettingsSectionTitle("通用与支持")
-                        SettingsCardGroup(
-                            entries = systemAndSupportEntries,
-                            onEvent = onEvent,
-                        )
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "CogniBal $versionName · 理智平衡生活每一刻",
-                            color = colors.textTertiary.copy(alpha = 0.6f),
-                            fontSize = 11.5.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 4.dp),
-                        )
-                    }
-                }
-            } else {
-                // 窄屏模式（手机竖屏）：清晰自上而下的纵向节奏
-                UserStatsHeader(
-                    daysInUse = uiState.daysInUse,
-                    totalRecords = uiState.totalRecordsCount,
-                )
-                SurplusCard(
-                    surplus = uiState.totalSurplus,
-                    isVisible = uiState.isSurplusVisible,
-                    currencySymbol = preferences.currency.symbol,
-                    onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
-                )
-                Spacer(modifier = Modifier.height(2.dp))
-                SettingsSectionTitle("常用工具与分析")
-                SettingsShortcutBar(
-                    onShortcutClick = onOpenShortcut,
-                    columns = 4,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                SettingsSectionTitle("偏好与安全")
-                SettingsCardGroup(
-                    entries = preferenceAndSecurityEntries,
-                    onEvent = onEvent,
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                SettingsSectionTitle("通用与支持")
-                SettingsCardGroup(
-                    entries = systemAndSupportEntries,
-                    onEvent = onEvent,
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = "CogniBal $versionName · 理智平衡生活每一刻",
-                    color = colors.textTertiary.copy(alpha = 0.6f),
-                    fontSize = 11.5.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 8.dp),
-                )
-            }
-        }
-    }
-
-    // --- 子功能交互弹窗（后续可平滑演进至独立二级页面）---
-
-    if (uiState.showAppearanceDialog) {
-        AppearanceSettingsDialog(
-            preferences = preferences,
-            onDarkModeChange = { onEvent(SettingsUiEvent.DarkModeChanged(it)) },
-            onThemeStyleChange = { onEvent(SettingsUiEvent.ThemeStyleChanged(it)) },
-            onDismiss = { onEvent(SettingsUiEvent.DismissAppearanceDialog) },
-        )
-    }
-
-    if (uiState.showBackupDialog) {
-        BackupSettingsDialog(
-            onExportData = onExportData,
-            onDismiss = { onEvent(SettingsUiEvent.DismissBackupDialog) },
-        )
-    }
-
-    if (uiState.showSecurityDialog) {
-        SecuritySettingsDialog(
-            onDismiss = { onEvent(SettingsUiEvent.DismissSecurityDialog) },
-        )
-    }
+    SettingsHome(
+        uiState = uiState,
+        onEvent = onEvent,
+        onOpenShortcut = onOpenShortcut,
+        onNavigate = onNavigate,
+        modifier = modifier,
+    )
 
     if (uiState.showMoreDialog) {
         MoreSettingsDialog(
@@ -365,7 +224,135 @@ internal fun SettingsScreen(
     }
 }
 
-private data class SettingsLayoutSpec(
+@Composable
+private fun SettingsHome(
+    uiState: SettingsUiState,
+    onEvent: (SettingsUiEvent) -> Unit,
+    onOpenShortcut: (SettingsShortcut) -> Unit,
+    onNavigate: (NavKey) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val preferences = uiState.preferences
+    val colors = MaterialTheme.appColors
+    val contentPadding = listContentPadding()
+    val layoutDirection = LocalLayoutDirection.current
+    val versionName = appVersionName()
+    val scrollState = rememberScrollState()
+
+    BoxWithConstraints(modifier = modifier.fillMaxSize()) {
+    val layout = settingsLayoutSpec(maxWidth, maxHeight)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Column(
+            modifier = Modifier
+                .widthIn(max = layout.maxContentWidth)
+                .fillMaxWidth()
+                .verticalScroll(scrollState)
+                .padding(
+                    start = contentPadding.calculateLeftPadding(layoutDirection),
+                    end = contentPadding.calculateRightPadding(layoutDirection),
+                    top = contentPadding.calculateTopPadding(),
+                    bottom = contentPadding.calculateBottomPadding(),
+                )
+                .consumeWindowInsets(contentPadding)
+                .padding(
+                    horizontal = layout.horizontalPadding,
+                    vertical = if (layout.compactHeight) 10.dp else 14.dp,
+                ),
+            verticalArrangement = Arrangement.spacedBy(if (layout.compactHeight) 12.dp else 16.dp),
+        ) {
+            if (layout.isWide) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        UserStatsHeader(
+                            daysInUse = uiState.daysInUse,
+                            totalRecords = uiState.totalRecordsCount,
+                        )
+                        SurplusCard(
+                            surplus = uiState.totalSurplus,
+                            isVisible = uiState.isSurplusVisible,
+                            currencySymbol = preferences.currency.symbol,
+                            onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
+                        )
+                        SettingsShortcutBar(
+                            onShortcutClick = onOpenShortcut,
+                            columns = 2,
+                        )
+                    }
+
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        SettingsPageGroup(
+                            entries = preferenceAndSecurityEntries,
+                            onNavigate = onNavigate,
+                        )
+                        SettingsCardGroup(
+                            entries = systemAndSupportEntries,
+                            onEvent = onEvent,
+                        )
+                        Text(
+                            text = "CogniBal $versionName",
+                            color = colors.textTertiary.copy(alpha = 0.6f),
+                            fontSize = 11.5.sp,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 4.dp),
+                        )
+                    }
+                }
+            } else {
+                UserStatsHeader(
+                    daysInUse = uiState.daysInUse,
+                    totalRecords = uiState.totalRecordsCount,
+                )
+                SurplusCard(
+                    surplus = uiState.totalSurplus,
+                    isVisible = uiState.isSurplusVisible,
+                    currencySymbol = preferences.currency.symbol,
+                    onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
+                )
+                SettingsShortcutBar(
+                    onShortcutClick = onOpenShortcut,
+                    columns = 4,
+                )
+                SettingsPageGroup(
+                    entries = preferenceAndSecurityEntries,
+                    onNavigate = onNavigate,
+                )
+                SettingsCardGroup(
+                    entries = systemAndSupportEntries,
+                    onEvent = onEvent,
+                )
+                Text(
+                    text = "CogniBal $versionName",
+                    color = colors.textTertiary.copy(alpha = 0.6f),
+                    fontSize = 11.5.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp, bottom = 8.dp),
+                )
+            }
+        }
+    }
+    }
+}
+
+internal data class SettingsLayoutSpec(
     val isWide: Boolean,
     val compactHeight: Boolean,
     val maxContentWidth: Dp,
@@ -373,62 +360,75 @@ private data class SettingsLayoutSpec(
 )
 
 /**
- * 跟全局脚手架或窗口信息保持一致的断点计算。
- * 预览独立运行时回退到计算当前窗口。
+ * 按这一页实际拿到的宽高决定栏数。
+ *
+ * 列表-详情并排时，列表窗格往往比整窗窄，不能再用窗口宽度。
+ * 预览根节点有时没有上界，那时退回窗口尺寸。
  */
 @Composable
-private fun settingsLayoutSpec(): SettingsLayoutSpec {
+internal fun settingsLayoutSpec(maxWidth: Dp, maxHeight: Dp): SettingsLayoutSpec {
     val windowSizeClass = LocalCogniBalScaffold.current?.windowAdaptiveInfo?.windowSizeClass
-        ?: currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true).windowSizeClass
-    val isWide = windowSizeClass.isWidthAtLeastBreakpoint(
-        WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND,
-    )
-    val expandedWidth = windowSizeClass.isWidthAtLeastBreakpoint(
-        WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND,
-    )
+        ?: currentWindowAdaptiveInfoV2().windowSizeClass
+    val widthBounded = maxWidth.value.isFinite()
+    val heightBounded = maxHeight.value.isFinite()
+    val isWide = if (widthBounded) {
+        maxWidth >= MediumWidth
+    } else {
+        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+    }
+    val expandedWidth = if (widthBounded) {
+        maxWidth >= ExpandedWidth
+    } else {
+        windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+    }
+    val compactHeight = if (heightBounded) {
+        maxHeight < MediumHeight
+    } else {
+        !windowSizeClass.isHeightAtLeastBreakpoint(WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND)
+    }
     return SettingsLayoutSpec(
         isWide = isWide,
-        compactHeight = !windowSizeClass.isHeightAtLeastBreakpoint(
-            WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND,
-        ),
-        maxContentWidth = if (isWide) 920.dp else 560.dp,
+        compactHeight = compactHeight,
+        maxContentWidth = if (isWide) 1080.dp else Dp.Unspecified,
         horizontalPadding = when {
-            expandedWidth -> 28.dp
+            expandedWidth -> 24.dp
             isWide -> 20.dp
             else -> 16.dp
         },
     )
 }
 
+private val MediumWidth = WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND.dp
+private val ExpandedWidth = WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND.dp
+private val MediumHeight = WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND.dp
+
 private data class SettingsEntry(
     val icon: ImageVector,
     val title: String,
-    val subtitle: String,
-    val accentColor: Color,
     val event: SettingsUiEvent,
 )
 
+private data class SettingsPageEntry(
+    val icon: ImageVector,
+    val title: String,
+    val key: NavKey,
+)
+
 private val preferenceAndSecurityEntries = listOf(
-    SettingsEntry(
+    SettingsPageEntry(
         icon = Icons.Rounded.Palette,
-        title = "外观与主题",
-        subtitle = "深浅外观、色彩方案",
-        accentColor = Color(0xFF8E6CE6),
-        event = SettingsUiEvent.OpenAppearanceDialog,
+        title = "外观设置",
+        key = AppearanceSettings,
     ),
-    SettingsEntry(
+    SettingsPageEntry(
         icon = Icons.Rounded.Backup,
-        title = "数据备份",
-        subtitle = "账单导出、备份副本",
-        accentColor = Color(0xFF38A169),
-        event = SettingsUiEvent.OpenBackupDialog,
+        title = "备份设置",
+        key = BackupSettings,
     ),
-    SettingsEntry(
+    SettingsPageEntry(
         icon = Icons.Rounded.Security,
         title = "安全与隐私",
-        subtitle = "本地沙盒、脱敏保护",
-        accentColor = Color(0xFFE2843B),
-        event = SettingsUiEvent.OpenSecurityDialog,
+        key = SecuritySettings,
     ),
 )
 
@@ -436,32 +436,31 @@ private val systemAndSupportEntries = listOf(
     SettingsEntry(
         icon = Icons.Rounded.Tune,
         title = "更多设置",
-        subtitle = "货币符号、触感反馈、清理缓存",
-        accentColor = Color(0xFF3182CE),
         event = SettingsUiEvent.OpenMoreDialog,
     ),
     SettingsEntry(
         icon = Icons.Rounded.Info,
         title = "关于知余",
-        subtitle = "版本 1.0.0 · 开源与致谢",
-        accentColor = Color(0xFFD65D7A),
         event = SettingsUiEvent.OpenAboutDialog,
     ),
 )
 
 @Composable
-private fun SettingsSectionTitle(
-    title: String,
+private fun SettingsPageGroup(
+    entries: List<SettingsPageEntry>,
+    onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = MaterialTheme.appColors
-    Text(
-        text = title,
-        color = colors.textTertiary,
-        fontSize = 12.5.sp,
-        fontWeight = FontWeight.Medium,
-        modifier = modifier.padding(start = 4.dp, bottom = 2.dp),
-    )
+    SettingsSectionCard(modifier = modifier) {
+        entries.forEachIndexed { index, entry ->
+            if (index > 0) SettingsDivider()
+            SettingActionItem(
+                icon = entry.icon,
+                title = entry.title,
+                onClick = dropUnlessResumed { onNavigate(entry.key) },
+            )
+        }
+    }
 }
 
 @Composable
@@ -470,17 +469,12 @@ private fun SettingsCardGroup(
     onEvent: (SettingsUiEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = MaterialTheme.appColors
     SettingsSectionCard(modifier = modifier) {
         entries.forEachIndexed { index, entry ->
             if (index > 0) SettingsDivider()
-            val accentBg = entry.accentColor.copy(alpha = if (colors.isDark) 0.22f else 0.12f)
             SettingActionItem(
                 icon = entry.icon,
                 title = entry.title,
-                subtitle = entry.subtitle,
-                iconTint = entry.accentColor,
-                iconBackgroundColor = accentBg,
                 onClick = { onEvent(entry.event) },
             )
         }
@@ -513,9 +507,9 @@ private fun SettingsScreenWarmCreamPreview() {
         SettingsScreen(
             uiState = SettingsUiState(isSurplusVisible = false),
             onEvent = {},
-            onExportData = {},
             onOpenShortcut = {},
             onOpenSourceLicenses = {},
+            onNavigate = {},
         )
     }
 }
@@ -527,9 +521,9 @@ private fun SettingsScreenMonochromeDarkPreview() {
         SettingsScreen(
             uiState = SettingsUiState(isSurplusVisible = true),
             onEvent = {},
-            onExportData = {},
             onOpenShortcut = {},
             onOpenSourceLicenses = {},
+            onNavigate = {},
         )
     }
 }

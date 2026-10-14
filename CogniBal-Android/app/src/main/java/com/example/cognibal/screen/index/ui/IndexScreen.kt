@@ -4,7 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldLayout
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldValue
@@ -18,12 +18,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.example.cognibal.navigation.AppNavHost
+import com.example.cognibal.navigation.rememberAppNavigator
 import com.example.cognibal.screen.bill.ui.BillScreen
 import com.example.cognibal.screen.expense.ui.AddExpenseScreen
 import com.example.cognibal.screen.index.config.IndexTab
 import com.example.cognibal.screen.index.tool.indexNavigationPlacement
 import com.example.cognibal.screen.index.tool.navigationConsumedInsets
-import com.example.cognibal.screen.settings.ui.SettingsRoute
 import com.example.cognibal.ui.background.LocalPageBackgroundController
 import com.example.cognibal.ui.background.PageBackground
 import com.example.cognibal.ui.background.PageBackgroundController
@@ -46,7 +47,7 @@ import com.example.cognibal.ui.theme.CogniBalTheme
 fun IndexScreen(
     modifier: Modifier = Modifier,
 ) {
-    val windowAdaptiveInfo = currentWindowAdaptiveInfo(supportLargeAndXLargeWidth = true)
+    val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(windowAdaptiveInfo)
     val placement = navigationSuiteType.indexNavigationPlacement()
     val navigationVisibleState = rememberSaveable { mutableStateOf(true) }
@@ -72,6 +73,7 @@ fun IndexScreen(
         navigationVisibleState = navigationVisibleState,
     )
     var tab by rememberSaveable { mutableStateOf(IndexTab.Bill) }
+    val navigator = rememberAppNavigator()
 
     LaunchedEffect(showNavigation) {
         if (showNavigation) {
@@ -117,7 +119,10 @@ fun IndexScreen(
                     } else {
                         when (tab) {
                             IndexTab.Bill -> BillScreen(Modifier.fillMaxSize())
-                            IndexTab.Settings -> SettingsRoute(Modifier.fillMaxSize())
+                            IndexTab.Settings -> AppNavHost(
+                                navigator = navigator,
+                                modifier = Modifier.fillMaxSize(),
+                            )
                         }
                     }
                     StatusBarProtection()

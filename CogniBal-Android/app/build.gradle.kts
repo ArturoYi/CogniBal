@@ -90,4 +90,10 @@ dependencies {
 
     // 业务 JSON 导入导出，不负责 SQLite 文件本身。
     implementation(libs.kotlinx.serialization.json)
+
+    // 全局返回栈。路由表在 navigation 包，设置二级页是其中的目的地。
+    implementation(libs.androidx.navigation3.runtime)
+    implementation(libs.androidx.navigation3.ui)
+    // 宽屏把设置列表和二级页并排。窄屏仍一次只显示一页。
+    implementation(libs.androidx.adaptive.navigation3)
 }
