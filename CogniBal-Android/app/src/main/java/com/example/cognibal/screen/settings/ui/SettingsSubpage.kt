@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cognibal.R
+import com.example.cognibal.ui.background.RequestPageBackground
 import com.example.cognibal.ui.insets.listContentPadding
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.appColors
@@ -43,7 +44,7 @@ import com.example.cognibal.ui.theme.appColors
 /**
  * 设置二级页的共用骨架：顶栏返回，下面是可滚动内容。
  *
- * 底色铺到屏幕边缘。安全区垫在内容上，返回键和条目不会被状态栏、导航栏挡住。
+ * 底色由共用页面底铺到屏幕边缘，这里不再另铺一层。安全区垫在内容上，返回键和条目不会被状态栏、导航栏挡住。
  * 列表和详情并排时不显示返回键，系统返回仍由导航宿主处理。
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
@@ -58,11 +59,10 @@ internal fun SettingsSubpage(
     val contentPadding = listContentPadding()
     val layoutDirection = LocalLayoutDirection.current
     val scrollState = rememberScrollState()
+    RequestPageBackground()
 
     BoxWithConstraints(
-        modifier = modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
     ) {
         val layout = settingsLayoutSpec(maxWidth, maxHeight)
@@ -104,18 +104,18 @@ internal fun SettingsSubpage(
  */
 @Composable
 internal fun SettingsDetailPlaceholder(modifier: Modifier = Modifier) {
+    RequestPageBackground()
     val colors = MaterialTheme.appColors
     val contentPadding = listContentPadding()
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .padding(contentPadding)
             .consumeWindowInsets(contentPadding),
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = "选择一项设置",
+            text = stringResource(R.string.settings_choose),
             color = colors.textTertiary,
             fontSize = 15.sp,
         )

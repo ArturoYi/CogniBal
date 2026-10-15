@@ -9,13 +9,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cognibal.screen.bill.config.BillTabConfig
+import com.example.cognibal.ui.background.RequestPageBackground
 import com.example.cognibal.ui.insets.screenSafeDrawing
 
 /**
- * 账单。由 Index 放进共用导航里，自己不再画底栏或侧栏。
+ * 账单。首页标签之一，由路由表放进共用导航，自己不再画底栏或侧栏。
  */
 @Composable
 internal fun BillScreen(modifier: Modifier = Modifier) {
+    RequestPageBackground()
     Box(
         modifier = modifier
             .fillMaxSize()

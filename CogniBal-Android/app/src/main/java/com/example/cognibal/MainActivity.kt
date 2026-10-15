@@ -3,9 +3,9 @@ package com.example.cognibal
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,7 +34,7 @@ import com.example.cognibal.ui.theme.CogniBalTheme
  * Compose。Compose 把卡片画到同一位置并完成一帧后，才撤掉系统启动页，再播扇形展开。
  * 这样两层图标重合，用户看不到跳变。
  */
-class MainActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     /**
      * 跨 Compose 重组持有系统启动页。
      *

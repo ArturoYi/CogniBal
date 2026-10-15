@@ -1,6 +1,8 @@
 package com.example.cognibal.ui.theme
 
 import android.app.Activity
+import androidx.annotation.StringRes
+import com.example.cognibal.R
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,9 +39,12 @@ import androidx.core.view.WindowCompat
  * - [WarmCream] 方案一：暖奶油青绿（温润护眼、低刺眼、暖调奶油米底）
  * - [Monochrome] 方案二：黑白色（极简墨灰纸色、低刺眼对比、浅色暗色均可长时间阅读）
  */
-enum class AppThemeStyle(val displayName: String) {
-    WarmCream("暖奶油青绿"),
-    Monochrome("黑白色"),
+enum class AppThemeStyle(
+    @StringRes val nameRes: Int,
+    @StringRes val descriptionRes: Int,
+) {
+    WarmCream(R.string.theme_warm_cream, R.string.theme_warm_cream_desc),
+    Monochrome(R.string.theme_monochrome, R.string.theme_monochrome_desc),
 }
 
 /** 提供当前应用所选主题风格的 CompositionLocal */
@@ -97,8 +103,13 @@ fun CogniBalTheme(
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
-            content = content,
-        )
+        ) {
+            // 水波纹按点击节点的矩形铺开，圆角和圆形控件上会画出形状外面。
+            // 这里直接关掉，不再为裁剪它多加一层离屏绘制。
+            CompositionLocalProvider(LocalRippleConfiguration provides null) {
+                content()
+            }
+        }
     }
 }
 

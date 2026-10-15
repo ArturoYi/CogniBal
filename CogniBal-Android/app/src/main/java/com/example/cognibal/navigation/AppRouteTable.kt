@@ -1,10 +1,14 @@
 package com.example.cognibal.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy
+import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
+import com.example.cognibal.screen.bill.ui.BillScreen
+import com.example.cognibal.screen.expense.ui.AddExpenseScreen
 import com.example.cognibal.screen.settings.ui.AppearanceSettingsRoute
 import com.example.cognibal.screen.settings.ui.BackupSettingsRoute
 import com.example.cognibal.screen.settings.ui.SecuritySettingsRoute
@@ -14,14 +18,24 @@ import com.example.cognibal.screen.settings.ui.SettingsListRoute
 /**
  * 路由表。每个目的地只在这里绑定一次界面。
  *
- * 设置列表是列表窗格，三个二级页是详情窗格。窄屏退回单页，由 [AppNavHost] 做滑动。
+ * 账单和设置列表是首页标签。记一笔是普通整页。设置列表是列表窗格，三个二级页是详情窗格。
+ * 窄屏退回单页，由 [AppNavHost] 做滑动。
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.appRoutes(navigator: AppNavigator) {
+    entry<Bill>(metadata = homeTabMetadata()) {
+        BillScreen(Modifier.fillMaxSize())
+    }
+    entry<AddExpense> {
+        AddExpenseScreen(
+            onBack = dropUnlessResumed(block = navigator::back),
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
     entry<SettingsList>(
         metadata = ListDetailSceneStrategy.listPane(
             detailPlaceholder = { SettingsDetailPlaceholder() },
-        ),
+        ) + homeTabMetadata(),
     ) {
         SettingsListRoute(
             onNavigate = navigator::navigate,

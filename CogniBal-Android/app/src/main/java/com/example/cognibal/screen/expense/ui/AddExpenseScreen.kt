@@ -14,17 +14,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.example.cognibal.screen.expense.config.AddExpenseConfig
+import com.example.cognibal.ui.background.RequestPageBackground
 import com.example.cognibal.ui.insets.screenSafeDrawing
 import com.example.cognibal.ui.interaction.interactiveClick
 
 /**
- * 添加开支。从 Index 中间的加号进入，盖住导航条；返回后回到原来的标签。
+ * 记一笔。从首页中间的加号压进当前标签的返回栈，返回后回到原来的标签。
+ * 它不是首页标签，底栏和侧栏会收起。
  */
 @Composable
 internal fun AddExpenseScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    RequestPageBackground()
     Column(
         modifier
             .fillMaxSize()

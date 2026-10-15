@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">知余</string>
-    <string name="tab_bill">账单</string>
-    <string name="tab_settings">设置</string>
-    <string name="add_expense">添加开支</string>
-    <string name="navigate_back">返回</string>
-</resources>

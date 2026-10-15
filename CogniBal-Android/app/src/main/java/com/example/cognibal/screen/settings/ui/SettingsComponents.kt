@@ -1,13 +1,15 @@
 package com.example.cognibal.screen.settings.ui
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
@@ -43,6 +46,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -51,21 +55,36 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.cognibal.R
 import com.example.cognibal.screen.settings.model.AppPreferences
 import com.example.cognibal.screen.settings.model.CurrencyPreference
 import com.example.cognibal.screen.settings.model.DarkModePreference
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.AppThemeStyle
+import com.example.cognibal.ui.theme.LocalAppThemeStyle
 import com.example.cognibal.ui.theme.MonochromeLight_Expense
 import com.example.cognibal.ui.theme.MonochromeLight_Primary
 import com.example.cognibal.ui.theme.MonochromeLight_Secondary
@@ -84,9 +103,11 @@ fun UserStatsHeader(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
+    val days = pluralStringResource(R.plurals.day_count, daysInUse, daysInUse)
+    val entries = pluralStringResource(R.plurals.entry_count, totalRecords, totalRecords)
 
     Text(
-        text = "知余已经陪伴你 ${daysInUse}天，共记账 ${totalRecords}笔。",
+        text = stringResource(R.string.user_stats, days, entries),
         color = colors.textSecondary,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
@@ -155,7 +176,7 @@ fun SurplusCard(
                             )
                         }
                         Text(
-                            text = "总盈余",
+                            text = stringResource(R.string.surplus_total),
                             color = colors.textSecondary,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium,
@@ -171,7 +192,9 @@ fun SurplusCard(
                     ) {
                         Icon(
                             imageVector = if (isVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
-                            contentDescription = if (isVisible) "隐藏金额" else "显示金额",
+                            contentDescription = stringResource(
+                                if (isVisible) R.string.hide_amount else R.string.show_amount,
+                            ),
                             tint = colors.primary,
                             modifier = Modifier.size(17.dp),
                         )
@@ -223,13 +246,13 @@ fun SurplusCard(
  * 设置页快捷账务工具入口。
  */
 internal enum class SettingsShortcut(
-    val label: String,
+    @StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
-    Statistics("统计", Icons.Rounded.PieChart),
-    Reports("报表", Icons.Rounded.BarChart),
-    Budget("预算", Icons.Rounded.Savings),
-    Assets("资产", Icons.Rounded.AccountBalance),
+    Statistics(R.string.shortcut_statistics, Icons.Rounded.PieChart),
+    Reports(R.string.shortcut_reports, Icons.Rounded.BarChart),
+    Budget(R.string.shortcut_budget, Icons.Rounded.Savings),
+    Assets(R.string.shortcut_assets, Icons.Rounded.AccountBalance),
 }
 
 @Composable
@@ -301,10 +324,12 @@ private fun SettingsShortcutItem(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = shortcut.label,
+                    text = stringResource(shortcut.labelRes),
                     color = colors.textPrimary,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         } else {
@@ -330,11 +355,13 @@ private fun SettingsShortcutItem(
                 }
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
-                    text = shortcut.label,
+                    text = stringResource(shortcut.labelRes),
                     color = colors.textPrimary,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                 )
             }
         }
@@ -445,11 +472,14 @@ fun SettingActionItem(
 
         Spacer(modifier = Modifier.width(6.dp))
 
+        val mirrorChevron = LocalLayoutDirection.current == LayoutDirection.Rtl
         Icon(
             imageVector = Icons.Rounded.ChevronRight,
             contentDescription = null,
             tint = colors.textTertiary.copy(alpha = 0.7f),
-            modifier = Modifier.size(18.dp),
+            modifier = Modifier
+                .size(18.dp)
+                .graphicsLayer { scaleX = if (mirrorChevron) -1f else 1f },
         )
     }
 }
@@ -586,14 +616,14 @@ fun ThemeModeSelector(
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "主题",
+                    text = stringResource(R.string.theme),
                     color = colors.textPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = currentPreference.subtitle,
+                    text = stringResource(currentPreference.subtitleRes),
                     color = colors.textTertiary,
                     fontSize = 12.sp,
                 )
@@ -601,11 +631,14 @@ fun ThemeModeSelector(
         }
         Spacer(modifier = Modifier.height(10.dp))
 
+        val trackColor = colors.tagBackground
+            .copy(alpha = 0.45f)
+            .compositeOver(colors.cardBackground)
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .background(
-                    color = colors.tagBackground.copy(alpha = 0.45f),
+                    color = trackColor,
                     shape = RoundedCornerShape(12.dp),
                 )
                 .padding(4.dp),
@@ -619,43 +652,38 @@ fun ThemeModeSelector(
                     DarkModePreference.DARK -> Icons.Rounded.DarkMode
                 }
 
-                val containerColor by animateColorAsState(
-                    targetValue = if (isSelected) colors.cardBackground else Color.Transparent,
-                    animationSpec = tween(durationMillis = 200),
-                    label = "modeContainer",
-                )
-                val contentColor by animateColorAsState(
-                    targetValue = if (isSelected) colors.primary else colors.textSecondary,
-                    animationSpec = tween(durationMillis = 200),
-                    label = "modeContent",
-                )
+                val containerColor = if (isSelected) colors.cardBackground else Color.Transparent
+                val contentColor = if (isSelected) colors.primary else colors.textSecondary
 
-                Surface(
-                    onClick = { onSelectPreference(option) },
-                    shape = RoundedCornerShape(9.dp),
-                    color = containerColor,
-                    modifier = Modifier.weight(1f),
-                    shadowElevation = if (isSelected) 0.5.dp else 0.dp,
+                val shape = RoundedCornerShape(9.dp)
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .minimumInteractiveComponentSize()
+                        .shadow(
+                            elevation = if (isSelected) 0.5.dp else 0.dp,
+                            shape = shape,
+                        )
+                        .clip(shape)
+                        .background(containerColor)
+                        .themeOptionClick(shape = shape, onClick = { onSelectPreference(option) })
+                        .padding(vertical = 10.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Column(
-                        modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = option.title,
-                            tint = contentColor,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = option.title,
-                            color = contentColor,
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                    }
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = stringResource(option.titleRes),
+                        tint = contentColor,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = stringResource(option.titleRes),
+                        color = contentColor,
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                    )
                 }
             }
         }
@@ -663,13 +691,45 @@ fun ThemeModeSelector(
 }
 
 /**
+ * 主题选项不画点击水波纹。
+ *
+ * 亮色切到跟随系统、而系统也是亮色时，主题不会变，水波纹仍会在按钮上闪一下。
+ * 键盘焦点仍描一圈，方便看见当前项。
+ */
+@Composable
+private fun Modifier.themeOptionClick(
+    shape: Shape,
+    onClick: () -> Unit,
+): Modifier {
+    val interactionSource = remember { MutableInteractionSource() }
+    val focused by interactionSource.collectIsFocusedAsState()
+    val outlined = if (focused) {
+        border(
+            width = 2.dp,
+            color = MaterialTheme.colorScheme.secondary,
+            shape = shape,
+        )
+    } else {
+        this
+    }
+    return outlined
+        .pointerHoverIcon(PointerIcon.Hand)
+        .clickable(
+            interactionSource = interactionSource,
+            indication = null,
+            role = Role.RadioButton,
+            onClick = onClick,
+        )
+}
+
+/**
  * 主题色：暖奶油青绿、黑白色。
  */
 @Composable
 fun ThemeStyleSelector(
-    currentStyle: AppThemeStyle,
     onSelectStyle: (AppThemeStyle) -> Unit,
     modifier: Modifier = Modifier,
+    currentStyle: AppThemeStyle = LocalAppThemeStyle.current,
 ) {
     val colors = MaterialTheme.appColors
 
@@ -683,14 +743,14 @@ fun ThemeStyleSelector(
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "主题色",
+                    text = stringResource(R.string.theme_color),
                     color = colors.textPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Medium,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "低饱和温润配色，护眼耐看",
+                    text = stringResource(R.string.theme_color_subtitle),
                     color = colors.textTertiary,
                     fontSize = 12.sp,
                 )
@@ -719,7 +779,6 @@ private data class ThemeCardPalette(
     val primary: Color,
     val secondary: Color,
     val expense: Color,
-    val desc: String,
 )
 
 @Composable
@@ -735,33 +794,32 @@ private fun ThemeStyleCard(
             primary = WarmCreamLight_Primary,
             secondary = WarmCreamLight_Secondary,
             expense = WarmCreamLight_Expense,
-            desc = "温润护眼 · 暖奶油底",
         )
         AppThemeStyle.Monochrome -> ThemeCardPalette(
             primary = MonochromeLight_Primary,
             secondary = MonochromeLight_Secondary,
             expense = MonochromeLight_Expense,
-            desc = "极简克制 · 柔和墨灰",
         )
     }
 
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        color = if (isSelected) colors.tagBackground.copy(alpha = 0.55f) else colors.tagBackground.copy(alpha = 0.2f),
-        shadowElevation = 0.dp,
-        modifier = modifier,
+    val shape = RoundedCornerShape(14.dp)
+    val containerColor = colors.tagBackground
+        .copy(alpha = if (isSelected) 0.55f else 0.2f)
+        .compositeOver(colors.cardBackground)
+    Column(
+        modifier = modifier
+            .clip(shape)
+            .background(containerColor)
+            .themeOptionClick(shape = shape, onClick = onClick)
+            .padding(12.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = style.displayName,
+                    text = stringResource(style.nameRes),
                     color = colors.textPrimary,
                     fontSize = 13.5.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
@@ -775,7 +833,7 @@ private fun ThemeStyleCard(
                     ) {
                         Icon(
                             imageVector = Icons.Rounded.Check,
-                            contentDescription = "已选择",
+                            contentDescription = stringResource(R.string.selected),
                             tint = colors.onPrimary,
                             modifier = Modifier.size(11.dp),
                         )
@@ -812,11 +870,10 @@ private fun ThemeStyleCard(
             Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = palette.desc,
+                text = stringResource(style.descriptionRes),
                 color = colors.textTertiary,
                 fontSize = 11.sp,
             )
-        }
     }
 }
 
@@ -837,7 +894,7 @@ fun MoreSettingsDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "更多功能",
+                text = stringResource(R.string.more_features),
                 color = colors.textPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -847,7 +904,7 @@ fun MoreSettingsDialog(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 SettingActionItem(
                     icon = Icons.Rounded.Payments,
-                    title = "默认货币符号",
+                    title = stringResource(R.string.default_currency),
                     valueText = preferences.currency.symbol,
                     onClick = {
                         onDismiss()
@@ -859,7 +916,7 @@ fun MoreSettingsDialog(
 
                 SettingSwitchItem(
                     icon = Icons.Rounded.Vibration,
-                    title = "操作触感反馈",
+                    title = stringResource(R.string.haptic_feedback),
                     checked = preferences.hapticFeedback,
                     onCheckedChange = onHapticFeedbackChange,
                 )
@@ -868,7 +925,7 @@ fun MoreSettingsDialog(
 
                 SettingActionItem(
                     icon = Icons.Rounded.Storage,
-                    title = "清除临时缓存",
+                    title = stringResource(R.string.clear_temp_cache),
                     valueText = cacheSizeText,
                     onClick = {
                         onDismiss()
@@ -879,7 +936,11 @@ fun MoreSettingsDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "关闭", color = colors.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    text = stringResource(R.string.close),
+                    color = colors.primary,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         },
         containerColor = colors.cardBackground,
@@ -901,7 +962,7 @@ fun CurrencySelectDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "选择默认记账货币",
+                text = stringResource(R.string.choose_currency),
                 color = colors.textPrimary,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
@@ -935,7 +996,7 @@ fun CurrencySelectDialog(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = option.displayName,
+                            text = stringResource(option.nameRes),
                             color = if (isSelected) colors.textPrimary else colors.textSecondary,
                             fontSize = 15.sp,
                             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
@@ -946,7 +1007,11 @@ fun CurrencySelectDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text(text = "取消", color = colors.primary, fontWeight = FontWeight.Bold)
+                Text(
+                    text = stringResource(R.string.cancel),
+                    color = colors.primary,
+                    fontWeight = FontWeight.Bold,
+                )
             }
         },
         containerColor = colors.cardBackground,

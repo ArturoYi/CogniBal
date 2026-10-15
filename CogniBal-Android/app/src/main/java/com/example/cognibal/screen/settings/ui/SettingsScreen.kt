@@ -3,7 +3,6 @@ package com.example.cognibal.screen.settings.ui
 import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -33,10 +32,12 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.annotation.StringRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
@@ -49,12 +50,15 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import androidx.window.core.layout.WindowSizeClass
+import com.example.cognibal.R
 import com.example.cognibal.navigation.AppearanceSettings
 import com.example.cognibal.navigation.BackupSettings
 import com.example.cognibal.navigation.SecuritySettings
 import com.example.cognibal.screen.settings.viewmodel.SettingsUiEvent
 import com.example.cognibal.screen.settings.viewmodel.SettingsUiState
 import com.example.cognibal.screen.settings.viewmodel.SettingsViewModel
+import com.example.cognibal.ui.background.PageBackgroundHost
+import com.example.cognibal.ui.background.RequestPageBackground
 import com.example.cognibal.ui.insets.listContentPadding
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.scaffold.LocalCogniBalScaffold
@@ -73,20 +77,25 @@ internal fun SettingsListRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val cacheClearedMessage = stringResource(R.string.cache_cleared)
+    val openSourceMessage = stringResource(R.string.open_source_toast)
+    val shortcutComingSoon = SettingsShortcut.entries.associateWith { shortcut ->
+        stringResource(R.string.shortcut_coming_soon, stringResource(shortcut.labelRes))
+    }
     val onEvent = { event: SettingsUiEvent ->
         viewModel.onEvent(event)
         if (event == SettingsUiEvent.ConfirmClearCache) {
-            Toast.makeText(context, "缓存已成功清理", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, cacheClearedMessage, Toast.LENGTH_SHORT).show()
         }
     }
     SettingsScreen(
         uiState = uiState,
         onEvent = onEvent,
         onOpenShortcut = { shortcut ->
-            Toast.makeText(context, "${shortcut.label}即将开放", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, shortcutComingSoon.getValue(shortcut), Toast.LENGTH_SHORT).show()
         },
         onOpenSourceLicenses = {
-            Toast.makeText(context, "CogniBal 遵循 Apache 2.0 开源许可", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, openSourceMessage, Toast.LENGTH_SHORT).show()
         },
         onNavigate = onNavigate,
         modifier = modifier,
@@ -111,8 +120,10 @@ internal fun SettingsScreen(
     onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    RequestPageBackground()
     val preferences = uiState.preferences
     val colors = MaterialTheme.appColors
+    val versionName = appVersionName()
     SettingsHome(
         uiState = uiState,
         onEvent = onEvent,
@@ -145,7 +156,7 @@ internal fun SettingsScreen(
             onDismissRequest = { onEvent(SettingsUiEvent.DismissClearCacheDialog) },
             title = {
                 Text(
-                    text = "清除本地缓存",
+                    text = stringResource(R.string.clear_cache_title),
                     color = colors.textPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -153,7 +164,7 @@ internal fun SettingsScreen(
             },
             text = {
                 Text(
-                    text = "确定要清理当前 ${uiState.cacheSizeText} 的临时数据缓存吗？这不会影响你的真实账单记录。",
+                    text = stringResource(R.string.clear_cache_message, uiState.cacheSizeText),
                     color = colors.textSecondary,
                     fontSize = 14.sp,
                     lineHeight = 20.sp,
@@ -161,12 +172,16 @@ internal fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { onEvent(SettingsUiEvent.ConfirmClearCache) }) {
-                    Text(text = "确认清理", color = colors.primary, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.clear_cache_confirm),
+                        color = colors.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             },
             dismissButton = {
                 TextButton(onClick = { onEvent(SettingsUiEvent.DismissClearCacheDialog) }) {
-                    Text(text = "取消", color = colors.textTertiary)
+                    Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
                 }
             },
             containerColor = colors.cardBackground,
@@ -179,7 +194,7 @@ internal fun SettingsScreen(
             onDismissRequest = { onEvent(SettingsUiEvent.DismissAboutDialog) },
             title = {
                 Text(
-                    text = "CogniBal · 账衡",
+                    text = stringResource(R.string.about_title),
                     color = colors.textPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
@@ -188,13 +203,13 @@ internal fun SettingsScreen(
             text = {
                 Column {
                     Text(
-                        text = "版本：1.0.0 (Build 2026.10)",
+                        text = stringResource(R.string.about_version, versionName),
                         color = colors.textSecondary,
                         fontSize = 13.sp,
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "CogniBal 致力于打造兼具温润护眼美学与极简高辨识度的记账工具，支持根据不同屏幕尺寸自适应布局，提供沉浸流畅的财务管理体验。",
+                        text = stringResource(R.string.about_description),
                         color = colors.textPrimary,
                         fontSize = 14.sp,
                         lineHeight = 20.sp,
@@ -205,7 +220,7 @@ internal fun SettingsScreen(
                         modifier = Modifier.align(Alignment.End),
                     ) {
                         Text(
-                            text = "开源许可与致谢",
+                            text = stringResource(R.string.open_source),
                             color = colors.primary,
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
@@ -215,7 +230,11 @@ internal fun SettingsScreen(
             },
             confirmButton = {
                 TextButton(onClick = { onEvent(SettingsUiEvent.DismissAboutDialog) }) {
-                    Text(text = "完成", color = colors.primary, fontWeight = FontWeight.Bold)
+                    Text(
+                        text = stringResource(R.string.done),
+                        color = colors.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             },
             containerColor = colors.cardBackground,
@@ -242,9 +261,7 @@ private fun SettingsHome(
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
     val layout = settingsLayoutSpec(maxWidth, maxHeight)
     Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background),
+        modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
     ) {
         Column(
@@ -304,7 +321,7 @@ private fun SettingsHome(
                             onEvent = onEvent,
                         )
                         Text(
-                            text = "CogniBal $versionName",
+                            text = stringResource(R.string.app_version_footer, versionName),
                             color = colors.textTertiary.copy(alpha = 0.6f),
                             fontSize = 11.5.sp,
                             textAlign = TextAlign.Center,
@@ -338,7 +355,7 @@ private fun SettingsHome(
                     onEvent = onEvent,
                 )
                 Text(
-                    text = "CogniBal $versionName",
+                    text = stringResource(R.string.app_version_footer, versionName),
                     color = colors.textTertiary.copy(alpha = 0.6f),
                     fontSize = 11.5.sp,
                     textAlign = TextAlign.Center,
@@ -404,30 +421,30 @@ private val MediumHeight = WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND.dp
 
 private data class SettingsEntry(
     val icon: ImageVector,
-    val title: String,
+    @StringRes val titleRes: Int,
     val event: SettingsUiEvent,
 )
 
 private data class SettingsPageEntry(
     val icon: ImageVector,
-    val title: String,
+    @StringRes val titleRes: Int,
     val key: NavKey,
 )
 
 private val preferenceAndSecurityEntries = listOf(
     SettingsPageEntry(
         icon = Icons.Rounded.Palette,
-        title = "外观设置",
+        titleRes = R.string.settings_appearance,
         key = AppearanceSettings,
     ),
     SettingsPageEntry(
         icon = Icons.Rounded.Backup,
-        title = "备份设置",
+        titleRes = R.string.settings_backup,
         key = BackupSettings,
     ),
     SettingsPageEntry(
         icon = Icons.Rounded.Security,
-        title = "安全与隐私",
+        titleRes = R.string.settings_security,
         key = SecuritySettings,
     ),
 )
@@ -435,12 +452,12 @@ private val preferenceAndSecurityEntries = listOf(
 private val systemAndSupportEntries = listOf(
     SettingsEntry(
         icon = Icons.Rounded.Tune,
-        title = "更多设置",
+        titleRes = R.string.settings_more,
         event = SettingsUiEvent.OpenMoreDialog,
     ),
     SettingsEntry(
         icon = Icons.Rounded.Info,
-        title = "关于知余",
+        titleRes = R.string.settings_about,
         event = SettingsUiEvent.OpenAboutDialog,
     ),
 )
@@ -456,7 +473,7 @@ private fun SettingsPageGroup(
             if (index > 0) SettingsDivider()
             SettingActionItem(
                 icon = entry.icon,
-                title = entry.title,
+                title = stringResource(entry.titleRes),
                 onClick = dropUnlessResumed { onNavigate(entry.key) },
             )
         }
@@ -474,7 +491,7 @@ private fun SettingsCardGroup(
             if (index > 0) SettingsDivider()
             SettingActionItem(
                 icon = entry.icon,
-                title = entry.title,
+                title = stringResource(entry.titleRes),
                 onClick = { onEvent(entry.event) },
             )
         }
@@ -504,13 +521,15 @@ private fun appVersionName(): String {
 @Composable
 private fun SettingsScreenWarmCreamPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
-        SettingsScreen(
-            uiState = SettingsUiState(isSurplusVisible = false),
-            onEvent = {},
-            onOpenShortcut = {},
-            onOpenSourceLicenses = {},
-            onNavigate = {},
-        )
+        PageBackgroundHost {
+            SettingsScreen(
+                uiState = SettingsUiState(isSurplusVisible = false),
+                onEvent = {},
+                onOpenShortcut = {},
+                onOpenSourceLicenses = {},
+                onNavigate = {},
+            )
+        }
     }
 }
 
@@ -518,12 +537,14 @@ private fun SettingsScreenWarmCreamPreview() {
 @Composable
 private fun SettingsScreenMonochromeDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = true) {
-        SettingsScreen(
-            uiState = SettingsUiState(isSurplusVisible = true),
-            onEvent = {},
-            onOpenShortcut = {},
-            onOpenSourceLicenses = {},
-            onNavigate = {},
-        )
+        PageBackgroundHost {
+            SettingsScreen(
+                uiState = SettingsUiState(isSurplusVisible = true),
+                onEvent = {},
+                onOpenShortcut = {},
+                onOpenSourceLicenses = {},
+                onNavigate = {},
+            )
+        }
     }
 }

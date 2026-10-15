@@ -1,37 +1,68 @@
 package com.example.cognibal.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.navigation3.runtime.NavBackStack
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 
 /**
- * 应用唯一的返回栈。
+ * 首页两个标签各自一条返回栈，当前标签记在 [homeTab]。
  *
- * 记在主页组合里，切换底部标签时栈还在。界面只调用 [navigate] 和 [back]，不自己持有栈。
+ * 记一笔和设置二级页都压在当前标签的栈上。界面只调用 [selectHome]、[navigate] 和 [back]。
  */
 internal class AppNavigator(
-    val backStack: NavBackStack<NavKey>,
+    val billStack: NavBackStack<NavKey>,
+    val settingsStack: NavBackStack<NavKey>,
+    private val homeTabState: MutableState<HomeTab>,
 ) {
+    var homeTab: HomeTab
+        get() = homeTabState.value
+        private set(value) {
+            homeTabState.value = value
+        }
+
+    val activeStack: NavBackStack<NavKey>
+        get() = when (homeTab) {
+            HomeTab.Bill -> billStack
+            HomeTab.Settings -> settingsStack
+        }
+
+    fun selectHome(tab: HomeTab) {
+        homeTab = tab
+    }
+
     fun navigate(key: NavKey) {
-        if (backStack.lastOrNull() == key) return
-        if (backStack.lastOrNull() in settingsDetailKeys) {
-            backStack[backStack.lastIndex] = key
+        val stack = activeStack
+        if (stack.lastOrNull() == key) return
+        if (key in settingsDetailKeys && stack.lastOrNull() in settingsDetailKeys) {
+            stack[stack.lastIndex] = key
         } else {
-            backStack.add(key)
+            stack.add(key)
         }
     }
 
     fun back() {
-        if (backStack.size > 1) {
-            backStack.removeLastOrNull()
+        val stack = activeStack
+        if (stack.size > 1) {
+            stack.removeLastOrNull()
         }
     }
 }
 
 @Composable
 internal fun rememberAppNavigator(): AppNavigator {
-    val backStack = rememberNavBackStack(SettingsList)
-    return remember(backStack) { AppNavigator(backStack) }
+    val billStack = rememberNavBackStack(Bill)
+    val settingsStack = rememberNavBackStack(SettingsList)
+    val homeTab = rememberSaveable { mutableStateOf(HomeTab.Bill) }
+    return remember(billStack, settingsStack, homeTab) {
+        AppNavigator(
+            billStack = billStack,
+            settingsStack = settingsStack,
+            homeTabState = homeTab,
+        )
+    }
 }

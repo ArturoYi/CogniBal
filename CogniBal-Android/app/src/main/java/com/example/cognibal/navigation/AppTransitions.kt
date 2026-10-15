@@ -1,6 +1,8 @@
 package com.example.cognibal.navigation
 
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
@@ -26,6 +28,14 @@ internal fun wechatPush(): ContentTransform {
         sizeTransform = null,
     )
 }
+
+/** 首页两个标签对调时不滑整页，避免账单和设置互相推开。 */
+internal fun noPageTransition(): ContentTransform =
+    ContentTransform(
+        targetContentEnter = EnterTransition.None,
+        initialContentExit = ExitTransition.None,
+        sizeTransform = null,
+    )
 
 /** 返回时方向相反，时长和曲线与进入相同。 */
 internal fun wechatPop(): ContentTransform {

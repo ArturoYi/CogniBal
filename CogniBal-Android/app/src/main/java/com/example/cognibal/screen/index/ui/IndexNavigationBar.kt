@@ -33,7 +33,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBarDefaults
 import androidx.compose.material3.NavigationRailDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -289,7 +288,7 @@ private fun CenterAddButton(
             .background(primary)
             .clickable(
                 interactionSource = interactionSource,
-                indication = ripple(bounded = true, color = onPrimary.copy(alpha = 0.35f)),
+                indication = null,
                 role = Role.Button,
                 onClick = onClick,
             ),

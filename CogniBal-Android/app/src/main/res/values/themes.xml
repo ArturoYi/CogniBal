@@ -6,7 +6,8 @@
       系统启动图卸下、Compose 黑底画上之前会空出一帧，浅色背景就会闪一下。
       启动页盖住窗口后再改回应用底色，结束时的淡出仍然落到主界面。
     -->
-    <style name="Theme.CogniBal.Window" parent="android:Theme.Material.Light.NoActionBar">
+    <!-- AppCompat 才能在 Android 12 及以下应用「应用内语言」。窗口属性仍由下面几项盖住。 -->
+    <style name="Theme.CogniBal.Window" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/icon_black</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>

@@ -31,8 +31,8 @@ android {
     buildTypes {
         release {
             optimization {
-                // 关闭 R8 压缩与混淆，正式包保持可读，便于当前阶段排查。
-                enable = false
+                // AGP 9.3：同时压缩无用代码和资源，并混淆。调试包不受影响。
+                enable = true
             }
         }
     }
@@ -72,6 +72,8 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     implementation(libs.androidx.core.ktx)
+    // 应用内语言：AppCompatDelegate.setApplicationLocales。
+    implementation(libs.androidx.appcompat)
     // 系统启动页，交给 MainActivity 里的 StartupSplash。
     implementation(libs.androidx.core.splashscreen)
 

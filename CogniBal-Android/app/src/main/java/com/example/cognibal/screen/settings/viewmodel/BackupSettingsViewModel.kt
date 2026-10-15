@@ -1,9 +1,11 @@
 package com.example.cognibal.screen.settings.viewmodel
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.cognibal.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -35,31 +37,31 @@ internal enum class BackupSettingsAction {
 
 internal data class BackupSettingsRow(
     val action: BackupSettingsAction,
-    val title: String,
-    val subtitle: String,
+    @StringRes val titleRes: Int,
+    @StringRes val subtitleRes: Int,
 )
 
 internal data class BackupSettingsUiState(
     val rows: List<BackupSettingsRow> = listOf(
         BackupSettingsRow(
             action = BackupSettingsAction.Backup,
-            title = "备份",
-            subtitle = "把当前账单保存到这台设备",
+            titleRes = R.string.backup_save,
+            subtitleRes = R.string.backup_save_subtitle,
         ),
         BackupSettingsRow(
             action = BackupSettingsAction.Export,
-            title = "导出备份",
-            subtitle = "生成一份可以带走的备份文件",
+            titleRes = R.string.backup_export,
+            subtitleRes = R.string.backup_export_subtitle,
         ),
         BackupSettingsRow(
             action = BackupSettingsAction.Import,
-            title = "导入备份",
-            subtitle = "从备份文件恢复账单",
+            titleRes = R.string.backup_import,
+            subtitleRes = R.string.backup_import_subtitle,
         ),
         BackupSettingsRow(
             action = BackupSettingsAction.NearbyShare,
-            title = "附近分享",
-            subtitle = "把备份发给附近的设备",
+            titleRes = R.string.backup_nearby,
+            subtitleRes = R.string.backup_nearby_subtitle,
         ),
     ),
 )

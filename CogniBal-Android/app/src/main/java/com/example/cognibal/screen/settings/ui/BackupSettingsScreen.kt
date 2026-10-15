@@ -1,27 +1,26 @@
 package com.example.cognibal.screen.settings.ui
 
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.CloudDownload
 import androidx.compose.material.icons.rounded.CloudUpload
 import androidx.compose.material.icons.rounded.Share
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cognibal.R
 import com.example.cognibal.screen.settings.viewmodel.BackupSettingsAction
 import com.example.cognibal.screen.settings.viewmodel.BackupSettingsUiEvent
 import com.example.cognibal.screen.settings.viewmodel.BackupSettingsUiState
 import com.example.cognibal.screen.settings.viewmodel.BackupSettingsViewModel
+import com.example.cognibal.ui.background.PageBackgroundHost
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.theme.AppThemeStyle
 import com.example.cognibal.ui.theme.CogniBalTheme
-import com.example.cognibal.ui.theme.appColors
 
 /** 备份设置入口。条目来自 ViewModel，点击先不执行备份。 */
 @Composable
@@ -47,7 +46,7 @@ internal fun BackupSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     SettingsSubpage(
-        title = "备份设置",
+        title = stringResource(R.string.settings_backup),
         onBack = onBack,
         modifier = modifier,
     ) {
@@ -55,8 +54,8 @@ internal fun BackupSettingsScreen(
             actions = uiState.rows.map { row ->
                 SettingsAction(
                     icon = row.action.icon,
-                    title = row.title,
-                    subtitle = row.subtitle,
+                    title = stringResource(row.titleRes),
+                    subtitle = stringResource(row.subtitleRes),
                 )
             },
             onAction = { index ->
@@ -78,7 +77,7 @@ private val BackupSettingsAction.icon: ImageVector
 @Composable
 private fun BackupSettingsPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
-        Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.appColors.background) {
+        PageBackgroundHost {
             BackupSettingsScreen(
                 uiState = BackupSettingsUiState(),
                 onEvent = {},

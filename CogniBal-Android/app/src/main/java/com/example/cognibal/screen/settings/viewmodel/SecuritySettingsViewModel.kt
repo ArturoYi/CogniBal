@@ -1,9 +1,11 @@
 package com.example.cognibal.screen.settings.viewmodel
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.cognibal.R
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -34,26 +36,26 @@ internal enum class SecuritySettingsAction {
 
 internal data class SecuritySettingsRow(
     val action: SecuritySettingsAction,
-    val title: String,
-    val subtitle: String,
+    @StringRes val titleRes: Int,
+    @StringRes val subtitleRes: Int,
 )
 
 internal data class SecuritySettingsUiState(
     val rows: List<SecuritySettingsRow> = listOf(
         SecuritySettingsRow(
             action = SecuritySettingsAction.Terms,
-            title = "用户协议",
-            subtitle = "查看服务条款",
+            titleRes = R.string.security_terms,
+            subtitleRes = R.string.security_terms_subtitle,
         ),
         SecuritySettingsRow(
             action = SecuritySettingsAction.Privacy,
-            title = "隐私协议",
-            subtitle = "查看数据如何被使用",
+            titleRes = R.string.security_privacy,
+            subtitleRes = R.string.security_privacy_subtitle,
         ),
         SecuritySettingsRow(
             action = SecuritySettingsAction.AppLock,
-            title = "应用保护",
-            subtitle = "打开应用前先验证身份",
+            titleRes = R.string.security_app_lock,
+            subtitleRes = R.string.security_app_lock_subtitle,
         ),
     ),
 )
