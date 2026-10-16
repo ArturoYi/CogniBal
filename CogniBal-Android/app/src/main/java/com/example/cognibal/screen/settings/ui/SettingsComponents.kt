@@ -8,6 +8,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -54,10 +55,16 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
@@ -85,6 +92,8 @@ import com.example.cognibal.screen.settings.model.DarkModePreference
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.AppThemeStyle
 import com.example.cognibal.ui.theme.LocalAppThemeStyle
+import com.example.cognibal.ui.theme.LocalThemeReveal
+import com.example.cognibal.ui.theme.revealOrRun
 import com.example.cognibal.ui.theme.MonochromeLight_Expense
 import com.example.cognibal.ui.theme.MonochromeLight_Primary
 import com.example.cognibal.ui.theme.MonochromeLight_Secondary
@@ -605,6 +614,14 @@ fun ThemeModeSelector(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
+    val systemDark = isSystemInDarkTheme()
+    val themeReveal = LocalThemeReveal.current
+    var pendingMode by remember { mutableStateOf<DarkModePreference?>(null) }
+    SideEffect {
+        if (pendingMode == currentPreference) pendingMode = null
+    }
+    val shownPreference = pendingMode ?: currentPreference
+    val currentDark = shownPreference.showsDarkTheme(systemDark)
 
     Column(
         modifier = modifier
@@ -623,7 +640,7 @@ fun ThemeModeSelector(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = stringResource(currentPreference.subtitleRes),
+                    text = stringResource(shownPreference.subtitleRes),
                     color = colors.textTertiary,
                     fontSize = 12.sp,
                 )
@@ -645,7 +662,7 @@ fun ThemeModeSelector(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             DarkModePreference.entries.forEach { option ->
-                val isSelected = option == currentPreference
+                val isSelected = option == shownPreference
                 val icon = when (option) {
                     DarkModePreference.FOLLOW_SYSTEM -> Icons.Rounded.Contrast
                     DarkModePreference.LIGHT -> Icons.Rounded.LightMode
@@ -666,7 +683,17 @@ fun ThemeModeSelector(
                         )
                         .clip(shape)
                         .background(containerColor)
-                        .themeOptionClick(shape = shape, onClick = { onSelectPreference(option) })
+                        .themeOptionClick(shape = shape) { center ->
+                            val nextDark = option.showsDarkTheme(systemDark)
+                            themeReveal.revealOrRun(
+                                centerInRoot = center,
+                                colorsWillChange = option != shownPreference && nextDark != currentDark,
+                            ) {
+                                themeReveal?.hold(dark = nextDark)
+                                pendingMode = option
+                                onSelectPreference(option)
+                            }
+                        }
                         .padding(vertical = 10.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
@@ -695,14 +722,16 @@ fun ThemeModeSelector(
  *
  * 亮色切到跟随系统、而系统也是亮色时，主题不会变，水波纹仍会在按钮上闪一下。
  * 键盘焦点仍描一圈，方便看见当前项。
+ * 圆心用这一项的中心，手指和键盘都从同一处扩开。
  */
 @Composable
 private fun Modifier.themeOptionClick(
     shape: Shape,
-    onClick: () -> Unit,
+    onClick: (centerInRoot: Offset) -> Unit,
 ): Modifier {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
+    val coordinates = remember { CoordinatesHolder() }
     val outlined = if (focused) {
         border(
             width = 2.dp,
@@ -713,13 +742,35 @@ private fun Modifier.themeOptionClick(
         this
     }
     return outlined
+        .onGloballyPositioned { coordinates.value = it }
         .pointerHoverIcon(PointerIcon.Hand)
         .clickable(
             interactionSource = interactionSource,
             indication = null,
             role = Role.RadioButton,
-            onClick = onClick,
+            onClick = { onClick(coordinates.value.centerInRoot()) },
         )
+}
+
+private class CoordinatesHolder {
+    var value: LayoutCoordinates? = null
+}
+
+private fun LayoutCoordinates?.centerInRoot(): Offset {
+    val coordinates = this
+    if (coordinates == null || !coordinates.isAttached) return Offset.Zero
+    return coordinates.localToRoot(
+        Offset(
+            x = coordinates.size.width / 2f,
+            y = coordinates.size.height / 2f,
+        ),
+    )
+}
+
+private fun DarkModePreference.showsDarkTheme(systemDark: Boolean): Boolean = when (this) {
+    DarkModePreference.FOLLOW_SYSTEM -> systemDark
+    DarkModePreference.LIGHT -> false
+    DarkModePreference.DARK -> true
 }
 
 /**
@@ -789,6 +840,7 @@ private fun ThemeStyleCard(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
+    val themeReveal = LocalThemeReveal.current
     val palette = when (style) {
         AppThemeStyle.WarmCream -> ThemeCardPalette(
             primary = WarmCreamLight_Primary,
@@ -810,7 +862,15 @@ private fun ThemeStyleCard(
         modifier = modifier
             .clip(shape)
             .background(containerColor)
-            .themeOptionClick(shape = shape, onClick = onClick)
+            .themeOptionClick(shape = shape) { center ->
+                themeReveal.revealOrRun(
+                    centerInRoot = center,
+                    colorsWillChange = !isSelected,
+                ) {
+                    themeReveal?.hold(style = style)
+                    onClick()
+                }
+            }
             .padding(12.dp),
     ) {
             Row(

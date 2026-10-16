@@ -13,6 +13,9 @@
     <string name="settings_choose">اختر إعدادًا</string>
     <string name="language">اللغة</string>
     <string name="language_follow_system">استخدام لغة النظام</string>
+    <string name="language_switch_title">هل تريد تغيير اللغة؟</string>
+    <string name="language_switch_message">هل تريد تغيير لغة التطبيق إلى %1$s؟</string>
+    <string name="language_switch_confirm">تغيير</string>
     <string name="theme">السمة</string>
     <string name="theme_follow_system">النظام</string>
     <string name="theme_follow_system_subtitle">مطابقة المظهر الفاتح أو الداكن للنظام</string>

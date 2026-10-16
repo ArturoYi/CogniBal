@@ -13,6 +13,9 @@
     <string name="settings_choose">Kies een instelling</string>
     <string name="language">Taal</string>
     <string name="language_follow_system">Systeemtaal gebruiken</string>
+    <string name="language_switch_title">Taal wijzigen?</string>
+    <string name="language_switch_message">App-taal wijzigen naar %1$s?</string>
+    <string name="language_switch_confirm">Wijzigen</string>
     <string name="theme">Thema</string>
     <string name="theme_follow_system">Systeem</string>
     <string name="theme_follow_system_subtitle">Volg de lichte of donkere weergave van het systeem</string>

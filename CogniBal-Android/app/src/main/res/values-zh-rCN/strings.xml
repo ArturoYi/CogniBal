@@ -13,6 +13,9 @@
     <string name="settings_choose">选择一项设置</string>
     <string name="language">语言</string>
     <string name="language_follow_system">使用系统语言</string>
+    <string name="language_switch_title">切换语言？</string>
+    <string name="language_switch_message">要将界面语言切换为%1$s吗？</string>
+    <string name="language_switch_confirm">切换</string>
     <string name="theme">主题</string>
     <string name="theme_follow_system">跟随系统</string>
     <string name="theme_follow_system_subtitle">随系统深浅外观自动切换</string>

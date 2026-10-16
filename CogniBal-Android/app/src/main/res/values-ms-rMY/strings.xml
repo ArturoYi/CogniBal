@@ -13,6 +13,9 @@
     <string name="settings_choose">Pilih tetapan</string>
     <string name="language">Bahasa</string>
     <string name="language_follow_system">Guna bahasa sistem</string>
+    <string name="language_switch_title">Tukar bahasa?</string>
+    <string name="language_switch_message">Tukar bahasa apl kepada %1$s?</string>
+    <string name="language_switch_confirm">Tukar</string>
     <string name="theme">Tema</string>
     <string name="theme_follow_system">Sistem</string>
     <string name="theme_follow_system_subtitle">Ikut penampilan cerah atau gelap sistem</string>

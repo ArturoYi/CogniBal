@@ -3,7 +3,11 @@ package com.example.cognibal.screen.settings.ui
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Language
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -42,6 +46,8 @@ internal fun AppearanceSettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     val languageTag = currentApplicationLanguageTag()
+    var languageDialogAttached by remember { mutableStateOf(false) }
+    var confirmDialogAttached by remember { mutableStateOf(false) }
     SettingsSubpage(
         title = stringResource(R.string.settings_appearance),
         onBack = onBack,
@@ -66,10 +72,37 @@ internal fun AppearanceSettingsScreen(
         }
     }
     if (uiState.showLanguageDialog) {
+        DisposableEffect(Unit) {
+            languageDialogAttached = true
+            onDispose { languageDialogAttached = false }
+        }
         LanguageSelectDialog(
             selectedTag = languageTag,
             onSelect = { onEvent(AppearanceSettingsUiEvent.LanguageSelected(it)) },
             onDismiss = { onEvent(AppearanceSettingsUiEvent.DismissLanguageDialog) },
+        )
+    }
+    uiState.languageConfirmation?.let { choice ->
+        DisposableEffect(choice) {
+            confirmDialogAttached = true
+            onDispose { confirmDialogAttached = false }
+        }
+        LanguageSwitchConfirmDialog(
+            languageName = languageLabel(choice.languageTag),
+            onConfirm = { onEvent(AppearanceSettingsUiEvent.ConfirmLanguageSwitch) },
+            onDismiss = { onEvent(AppearanceSettingsUiEvent.DismissLanguageConfirmation) },
+        )
+    }
+    uiState.languageSwitch?.let { choice ->
+        LanguageSwitchCover(
+            targetTag = choice.languageTag,
+            dialogsDismissed = !uiState.showLanguageDialog &&
+                uiState.languageConfirmation == null &&
+                !languageDialogAttached &&
+                !confirmDialogAttached,
+            onCoverShown = { onEvent(AppearanceSettingsUiEvent.DismissLanguageDialog) },
+            onApply = { onEvent(AppearanceSettingsUiEvent.ApplyLanguageSwitch) },
+            onFinished = { onEvent(AppearanceSettingsUiEvent.LanguageSwitchFinished) },
         )
     }
 }

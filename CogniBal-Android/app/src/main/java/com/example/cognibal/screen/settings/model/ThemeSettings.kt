@@ -6,9 +6,9 @@ import com.example.cognibal.R
 /**
  * 暗色模式偏好枚举
  *
- * - [FOLLOW_SYSTEM]: 跟随系统外观（默认）
+ * - [FOLLOW_SYSTEM]: 跟随系统外观
  * - [LIGHT]: 强制使用浅色（亮色）外观
- * - [DARK]: 强制使用深色（暗色）外观
+ * - [DARK]: 强制使用深色（暗色）外观。未保存过偏好时用这一项
  *
  * 文案是字符串资源，切换语言后由界面重新读取。
  */
@@ -35,7 +35,7 @@ enum class DarkModePreference(
 
     companion object {
         fun fromId(id: String?): DarkModePreference {
-            return entries.firstOrNull { it.id == id } ?: FOLLOW_SYSTEM
+            return entries.firstOrNull { it.id == id } ?: DARK
         }
     }
 }

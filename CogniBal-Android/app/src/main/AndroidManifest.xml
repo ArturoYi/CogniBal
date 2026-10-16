@@ -22,11 +22,16 @@
                 android:name="autoStoreLocales"
                 android:value="true" />
         </service>
+        <!--
+          locale|layoutDirection：应用内语言由本 Activity 自己消化。
+          不重建窗口，避免切语言时闪回启动页黑底。
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.CogniBal.Splash"
+            android:configChanges="locale|layoutDirection"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

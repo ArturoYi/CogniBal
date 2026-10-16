@@ -13,6 +13,9 @@
     <string name="settings_choose">Valitse asetus</string>
     <string name="language">Kieli</string>
     <string name="language_follow_system">Käytä järjestelmän kieltä</string>
+    <string name="language_switch_title">Vaihdetaanko kieli?</string>
+    <string name="language_switch_message">Vaihdetaanko sovelluksen kieleksi %1$s?</string>
+    <string name="language_switch_confirm">Vaihda</string>
     <string name="theme">Teema</string>
     <string name="theme_follow_system">Järjestelmä</string>
     <string name="theme_follow_system_subtitle">Seuraa järjestelmän vaaleaa tai tummaa ulkoasua</string>

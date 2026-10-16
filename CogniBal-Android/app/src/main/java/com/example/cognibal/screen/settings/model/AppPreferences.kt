@@ -6,11 +6,11 @@ import com.example.cognibal.ui.theme.AppThemeStyle
  * 应用偏好的完整快照。
  *
  * DataStore 里仍是分散的键值；Repository 读出后收成这一份，界面和 ViewModel 只接触它。
- * 默认值就是首次安装、文件损坏或键缺失时的表现：暖奶油青绿，深浅跟随系统。
+ * 默认值就是首次安装、文件损坏或键缺失时的表现：暖奶油青绿，暗色。
  */
 data class AppPreferences(
     val themeStyle: AppThemeStyle = AppThemeStyle.WarmCream,
-    val darkMode: DarkModePreference = DarkModePreference.FOLLOW_SYSTEM,
+    val darkMode: DarkModePreference = DarkModePreference.DARK,
     val hapticFeedback: Boolean = true,
     val currency: CurrencyPreference = CurrencyPreference.CNY,
 ) {

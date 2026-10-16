@@ -25,13 +25,19 @@ internal class AppearanceSettingsViewModel(
     private val repository: AppPreferencesRepository,
 ) : ViewModel() {
     private val showLanguageDialog = MutableStateFlow(false)
+    private val languageConfirmation = MutableStateFlow<LanguageChoice?>(null)
+    private val languageSwitch = MutableStateFlow<LanguageChoice?>(null)
 
     val uiState: StateFlow<AppearanceSettingsUiState> = combine(
         repository.preferences,
         showLanguageDialog,
-    ) { preferences, showLanguage ->
+        languageConfirmation,
+        languageSwitch,
+    ) { preferences, showLanguage, confirmation, switching ->
         AppearanceSettingsUiState(
             showLanguageDialog = showLanguage,
+            languageConfirmation = confirmation,
+            languageSwitch = switching,
             darkMode = preferences.darkMode,
             themeStyle = preferences.themeStyle,
         )
@@ -44,20 +50,44 @@ internal class AppearanceSettingsViewModel(
     fun onEvent(event: AppearanceSettingsUiEvent) {
         when (event) {
             AppearanceSettingsUiEvent.LanguageClicked -> showLanguageDialog.value = true
-            AppearanceSettingsUiEvent.DismissLanguageDialog -> showLanguageDialog.value = false
-            is AppearanceSettingsUiEvent.LanguageSelected -> {
+            AppearanceSettingsUiEvent.DismissLanguageDialog -> {
+                languageConfirmation.value = null
                 showLanguageDialog.value = false
-                val locales = if (event.languageTag == null) {
-                    LocaleListCompat.getEmptyLocaleList()
-                } else {
-                    LocaleListCompat.forLanguageTags(event.languageTag)
-                }
-                AppCompatDelegate.setApplicationLocales(locales)
+            }
+            is AppearanceSettingsUiEvent.LanguageSelected -> {
+                if (languageSwitch.value != null) return
+                languageConfirmation.value = LanguageChoice(event.languageTag)
+            }
+            AppearanceSettingsUiEvent.DismissLanguageConfirmation ->
+                languageConfirmation.value = null
+            AppearanceSettingsUiEvent.ConfirmLanguageSwitch -> {
+                val choice = languageConfirmation.value ?: return
+                // 确认框留着，等盖层盖住后再和语言列表一起关。
+                languageSwitch.value = choice
+            }
+            AppearanceSettingsUiEvent.ApplyLanguageSwitch -> applyLanguageSwitch()
+            AppearanceSettingsUiEvent.LanguageSwitchFinished -> {
+                languageSwitch.value = null
+                languageConfirmation.value = null
+                showLanguageDialog.value = false
             }
             is AppearanceSettingsUiEvent.DarkModeChanged ->
                 persist { repository.setDarkMode(event.mode) }
             is AppearanceSettingsUiEvent.ThemeStyleChanged ->
                 persist { repository.setThemeStyle(event.style) }
+        }
+    }
+
+    private fun applyLanguageSwitch() {
+        val choice = languageSwitch.value ?: return
+        val locales = if (choice.languageTag == null) {
+            LocaleListCompat.getEmptyLocaleList()
+        } else {
+            LocaleListCompat.forLanguageTags(choice.languageTag)
+        }
+        // 相同语言不再写入。Activity 声明了 locale 配置变更，这里不会重建窗口。
+        if (locales != AppCompatDelegate.getApplicationLocales()) {
+            AppCompatDelegate.setApplicationLocales(locales)
         }
     }
 
@@ -80,9 +110,16 @@ internal class AppearanceSettingsViewModel(
     }
 }
 
+/** 选中的语言。`languageTag` 为空表示跟随系统。 */
+internal data class LanguageChoice(
+    val languageTag: String?,
+)
+
 internal data class AppearanceSettingsUiState(
     val showLanguageDialog: Boolean = false,
-    val darkMode: DarkModePreference = DarkModePreference.FOLLOW_SYSTEM,
+    val languageConfirmation: LanguageChoice? = null,
+    val languageSwitch: LanguageChoice? = null,
+    val darkMode: DarkModePreference = DarkModePreference.DARK,
     val themeStyle: AppThemeStyle = AppThemeStyle.WarmCream,
 )
 
@@ -91,8 +128,14 @@ internal sealed interface AppearanceSettingsUiEvent {
     data object LanguageClicked : AppearanceSettingsUiEvent
     data object DismissLanguageDialog : AppearanceSettingsUiEvent
 
-    /** `null` 表示跟随系统。 */
+    /** `null` 表示跟随系统。先进入确认，不立刻写语言。 */
     data class LanguageSelected(val languageTag: String?) : AppearanceSettingsUiEvent
+    data object DismissLanguageConfirmation : AppearanceSettingsUiEvent
+    data object ConfirmLanguageSwitch : AppearanceSettingsUiEvent
+
+    /** 盖层已经不透明，并且语言弹窗已经关掉之后，再写入语言。 */
+    data object ApplyLanguageSwitch : AppearanceSettingsUiEvent
+    data object LanguageSwitchFinished : AppearanceSettingsUiEvent
     data class DarkModeChanged(val mode: DarkModePreference) : AppearanceSettingsUiEvent
     data class ThemeStyleChanged(val style: AppThemeStyle) : AppearanceSettingsUiEvent
 }

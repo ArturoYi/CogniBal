@@ -50,6 +50,9 @@
     <string name="settings_choose">Choose a setting</string>
     <string name="language">Language</string>
     <string name="language_follow_system">Use system language</string>
+    <string name="language_switch_title">Switch language?</string>
+    <string name="language_switch_message">Switch the app language to %1$s?</string>
+    <string name="language_switch_confirm">Switch</string>
     <string name="theme">Theme</string>
     <string name="theme_follow_system">System</string>
     <string name="theme_follow_system_subtitle">Match the system light or dark appearance</string>

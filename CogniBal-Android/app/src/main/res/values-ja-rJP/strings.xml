@@ -13,6 +13,9 @@
     <string name="settings_choose">設定を選択</string>
     <string name="language">言語</string>
     <string name="language_follow_system">システムの言語に合わせる</string>
+    <string name="language_switch_title">言語を切り替えますか？</string>
+    <string name="language_switch_message">表示言語を%1$sに切り替えますか？</string>
+    <string name="language_switch_confirm">切り替える</string>
     <string name="theme">テーマ</string>
     <string name="theme_follow_system">システム</string>
     <string name="theme_follow_system_subtitle">システムのライトまたはダーク表示に合わせる</string>

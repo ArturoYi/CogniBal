@@ -13,6 +13,9 @@
     <string name="settings_choose">בחרו הגדרה</string>
     <string name="language">שפה</string>
     <string name="language_follow_system">שימוש בשפת המערכת</string>
+    <string name="language_switch_title">להחליף שפה?</string>
+    <string name="language_switch_message">להחליף את שפת האפליקציה ל-%1$s?</string>
+    <string name="language_switch_confirm">החלפה</string>
     <string name="theme">ערכת נושא</string>
     <string name="theme_follow_system">מערכת</string>
     <string name="theme_follow_system_subtitle">התאמה למראה הבהיר או הכהה של המערכת</string>

@@ -13,6 +13,9 @@
     <string name="settings_choose">Wybierz ustawienie</string>
     <string name="language">Język</string>
     <string name="language_follow_system">Użyj języka systemu</string>
+    <string name="language_switch_title">Zmienić język?</string>
+    <string name="language_switch_message">Zmienić język aplikacji na %1$s?</string>
+    <string name="language_switch_confirm">Zmień</string>
     <string name="theme">Motyw</string>
     <string name="theme_follow_system">System</string>
     <string name="theme_follow_system_subtitle">Dopasuj jasny lub ciemny wygląd systemu</string>

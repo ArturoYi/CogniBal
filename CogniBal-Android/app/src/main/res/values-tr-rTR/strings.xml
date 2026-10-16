@@ -13,6 +13,9 @@
     <string name="settings_choose">Bir ayar seçin</string>
     <string name="language">Dil</string>
     <string name="language_follow_system">Sistem dilini kullan</string>
+    <string name="language_switch_title">Dil değiştirilsin mi?</string>
+    <string name="language_switch_message">Uygulama dili %1$s olsun mu?</string>
+    <string name="language_switch_confirm">Değiştir</string>
     <string name="theme">Tema</string>
     <string name="theme_follow_system">Sistem</string>
     <string name="theme_follow_system_subtitle">Sistemin açık veya koyu görünümünü izle</string>

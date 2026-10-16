@@ -13,6 +13,9 @@
     <string name="settings_choose">Välj en inställning</string>
     <string name="language">Språk</string>
     <string name="language_follow_system">Använd systemspråk</string>
+    <string name="language_switch_title">Byt språk?</string>
+    <string name="language_switch_message">Byt appens språk till %1$s?</string>
+    <string name="language_switch_confirm">Byt</string>
     <string name="theme">Tema</string>
     <string name="theme_follow_system">System</string>
     <string name="theme_follow_system_subtitle">Följ systemets ljusa eller mörka utseende</string>

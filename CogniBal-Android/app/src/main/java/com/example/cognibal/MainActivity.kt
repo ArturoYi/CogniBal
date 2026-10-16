@@ -7,9 +7,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -25,6 +25,8 @@ import com.example.cognibal.ui.splash.ApplyAppWindowBackground
 import com.example.cognibal.ui.splash.SplashExit
 import com.example.cognibal.ui.splash.StartupSplash
 import com.example.cognibal.ui.theme.CogniBalTheme
+import com.example.cognibal.ui.theme.ThemeRevealHost
+import com.example.cognibal.ui.theme.rememberThemeRevealState
 
 /**
  * 应用入口，负责把系统启动页无缝交给 [StartupSplash]。
@@ -72,10 +74,16 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val settingsViewModel: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
             val preferences by settingsViewModel.preferences.collectAsStateWithLifecycle()
-            val isDark = preferences.useDarkTheme(isSystemInDarkTheme())
+            val systemDark = isSystemInDarkTheme()
+            val preferenceDark = preferences.useDarkTheme(systemDark)
+            val themeReveal = rememberThemeRevealState()
+            SideEffect {
+                themeReveal.releaseHold(preferences.themeStyle, preferenceDark)
+            }
+            val isDark = themeReveal.darkOr(preferenceDark)
 
             CogniBalTheme(
-                themeStyle = preferences.themeStyle,
+                themeStyle = themeReveal.styleOr(preferences.themeStyle),
                 darkTheme = isDark,
             ) {
                 // rememberSaveable 把“是否还在播启动动画”写进 SavedState。
@@ -83,7 +91,11 @@ class MainActivity : AppCompatActivity() {
                 var showSplash by rememberSaveable { mutableStateOf(true) }
                 // 系统图标的窗口坐标；布局完成前为 null，StartupSplash 会等它再对齐。
                 val iconBounds by splashExit.iconBounds
-                Box(modifier = Modifier.fillMaxSize()) {
+                // 主题包住整页。旧画面盖在新主题上，圆从点中的那一项挖开。
+                ThemeRevealHost(
+                    state = themeReveal,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                     if (showSplash) {
                         StartupSplash(
                             iconBounds = iconBounds,

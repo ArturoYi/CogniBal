@@ -13,6 +13,9 @@
     <string name="settings_choose">Choisir un réglage</string>
     <string name="language">Langue</string>
     <string name="language_follow_system">Utiliser la langue du système</string>
+    <string name="language_switch_title">Changer de langue ?</string>
+    <string name="language_switch_message">Passer la langue de l’application à %1$s ?</string>
+    <string name="language_switch_confirm">Changer</string>
     <string name="theme">Thème</string>
     <string name="theme_follow_system">Système</string>
     <string name="theme_follow_system_subtitle">Suivre l’apparence claire ou sombre du système</string>

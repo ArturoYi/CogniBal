@@ -13,6 +13,9 @@
     <string name="settings_choose">Alege o setare</string>
     <string name="language">Limbă</string>
     <string name="language_follow_system">Folosește limba sistemului</string>
+    <string name="language_switch_title">Schimbi limba?</string>
+    <string name="language_switch_message">Schimbi limba aplicației în %1$s?</string>
+    <string name="language_switch_confirm">Schimbă</string>
     <string name="theme">Temă</string>
     <string name="theme_follow_system">Sistem</string>
     <string name="theme_follow_system_subtitle">Urmează aspectul luminos sau întunecat al sistemului</string>

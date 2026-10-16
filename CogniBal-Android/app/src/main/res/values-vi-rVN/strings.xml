@@ -13,6 +13,9 @@
     <string name="settings_choose">Chọn một mục cài đặt</string>
     <string name="language">Ngôn ngữ</string>
     <string name="language_follow_system">Dùng ngôn ngữ hệ thống</string>
+    <string name="language_switch_title">Đổi ngôn ngữ?</string>
+    <string name="language_switch_message">Đổi ngôn ngữ ứng dụng sang %1$s?</string>
+    <string name="language_switch_confirm">Đổi</string>
     <string name="theme">Chủ đề</string>
     <string name="theme_follow_system">Hệ thống</string>
     <string name="theme_follow_system_subtitle">Theo giao diện sáng hoặc tối của hệ thống</string>

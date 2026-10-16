@@ -13,6 +13,9 @@
     <string name="settings_choose">Pumili ng setting</string>
     <string name="language">Wika</string>
     <string name="language_follow_system">Gamitin ang wika ng system</string>
+    <string name="language_switch_title">Palitan ang wika?</string>
+    <string name="language_switch_message">Palitan ang wika ng app sa %1$s?</string>
+    <string name="language_switch_confirm">Palitan</string>
     <string name="theme">Tema</string>
     <string name="theme_follow_system">System</string>
     <string name="theme_follow_system_subtitle">Sundin ang maliwanag o madilim na hitsura ng system</string>

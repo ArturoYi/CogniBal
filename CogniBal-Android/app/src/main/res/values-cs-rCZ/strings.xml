@@ -13,6 +13,9 @@
     <string name="settings_choose">Vyberte nastavení</string>
     <string name="language">Jazyk</string>
     <string name="language_follow_system">Použít jazyk systému</string>
+    <string name="language_switch_title">Změnit jazyk?</string>
+    <string name="language_switch_message">Změnit jazyk aplikace na %1$s?</string>
+    <string name="language_switch_confirm">Změnit</string>
     <string name="theme">Motiv</string>
     <string name="theme_follow_system">Systém</string>
     <string name="theme_follow_system_subtitle">Sledovat světlý nebo tmavý vzhled systému</string>

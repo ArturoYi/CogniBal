@@ -13,6 +13,9 @@
     <string name="settings_choose">Επιλέξτε μια ρύθμιση</string>
     <string name="language">Γλώσσα</string>
     <string name="language_follow_system">Χρήση της γλώσσας συστήματος</string>
+    <string name="language_switch_title">Αλλαγή γλώσσας;</string>
+    <string name="language_switch_message">Αλλαγή της γλώσσας της εφαρμογής σε %1$s;</string>
+    <string name="language_switch_confirm">Αλλαγή</string>
     <string name="theme">Θέμα</string>
     <string name="theme_follow_system">Σύστημα</string>
     <string name="theme_follow_system_subtitle">Ακολουθήστε τη φωτεινή ή σκούρα εμφάνιση του συστήματος</string>

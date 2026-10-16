@@ -13,6 +13,9 @@
     <string name="settings_choose">Válasszon egy beállítást</string>
     <string name="language">Nyelv</string>
     <string name="language_follow_system">A rendszer nyelvének használata</string>
+    <string name="language_switch_title">Nyelv váltása?</string>
+    <string name="language_switch_message">Az alkalmazás nyelve legyen %1$s?</string>
+    <string name="language_switch_confirm">Váltás</string>
     <string name="theme">Téma</string>
     <string name="theme_follow_system">Rendszer</string>
     <string name="theme_follow_system_subtitle">A rendszer világos vagy sötét megjelenésének követése</string>

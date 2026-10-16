@@ -13,6 +13,9 @@
     <string name="settings_choose">เลือกการตั้งค่า</string>
     <string name="language">ภาษา</string>
     <string name="language_follow_system">ใช้ภาษาของระบบ</string>
+    <string name="language_switch_title">เปลี่ยนภาษา?</string>
+    <string name="language_switch_message">เปลี่ยนภาษาของแอปเป็น %1$s หรือไม่?</string>
+    <string name="language_switch_confirm">เปลี่ยน</string>
     <string name="theme">ธีม</string>
     <string name="theme_follow_system">ระบบ</string>
     <string name="theme_follow_system_subtitle">ตามลักษณะสว่างหรือมืดของระบบ</string>
