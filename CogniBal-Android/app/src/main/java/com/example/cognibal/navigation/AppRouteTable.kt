@@ -7,8 +7,11 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.example.cognibal.screen.bill.ui.BillScreen
-import com.example.cognibal.screen.expense.ui.AddExpenseScreen
+import com.example.cognibal.screen.bill.ui.AccountDetailPlaceholder
+import com.example.cognibal.screen.bill.ui.AccountEditorRoute
+import com.example.cognibal.screen.bill.ui.BillHistoryRoute
+import com.example.cognibal.screen.bill.ui.BillRoute
+import com.example.cognibal.screen.expense.ui.AddExpenseRoute
 import com.example.cognibal.screen.settings.ui.AppearanceSettingsRoute
 import com.example.cognibal.screen.settings.ui.BackupSettingsRoute
 import com.example.cognibal.screen.settings.ui.SecuritySettingsRoute
@@ -18,16 +21,42 @@ import com.example.cognibal.screen.settings.ui.SettingsListRoute
 /**
  * 路由表。每个目的地只在这里绑定一次界面。
  *
- * 账单和设置列表是首页标签。记一笔是普通整页。设置列表是列表窗格，三个二级页是详情窗格。
- * 窄屏退回单页，由 [AppNavHost] 做滑动。
+ * 账单和设置列表是首页标签。记一笔是普通整页。
+ * 账单页和设置列表都是列表窗格：宽屏时账户表单、设置二级页显示在旁边。窄屏仍一次只显示一页。
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 internal fun EntryProviderScope<NavKey>.appRoutes(navigator: AppNavigator) {
-    entry<Bill>(metadata = homeTabMetadata()) {
-        BillScreen(Modifier.fillMaxSize())
+    entry<Bill>(
+        metadata = ListDetailSceneStrategy.listPane(
+            detailPlaceholder = { AccountDetailPlaceholder() },
+        ) + homeTabMetadata(),
+    ) {
+        BillRoute(
+            onCreateAccount = { navigator.navigate(AccountEditor()) },
+            onEditAccount = { accountId -> navigator.navigate(AccountEditor(accountId)) },
+            onViewAll = { accountId -> navigator.navigate(BillHistory(accountId)) },
+            modifier = Modifier.fillMaxSize(),
+        )
     }
-    entry<AddExpense> {
-        AddExpenseScreen(
+    entry<BillHistory> { key ->
+        BillHistoryRoute(
+            accountId = key.accountId,
+            onBack = dropUnlessResumed(block = navigator::back),
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+    entry<AccountEditor>(
+        metadata = ListDetailSceneStrategy.detailPane(),
+    ) { key ->
+        AccountEditorRoute(
+            accountId = key.accountId,
+            onBack = dropUnlessResumed(block = navigator::back),
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+    entry<AddExpense> { key ->
+        AddExpenseRoute(
+            typeCode = key.typeCode,
             onBack = dropUnlessResumed(block = navigator::back),
             modifier = Modifier.fillMaxSize(),
         )

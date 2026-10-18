@@ -31,6 +31,10 @@ enum class LedgerReject {
     InvalidPeriod,
     InvalidLimit,
     AccountInUse,
+    /** 再停用或删掉就会一个启用账户都不剩。 */
+    LastEnabledAccount,
+    /** 当前展示的账户不能物理删除。 */
+    DefaultAccountProtected,
     CategoryInUse,
     BalanceOverflow,
 }

@@ -59,6 +59,9 @@ interface BillDao {
     @Query("SELECT COUNT(*) FROM bill WHERE accountId = :accountId")
     suspend fun countByAccount(accountId: Long): Int
 
+    @Query("SELECT COUNT(*) FROM bill WHERE accountId = :accountId")
+    fun observeCountByAccount(accountId: Long): Flow<Int>
+
     @Query("SELECT COUNT(*) FROM bill WHERE categoryId = :categoryId")
     suspend fun countByCategory(categoryId: Long): Int
 
@@ -175,6 +178,33 @@ interface BillDao {
         startInclusive: LocalDateTime,
         endExclusive: LocalDateTime,
     ): Flow<PeriodAmountSummary>
+
+    /** 一个账户在区间内的收支。转账不计入。始终一行。 */
+    @Query(
+        """
+        SELECT COALESCE(SUM(CASE WHEN type = 0 THEN amount ELSE 0 END), 0) AS expenseAmount,
+               COALESCE(SUM(CASE WHEN type = 1 THEN amount ELSE 0 END), 0) AS incomeAmount
+        FROM bill
+        WHERE accountId = :accountId
+          AND billTime >= :startInclusive
+          AND billTime < :endExclusive
+        """,
+    )
+    fun observeAccountPeriodSummary(
+        accountId: Long,
+        startInclusive: LocalDateTime,
+        endExclusive: LocalDateTime,
+    ): Flow<PeriodAmountSummary>
+
+    @Query(
+        """
+        SELECT * FROM bill
+        WHERE accountId = :accountId
+        ORDER BY billTime DESC, id DESC
+        LIMIT :limit
+        """,
+    )
+    fun observeRecentByAccount(accountId: Long, limit: Int): Flow<List<Bill>>
 
     /**
      * 区间转账。库存里转出为负、转入为正，这里加总后都变成正数。

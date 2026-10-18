@@ -1,0 +1,444 @@
+package com.example.cognibal.screen.expense.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.cognibal.data.database.LedgerTime
+import com.example.cognibal.data.database.entity.Account
+import com.example.cognibal.data.database.entity.Category
+import com.example.cognibal.data.database.model.BillType
+import com.example.cognibal.data.database.model.CategoryType
+import com.example.cognibal.data.preferences.AppPreferencesRepository
+import com.example.cognibal.data.repository.AccountRepository
+import com.example.cognibal.data.repository.BillRepository
+import com.example.cognibal.data.repository.CategoryRepository
+import com.example.cognibal.data.repository.EntryDraft
+import com.example.cognibal.data.repository.EntryType
+import com.example.cognibal.data.repository.LedgerException
+import com.example.cognibal.data.repository.LedgerLimits
+import com.example.cognibal.data.repository.TransferDraft
+import com.example.cognibal.di.LedgerEntryPoint
+import com.example.cognibal.screen.bill.tool.parseMajorAmount
+import com.example.cognibal.screen.expense.model.AddBillIssue
+import com.example.cognibal.screen.expense.model.toAddBillIssue
+import com.example.cognibal.screen.expense.tool.AmountKey
+import com.example.cognibal.screen.expense.tool.applyAmountKey
+import com.example.cognibal.screen.expense.tool.resolveAccountId
+import com.example.cognibal.screen.expense.tool.resolveCategoryId
+import com.example.cognibal.screen.expense.tool.resolveCounterpartyId
+import com.example.cognibal.screen.settings.model.CurrencyPreference
+import dagger.hilt.android.EntryPointAccessors
+import java.time.LocalDate
+import java.time.LocalDateTime
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+
+/**
+ * 记一笔。
+ *
+ * 支出和收入写成一条 [EntryDraft]：金额为正，分类必须是同类型且启用。
+ * 转账写成 [TransferDraft]：金额为正，两个账户不同，仓库再拆成一负一正两条，分类为空。
+ * 创建时间和更新时间由仓库填写。账单时间是交易发生时间，可以改。
+ *
+ * 分类表是空的时候补一套默认分类。已经有分类就不动，避免把用户删掉的再填回来。
+ */
+internal class AddExpenseViewModel(
+    private val initialType: BillType,
+    private val bills: BillRepository,
+    private val categories: CategoryRepository,
+    accounts: AccountRepository,
+    preferences: AppPreferencesRepository,
+) : ViewModel() {
+    private val openedAt = LedgerTime.now()
+    private val form = MutableStateFlow(EntryForm(type = initialType, billTime = openedAt))
+
+    private val categoryRows: Flow<List<Category>> = flow {
+        try {
+            categories.seedDefaultsIfEmpty()
+        } catch (cancellation: CancellationException) {
+            throw cancellation
+        } catch (_: Exception) {
+            // 默认分类没写上时，页面按当前分类表继续。
+        }
+        emitAll(categories.observeAll())
+    }
+
+    val uiState: StateFlow<AddExpenseUiState> = combine(
+        form,
+        accounts.observeEnabled(),
+        categoryRows,
+        preferences.preferences,
+    ) { draft, accountRows, categoriesRows, prefs ->
+        val orderedAccounts = accountRows.sortedWith(
+            compareByDescending<Account> { it.isDefault }.thenBy { it.id },
+        )
+        val accountId = resolveAccountId(draft.accountId, orderedAccounts)
+        val categoryType = draft.type.categoryType()
+        val matching = if (categoryType == null) {
+            emptyList()
+        } else {
+            categoriesRows.filter { it.isEnable && it.type == categoryType }
+        }
+        AddExpenseUiState(
+            ready = true,
+            type = draft.type,
+            amountText = draft.amountText,
+            categories = matching.map { category ->
+                CategoryChoice(
+                    id = category.id,
+                    name = category.name,
+                    iconKey = category.icon,
+                    colorKey = category.color,
+                )
+            },
+            categoryId = categoryType?.let { resolveCategoryId(draft.categoryId, categoriesRows, it) },
+            accounts = orderedAccounts.map { account ->
+                AccountChoice(
+                    id = account.id,
+                    name = account.name,
+                    iconKey = account.icon,
+                    colorKey = account.color,
+                )
+            },
+            accountId = accountId,
+            toAccountId = if (draft.type == BillType.Transfer) {
+                resolveCounterpartyId(draft.toAccountId, accountId, orderedAccounts)
+            } else {
+                null
+            },
+            billTime = draft.billTime,
+            remark = draft.remark,
+            currencySymbol = prefs.currency.symbol,
+            issue = draft.issue,
+            saving = draft.saving,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+        initialValue = AddExpenseUiState(type = initialType, billTime = openedAt),
+    )
+
+    private val _finished = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    val finished: SharedFlow<Unit> = _finished.asSharedFlow()
+
+    private val _categoryCreated = MutableSharedFlow<CategoryCreateResult>(extraBufferCapacity = 1)
+    val categoryCreated: SharedFlow<CategoryCreateResult> = _categoryCreated.asSharedFlow()
+
+    private var visible = false
+    private var completed = false
+    private var resetOnNextEnter = false
+    private var saveToken = 0
+    private var creatingCategory = false
+
+    /** 页面进入组合。上次已经保存、或保存过程中离开，这里换成一张空白表。 */
+    fun onEnter() {
+        visible = true
+        if (resetOnNextEnter) {
+            resetOnNextEnter = false
+            saveToken += 1
+            form.value = freshForm()
+        }
+    }
+
+    /**
+     * 页面离开组合。未保存的草稿留着。
+     * 保存中离开则作废这一次界面结果：库里的事务仍会提交，下次进来是空白表。
+     */
+    fun onLeave() {
+        visible = false
+        if (completed || form.value.saving) {
+            completed = false
+            resetOnNextEnter = true
+            saveToken += 1
+        }
+    }
+
+    fun onEvent(event: AddExpenseUiEvent) {
+        when (event) {
+            is AddExpenseUiEvent.TypeSelected -> edit { it.copy(type = event.type) }
+            is AddExpenseUiEvent.AmountKeyPressed -> edit {
+                it.copy(amountText = applyAmountKey(it.amountText, event.key))
+            }
+            is AddExpenseUiEvent.CategorySelected -> edit { it.copy(categoryId = event.categoryId) }
+            is AddExpenseUiEvent.AccountSelected -> edit { it.copy(accountId = event.accountId) }
+            is AddExpenseUiEvent.ToAccountSelected -> edit { it.copy(toAccountId = event.accountId) }
+            is AddExpenseUiEvent.DatePicked -> edit { state ->
+                val date = event.date
+                state.copy(
+                    billTime = state.billTime
+                        .withYear(date.year)
+                        .withMonth(date.monthValue)
+                        .withDayOfMonth(date.dayOfMonth),
+                )
+            }
+            is AddExpenseUiEvent.TimePicked -> edit { state ->
+                state.copy(
+                    billTime = state.billTime
+                        .withHour(event.hour)
+                        .withMinute(event.minute)
+                        .withSecond(0)
+                        .withNano(0),
+                )
+            }
+            is AddExpenseUiEvent.RemarkChanged -> edit {
+                it.copy(remark = event.value.take(LedgerLimits.REMARK))
+            }
+            is AddExpenseUiEvent.CreateCategory -> createCategory(event)
+            AddExpenseUiEvent.Save -> save()
+        }
+    }
+
+    private fun edit(block: (EntryForm) -> EntryForm) {
+        form.update { current ->
+            if (current.saving) current else block(current).copy(issue = null)
+        }
+    }
+
+    private fun createCategory(event: AddExpenseUiEvent.CreateCategory) {
+        if (form.value.saving || creatingCategory) return
+        val type = form.value.type.categoryType() ?: return
+        val name = event.name.trim()
+        if (name.isEmpty()) {
+            _categoryCreated.tryEmit(CategoryCreateResult.Failed(AddBillIssue.BlankName))
+            return
+        }
+        if (name.length > LedgerLimits.NAME) {
+            _categoryCreated.tryEmit(CategoryCreateResult.Failed(AddBillIssue.NameTooLong))
+            return
+        }
+        creatingCategory = true
+        viewModelScope.launch {
+            try {
+                val id = categories.insertInFront(
+                    name = name,
+                    icon = event.iconKey,
+                    color = event.colorHex,
+                    type = type,
+                )
+                edit { it.copy(categoryId = id) }
+                _categoryCreated.tryEmit(CategoryCreateResult.Saved(id))
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (exception: LedgerException) {
+                _categoryCreated.tryEmit(CategoryCreateResult.Failed(exception.reason.toAddBillIssue()))
+            } finally {
+                creatingCategory = false
+            }
+        }
+    }
+
+    private fun save() {
+        if (form.value.saving) return
+        val snapshot = uiState.value
+        if (!snapshot.ready) return
+        val amount = parseMajorAmount(snapshot.amountText)
+        if (amount == null || amount <= 0L) {
+            form.update { it.copy(issue = AddBillIssue.InvalidAmount) }
+            return
+        }
+        val accountId = snapshot.accountId
+        if (accountId == null) {
+            form.update { it.copy(issue = AddBillIssue.NoAccount) }
+            return
+        }
+        when (snapshot.type) {
+            BillType.Transfer -> saveTransfer(snapshot, amount, accountId)
+            BillType.Expense, BillType.Income -> saveEntry(snapshot, amount, accountId)
+        }
+    }
+
+    private fun saveEntry(snapshot: AddExpenseUiState, amount: Long, accountId: Long) {
+        val categoryId = snapshot.categoryId
+        if (categoryId == null) {
+            form.update { it.copy(issue = AddBillIssue.NoCategory) }
+            return
+        }
+        val entryType = when (snapshot.type) {
+            BillType.Expense -> EntryType.Expense
+            BillType.Income -> EntryType.Income
+            BillType.Transfer -> return
+        }
+        val token = beginSave()
+        viewModelScope.launch {
+            try {
+                bills.insert(
+                    EntryDraft(
+                        type = entryType,
+                        amount = amount,
+                        categoryId = categoryId,
+                        accountId = accountId,
+                        billTime = snapshot.billTime,
+                        remark = snapshot.remark,
+                    ),
+                )
+                finishSave(token)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (exception: LedgerException) {
+                failSave(token, exception.reason.toAddBillIssue())
+            }
+        }
+    }
+
+    private fun saveTransfer(snapshot: AddExpenseUiState, amount: Long, accountId: Long) {
+        val toAccountId = snapshot.toAccountId
+        if (toAccountId == null) {
+            form.update { it.copy(issue = AddBillIssue.NeedSecondAccount) }
+            return
+        }
+        if (toAccountId == accountId) {
+            form.update { it.copy(issue = AddBillIssue.SameAccount) }
+            return
+        }
+        val token = beginSave()
+        viewModelScope.launch {
+            try {
+                bills.insertTransfer(
+                    TransferDraft(
+                        amount = amount,
+                        fromAccountId = accountId,
+                        toAccountId = toAccountId,
+                        billTime = snapshot.billTime,
+                        remark = snapshot.remark,
+                    ),
+                )
+                finishSave(token)
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (exception: LedgerException) {
+                failSave(token, exception.reason.toAddBillIssue())
+            }
+        }
+    }
+
+    private fun beginSave(): Int {
+        form.update { it.copy(saving = true, issue = null) }
+        return saveToken
+    }
+
+    private fun finishSave(token: Int) {
+        if (token != saveToken) return
+        completed = true
+        if (visible) {
+            _finished.tryEmit(Unit)
+        } else {
+            completed = false
+            resetOnNextEnter = true
+            form.update { it.copy(saving = false) }
+        }
+    }
+
+    private fun failSave(token: Int, issue: AddBillIssue) {
+        if (token != saveToken) return
+        form.update { it.copy(saving = false, issue = issue) }
+    }
+
+    private fun freshForm(): EntryForm = EntryForm(type = initialType, billTime = LedgerTime.now())
+
+    companion object {
+        private const val STOP_TIMEOUT_MILLIS = 5_000L
+
+        fun factory(typeCode: Int): ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val application = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
+                    ?: error("AddExpenseViewModel 需要 Application")
+                val entry = EntryPointAccessors.fromApplication(
+                    application,
+                    LedgerEntryPoint::class.java,
+                )
+                val type = BillType.entries.firstOrNull { it.code == typeCode } ?: BillType.Expense
+                AddExpenseViewModel(
+                    initialType = type,
+                    bills = entry.billRepository(),
+                    accounts = entry.accountRepository(),
+                    categories = entry.categoryRepository(),
+                    preferences = AppPreferencesRepository.create(application),
+                )
+            }
+        }
+    }
+}
+
+private fun BillType.categoryType(): CategoryType? = when (this) {
+    BillType.Expense -> CategoryType.Expense
+    BillType.Income -> CategoryType.Income
+    BillType.Transfer -> null
+}
+
+private data class EntryForm(
+    val type: BillType,
+    val amountText: String = "",
+    val categoryId: Long? = null,
+    val accountId: Long? = null,
+    val toAccountId: Long? = null,
+    val billTime: LocalDateTime,
+    val remark: String = "",
+    val issue: AddBillIssue? = null,
+    val saving: Boolean = false,
+)
+
+internal data class CategoryChoice(
+    val id: Long,
+    val name: String,
+    val iconKey: String,
+    val colorKey: String,
+)
+
+internal data class AccountChoice(
+    val id: Long,
+    val name: String,
+    val iconKey: String,
+    val colorKey: String,
+)
+
+internal data class AddExpenseUiState(
+    val ready: Boolean = false,
+    val type: BillType = BillType.Expense,
+    val amountText: String = "",
+    val categories: List<CategoryChoice> = emptyList(),
+    val categoryId: Long? = null,
+    val accounts: List<AccountChoice> = emptyList(),
+    val accountId: Long? = null,
+    val toAccountId: Long? = null,
+    val billTime: LocalDateTime,
+    val remark: String = "",
+    val currencySymbol: String = CurrencyPreference.CNY.symbol,
+    val issue: AddBillIssue? = null,
+    val saving: Boolean = false,
+)
+
+internal sealed interface AddExpenseUiEvent {
+    data class TypeSelected(val type: BillType) : AddExpenseUiEvent
+    data class AmountKeyPressed(val key: AmountKey) : AddExpenseUiEvent
+    data class CreateCategory(
+        val name: String,
+        val iconKey: String,
+        val colorHex: String,
+    ) : AddExpenseUiEvent
+    data class CategorySelected(val categoryId: Long) : AddExpenseUiEvent
+    data class AccountSelected(val accountId: Long) : AddExpenseUiEvent
+    data class ToAccountSelected(val accountId: Long) : AddExpenseUiEvent
+    data class DatePicked(val date: LocalDate) : AddExpenseUiEvent
+    data class TimePicked(val hour: Int, val minute: Int) : AddExpenseUiEvent
+    data class RemarkChanged(val value: String) : AddExpenseUiEvent
+    data object Save : AddExpenseUiEvent
+}
+
+internal sealed interface CategoryCreateResult {
+    data class Saved(val id: Long) : CategoryCreateResult
+    data class Failed(val issue: AddBillIssue) : CategoryCreateResult
+}

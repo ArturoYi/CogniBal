@@ -31,7 +31,9 @@ import kotlinx.serialization.json.Json
  * 把四张业务表导出成 JSON，或用一份 JSON 整份替换当前账本。
  *
  * 文件格式版本是 [FORMAT]，和 [AppDatabase.VERSION] 无关。
- * 以后给 JSON 加字段时升 [FORMAT]；给 SQLite 加列时升数据库版本并写 Migration。
+ * 以后给 JSON 加必填字段时升 [FORMAT]；给 SQLite 加列时升数据库版本并写 Migration。
+ * [AccountRecord.isDefault] 有默认值，旧备份没有这一项时按“不是当前展示”读入，
+ * 导入前再收成恰好一个当前展示账户。
  *
  * 导入不会重新套用账单对余额的增减。文件里的 [AccountRecord.balance] 就是当时的缓存余额，
  * 期初余额没有单独的列，不能从账单反推。导入若再走 [com.example.cognibal.data.repository.BillRepository]，
@@ -77,7 +79,7 @@ class JsonLedgerBackup @Inject constructor(
         if (snapshot.format != FORMAT) {
             throw BackupException.Format("不认识的备份格式 ${snapshot.format}")
         }
-        val accounts = snapshot.accounts.map { it.toEntity() }
+        val accounts = snapshot.accounts.map { it.toEntity() }.withSingleDefault()
         val categories = snapshot.categories.map { it.toEntity() }
         val bills = snapshot.bills.map { it.toEntity() }
         val budgets = snapshot.budgets.map { it.toEntity() }
@@ -182,6 +184,7 @@ private data class AccountRecord(
     val type: Int,
     val balance: Long,
     val isEnable: Boolean,
+    val isDefault: Boolean = false,
     val remark: String? = null,
     val createTime: String,
     val updateTime: String,
@@ -235,6 +238,7 @@ private fun Account.toRecord() = AccountRecord(
     type = type.code,
     balance = balance,
     isEnable = isEnable,
+    isDefault = isDefault,
     remark = remark,
     createTime = LedgerTime.encode(createTime),
     updateTime = LedgerTime.encode(updateTime),
@@ -285,10 +289,20 @@ private fun AccountRecord.toEntity(): Account = Account(
     type = code(AccountType::fromCode, type, "账户类型"),
     balance = balance,
     isEnable = isEnable,
+    isDefault = isDefault,
     remark = remark,
     createTime = time(createTime),
     updateTime = time(updateTime),
 )
+
+/** 导入后只留一个当前展示账户。文件里没标时，用第一个启用账户，再没有就用第一条。 */
+private fun List<Account>.withSingleDefault(): List<Account> {
+    if (isEmpty()) return this
+    val chosen = firstOrNull { it.isDefault }?.id
+        ?: firstOrNull { it.isEnable }?.id
+        ?: first().id
+    return map { account -> account.copy(isDefault = account.id == chosen) }
+}
 
 private fun CategoryRecord.toEntity(): Category = Category(
     id = id,

@@ -46,6 +46,7 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -234,6 +235,15 @@ fun StartupSplash(
     }
 
     val appBackground = MaterialTheme.colorScheme.background.toArgb()
+    val inspection = LocalInspectionMode.current
+    var motionFinished by remember { mutableStateOf(previewProgress != null) }
+    var dismissRequested by remember { mutableStateOf(false) }
+    var startupReady by remember { mutableStateOf(inspection || previewProgress != null) }
+    LaunchedEffect(inspection, previewProgress) {
+        if (inspection || previewProgress != null) return@LaunchedEffect
+        LedgerStartup.ensureDefaultAccount(context)
+        startupReady = true
+    }
     LaunchedEffect(appBackground, previewProgress) {
         if (previewProgress != null) return@LaunchedEffect
         // Theme window background stays black for the gap frame. After this black overlay
@@ -252,18 +262,22 @@ fun StartupSplash(
         // presents a frame without either icon. Wait until the matched frame is drawn.
         withFrameNanos { }
         onMatchedFrameDrawn()
-        if (reduceMotion) {
-            onFinished()
-            return@LaunchedEffect
+        if (!reduceMotion) {
+            progress.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(
+                    durationMillis = STARTUP_MOTION_MILLIS,
+                    easing = LinearEasing,
+                ),
+            )
         }
-        progress.animateTo(
-            targetValue = 1f,
-            animationSpec = tween(
-                durationMillis = STARTUP_MOTION_MILLIS,
-                easing = LinearEasing,
-            ),
-        )
-        onFinished()
+        motionFinished = true
+    }
+    LaunchedEffect(motionFinished, dismissRequested, startupReady, previewProgress) {
+        if (previewProgress != null) return@LaunchedEffect
+        if (startupReady && (motionFinished || dismissRequested)) {
+            onFinished()
+        }
     }
 
     val splashBackground = colorResource(R.color.icon_black)
@@ -289,7 +303,7 @@ fun StartupSplash(
                 indication = null,
                 onClick = {
                     onMatchedFrameDrawn()
-                    onFinished()
+                    dismissRequested = true
                 },
             ),
     ) {

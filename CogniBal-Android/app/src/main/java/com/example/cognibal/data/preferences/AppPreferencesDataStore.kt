@@ -7,6 +7,7 @@ import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 
@@ -38,6 +39,9 @@ internal object Keys {
     val darkMode = stringPreferencesKey("key_dark_mode")
     val hapticFeedback = booleanPreferencesKey("key_haptic_feedback")
     val currency = stringPreferencesKey("key_currency")
+
+    /** 旧版当前账户。启动时迁进 account.is_default 后删除。 */
+    val selectedAccountId = longPreferencesKey("key_selected_account_id")
 
     val legacyKeyNames: Set<String> = setOf(
         themeStyle.name,

@@ -38,6 +38,10 @@ interface CategoryDao {
     @Query("SELECT COUNT(*) FROM category")
     suspend fun count(): Int
 
+    /** 这一类型里最小的 sort。没有分类时是 null。越小越靠前。 */
+    @Query("SELECT MIN(sort) FROM category WHERE type = :type")
+    suspend fun minSort(type: CategoryType): Int?
+
     @Query("SELECT * FROM category WHERE id = :id")
     suspend fun getById(id: Long): Category?
 

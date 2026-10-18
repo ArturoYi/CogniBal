@@ -42,6 +42,9 @@ class BillRepository @Inject constructor(
 
     fun observeByAccount(accountId: Long): Flow<List<Bill>> = billDao.observeByAccount(accountId)
 
+    fun observeRecent(accountId: Long, limit: Int): Flow<List<Bill>> =
+        billDao.observeRecentByAccount(accountId, limit)
+
     fun observeById(id: Long): Flow<Bill?> = billDao.observeById(id)
 
     suspend fun insert(draft: EntryDraft): Long = onIo {

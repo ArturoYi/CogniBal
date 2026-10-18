@@ -37,8 +37,11 @@ internal class AppNavigator(
 
     fun navigate(key: NavKey) {
         val stack = activeStack
-        if (stack.lastOrNull() == key) return
-        if (key in settingsDetailKeys && stack.lastOrNull() in settingsDetailKeys) {
+        val top = stack.lastOrNull()
+        if (top == key) return
+        val replacesDetail = (key in settingsDetailKeys && top in settingsDetailKeys) ||
+            (key is AccountEditor && top is AccountEditor)
+        if (replacesDetail) {
             stack[stack.lastIndex] = key
         } else {
             stack.add(key)

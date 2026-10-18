@@ -51,8 +51,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun budgetDao(): BudgetDao
 
     companion object {
-        /** 第一版表结构。改表时加 1，并在 migration 包里补上对应脚本。 */
-        const val VERSION: Int = 1
+        /** 第二版给账户加了 is_default。改表时加 1，并在 migration 包里补上对应脚本。 */
+        const val VERSION: Int = 2
 
         const val NAME: String = "cognibal.db"
 

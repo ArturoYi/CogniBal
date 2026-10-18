@@ -75,6 +75,16 @@ class StatsRepository @Inject constructor(
         LedgerTime.normalize(endExclusive),
     )
 
+    fun observeAccountPeriod(
+        accountId: Long,
+        startInclusive: LocalDateTime,
+        endExclusive: LocalDateTime,
+    ): Flow<PeriodAmountSummary> = billDao.observeAccountPeriodSummary(
+        accountId,
+        LedgerTime.normalize(startInclusive),
+        LedgerTime.normalize(endExclusive),
+    )
+
     fun observeTransfers(
         startInclusive: LocalDateTime,
         endExclusive: LocalDateTime,

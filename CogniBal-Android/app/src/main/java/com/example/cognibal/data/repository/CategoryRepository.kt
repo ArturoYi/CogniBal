@@ -34,6 +34,35 @@ class CategoryRepository @Inject constructor(
         categoryDao.insert(draft.toRow(isEnable = true))
     }
 
+    /**
+     * 新建分类插到同类型的最前面。
+     * sort 比当前最小值再小 1，默认分类仍留在后面。
+     */
+    suspend fun insertInFront(
+        name: String,
+        icon: String,
+        color: String,
+        type: CategoryType,
+    ): Long = onIo {
+        database.withTransaction {
+            val currentMin = categoryDao.minSort(type)
+            val sort = when (currentMin) {
+                null -> 0
+                Int.MIN_VALUE -> Int.MIN_VALUE
+                else -> currentMin - 1
+            }
+            categoryDao.insert(
+                CategoryDraft(
+                    name = name,
+                    icon = icon,
+                    color = color,
+                    type = type,
+                    sort = sort,
+                ).toRow(isEnable = true),
+            )
+        }
+    }
+
     suspend fun update(id: Long, draft: CategoryDraft) = onIo {
         database.withTransaction {
             val existing = categoryDao.getById(id) ?: throw LedgerException(LedgerReject.CategoryNotFound)

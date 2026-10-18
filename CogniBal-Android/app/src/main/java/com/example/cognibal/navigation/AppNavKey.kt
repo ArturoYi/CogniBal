@@ -1,6 +1,7 @@
 package com.example.cognibal.navigation
 
 import androidx.navigation3.runtime.NavKey
+import com.example.cognibal.data.database.model.BillType
 import kotlinx.serialization.Serializable
 
 /**
@@ -14,9 +15,27 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data object Bill : NavKey
 
-/** 记一笔。从首页中间的加号进入，不占首页标签。 */
+/**
+ * 记一笔。从首页中间的加号或右下角菜单进入，不占首页标签。
+ *
+ * [typeCode] 用 [BillType.code]。默认是支出，和底栏中间的加号一致。
+ */
 @Serializable
-internal data object AddExpense : NavKey
+internal data class AddExpense(
+    val typeCode: Int = BillType.Expense.code,
+) : NavKey
+
+/** 当前账户的全部账单。从首页「查看全部」进入，不占首页标签。 */
+@Serializable
+internal data class BillHistory(val accountId: Long) : NavKey
+
+/**
+ * 新建或编辑账户。
+ *
+ * [accountId] 为空是新建。宽屏时作为账单页的详情窗格，窄屏单独占一页。
+ */
+@Serializable
+internal data class AccountEditor(val accountId: Long? = null) : NavKey
 
 /** 设置列表。设置栈的起点，也是首页标签。 */
 @Serializable

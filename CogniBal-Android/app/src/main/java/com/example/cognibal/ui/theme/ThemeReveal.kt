@@ -18,31 +18,40 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.GraphicsLayerScope
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Paint
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.ContentDrawScope
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.layer.GraphicsLayer
 import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.graphics.rememberGraphicsLayer
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
@@ -50,8 +59,9 @@ import kotlinx.coroutines.withTimeoutOrNull
 /**
  * 主题切换的圆形展开。
  *
- * 新主题先画出来。切换前的画面盖在上面，圆里用 [BlendMode.DstOut] 挖空，
- * 所以圆越大，新颜色露出来越多。半径只在 [drawWithContent] 里读，展开过程不重组。
+ * 旧画面铺在底层，新主题画在上面，只用一个越来越大的圆裁出新主题。
+ * 半径在 [graphicsLayer] 里读，展开时不重组。
+ * 不用 [View.draw]：那会把界面的硬件层画进软件画布，按钮会一直空白。
  */
 internal val LocalThemeReveal = staticCompositionLocalOf<ThemeRevealState?> { null }
 
@@ -75,12 +85,16 @@ internal fun ThemeRevealHost(
             modifier
                 .fillMaxSize()
                 .onGloballyPositioned { state.hostCoordinates = it }
+                .drawBehind { drawFrozenFrame(state) }
                 .drawWithContent {
-                    // 读一次，点击后才能只请求重绘、不重组。
                     state.recordTickValue()
-                    if (state.consumeRecordRequest()) {
-                        val width = size.width.roundToInt().coerceAtLeast(1)
-                        val height = size.height.roundToInt().coerceAtLeast(1)
+                    if (!state.consumeRecordRequest()) {
+                        drawContent()
+                        return@drawWithContent
+                    }
+                    val width = size.width.roundToInt().coerceAtLeast(1)
+                    val height = size.height.roundToInt().coerceAtLeast(1)
+                    try {
                         captureLayer.record(
                             density = this,
                             layoutDirection = layoutDirection,
@@ -89,14 +103,20 @@ internal fun ThemeRevealHost(
                             this@drawWithContent.drawContent()
                         }
                         drawLayer(captureLayer)
-                        state.completeRecordRequest()
-                        return@drawWithContent
+                        state.completeRecordRequest(recorded = true)
+                    } catch (_: Throwable) {
+                        drawContent()
+                        state.completeRecordRequest(recorded = false)
                     }
-                    drawContent()
-                    drawOldFrameHole(state)
                 },
         ) {
-            content()
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { applyRevealClip(state) },
+            ) {
+                content()
+            }
         }
     }
 }
@@ -120,7 +140,6 @@ internal class ThemeRevealState(
 ) {
     private val snapshot = mutableStateOf<ImageBitmap?>(null)
     private val radius = Animatable(0f)
-    private val layerPaint = Paint()
     private val recordTick = mutableIntStateOf(0)
 
     /** 只在点击时读，用来把根坐标换成这一层的坐标。 */
@@ -129,7 +148,7 @@ internal class ThemeRevealState(
     private var captureLayer: GraphicsLayer? = null
     private var revealCenter = Offset.Zero
     private var revealVisible = false
-    private var captureJob: kotlinx.coroutines.Job? = null
+    private var captureJob: Job? = null
     private var pendingCenter = Offset.Zero
     private var pendingApply: (() -> Unit)? = null
     private var recordArmed = false
@@ -157,9 +176,9 @@ internal class ThemeRevealState(
     }
 
     /**
-     * 先留下当前画面，再执行 [apply]。
+     * 先录下当前这一帧，再执行 [apply]。
      *
-     * 圆还在扩大时又点了别的颜色，底下直接换成最后一次，不再重新截一张半成品。
+     * 圆还在扩大时又点了别的颜色，只换底下的主题，不再截一张已经挖了洞的画面。
      */
     fun reveal(centerInRoot: Offset, apply: () -> Unit) {
         if (view.animationsDisabled()) {
@@ -197,6 +216,8 @@ internal class ThemeRevealState(
                     snapshot.value = null
                     revealVisible = false
                 }
+                // 等这一帧不再画旧画面，再释放像素，避免按钮还拿着已回收的位图。
+                withFrameNanos { }
                 image.recyclePixels()
             }
         }
@@ -210,10 +231,10 @@ internal class ThemeRevealState(
         return captureLayer != null
     }
 
-    fun completeRecordRequest() {
+    fun completeRecordRequest(recorded: Boolean) {
         val waiter = recordWaiter
         view.post {
-            waiter?.complete(true)
+            waiter?.complete(recorded)
             if (recordWaiter === waiter) recordWaiter = null
         }
     }
@@ -224,10 +245,7 @@ internal class ThemeRevealState(
 
     internal fun center(): Offset = revealCenter
 
-    internal fun layerPaint(): Paint = layerPaint
-
     private suspend fun captureOldFrame(): ImageBitmap? {
-        captureView(view)?.let { return it }
         val layer = captureLayer ?: return null
         val waiter = CompletableDeferred<Boolean>()
         recordWaiter = waiter
@@ -235,7 +253,8 @@ internal class ThemeRevealState(
         recordTick.intValue++
         val recorded = withTimeoutOrNull(CAPTURE_TIMEOUT_MILLIS) { waiter.await() } == true
         if (!recorded) return null
-        return runCatching { layer.toImageBitmap() }.getOrNull()?.takeIf { it.hasVisiblePixel() }
+        val captured = runCatching { layer.toImageBitmap() }.getOrNull() ?: return null
+        return captured.duplicate()
     }
 
     private fun centerInHost(centerInRoot: Offset): Offset {
@@ -245,34 +264,51 @@ internal class ThemeRevealState(
     }
 }
 
-private fun ContentDrawScope.drawOldFrameHole(state: ThemeRevealState) {
-    // 只在绘制时读。半径往前走一帧，只会让这一层重绘。
+private fun GraphicsLayerScope.applyRevealClip(state: ThemeRevealState) {
     val image = state.overlay()
     val progress = state.progress()
-    if (image == null || progress >= 1f) return
-    val pixels = image.asAndroidBitmap()
-    if (pixels.isRecycled) return
-    val canvas = drawContext.canvas
-    canvas.saveLayer(Rect(Offset.Zero, size), state.layerPaint())
-    try {
-        drawImage(
-            image = image,
-            dstSize = IntSize(
-                size.width.roundToInt().coerceAtLeast(1),
-                size.height.roundToInt().coerceAtLeast(1),
-            ),
-        )
-        if (progress > 0f) {
-            drawCircle(
-                color = Color.Black,
-                radius = coverRadius(size, state.center()) * progress,
-                center = state.center(),
-                blendMode = BlendMode.DstOut,
-            )
-        }
-    } finally {
-        canvas.restore()
+    if (image == null || progress >= 1f) {
+        alpha = 1f
+        clip = false
+        shape = RectangleShape
+        compositingStrategy = CompositingStrategy.Auto
+        return
     }
+    compositingStrategy = CompositingStrategy.Offscreen
+    if (progress <= 0f) {
+        alpha = 0f
+        clip = false
+        shape = RectangleShape
+        return
+    }
+    alpha = 1f
+    clip = true
+    val origin = state.center()
+    val fraction = progress
+    shape = object : Shape {
+        override fun createOutline(
+            size: Size,
+            layoutDirection: LayoutDirection,
+            density: Density,
+        ): Outline {
+            val path = Path()
+            path.addOval(Rect(origin, coverRadius(size, origin) * fraction))
+            return Outline.Generic(path)
+        }
+    }
+}
+
+private fun DrawScope.drawFrozenFrame(state: ThemeRevealState) {
+    val image = state.overlay() ?: return
+    val pixels = runCatching { image.asAndroidBitmap() }.getOrNull() ?: return
+    if (pixels.isRecycled) return
+    drawImage(
+        image = image,
+        dstSize = IntSize(
+            size.width.roundToInt().coerceAtLeast(1),
+            size.height.roundToInt().coerceAtLeast(1),
+        ),
+    )
 }
 
 private fun coverRadius(size: Size, center: Offset): Float {
@@ -281,44 +317,16 @@ private fun coverRadius(size: Size, center: Offset): Float {
     return hypot(horizontal, vertical) + 2f
 }
 
-private fun captureView(view: View): ImageBitmap? {
-    val width = view.width
-    val height = view.height
-    if (width <= 0 || height <= 0 || !view.isAttachedToWindow) return null
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    bitmap.density = view.resources.displayMetrics.densityDpi
+private fun ImageBitmap.duplicate(): ImageBitmap? {
+    val source = runCatching { asAndroidBitmap() }.getOrNull() ?: return null
+    if (source.isRecycled || source.width <= 0 || source.height <= 0) return null
     return try {
-        view.draw(android.graphics.Canvas(bitmap))
-        if (bitmap.hasVisiblePixel()) {
-            bitmap.asImageBitmap()
-        } else {
-            bitmap.recycle()
-            null
-        }
+        val copy = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        android.graphics.Canvas(copy).drawBitmap(source, 0f, 0f, null)
+        copy.asImageBitmap()
     } catch (_: Throwable) {
-        if (!bitmap.isRecycled) bitmap.recycle()
         null
     }
-}
-
-private fun Bitmap.hasVisiblePixel(): Boolean {
-    if (width <= 0 || height <= 0) return false
-    val samples = intArrayOf(
-        width / 2, height / 2,
-        width / 4, height / 3,
-        width * 3 / 4, height * 2 / 3,
-    )
-    for (index in samples.indices step 2) {
-        val x = samples[index].coerceIn(0, width - 1)
-        val y = samples[index + 1].coerceIn(0, height - 1)
-        if (getPixel(x, y) ushr 24 != 0) return true
-    }
-    return false
-}
-
-private fun ImageBitmap.hasVisiblePixel(): Boolean {
-    val bitmap = asAndroidBitmap()
-    return !bitmap.isRecycled && bitmap.hasVisiblePixel()
 }
 
 private fun View.animationsDisabled(): Boolean {
@@ -338,5 +346,5 @@ private val RevealSpec = tween<Float>(
     easing = LinearOutSlowInEasing,
 )
 
-private const val THEME_REVEAL_MILLIS = 600
+private const val THEME_REVEAL_MILLIS = 560
 private const val CAPTURE_TIMEOUT_MILLIS = 500L

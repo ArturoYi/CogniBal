@@ -90,7 +90,7 @@ fun IndexScreen(
                         placement = placement,
                         selected = navigator.homeTab.toIndexTab(),
                         onSelect = { navigator.selectHome(it.toHomeTab()) },
-                        onAddExpense = { navigator.navigate(AddExpense) },
+                        onAddExpense = { navigator.navigate(AddExpense()) },
                     )
                 },
                 navigationSuiteType = navigationSuiteType,
