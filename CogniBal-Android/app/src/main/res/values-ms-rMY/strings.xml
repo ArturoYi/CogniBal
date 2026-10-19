@@ -10,6 +10,9 @@
     <string name="settings_security">Keselamatan dan privasi</string>
     <string name="settings_more">Lagi tetapan</string>
     <string name="settings_about">Perihal CogniBal</string>
+    <string name="settings_feedback">Maklum balas</string>
+    <string name="feedback_email_subject">Maklum balas CogniBal</string>
+    <string name="feedback_email_unavailable">Tiada aplikasi e-mel</string>
     <string name="settings_choose">Pilih tetapan</string>
     <string name="language">Bahasa</string>
     <string name="language_follow_system">Guna bahasa sistem</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Laporan</string>
     <string name="shortcut_budget">Belanjawan</string>
     <string name="shortcut_assets">Aset</string>
+    <string name="shortcut_overview">Gambaran</string>
     <string name="shortcut_coming_soon">%1$s akan datang</string>
     <string name="more_features">Lagi</string>
     <string name="default_currency">Mata wang lalai</string>
@@ -81,4 +85,13 @@
     <plurals name="entry_count">
         <item quantity="other">%d entri</item>
     </plurals>
+    <string name="wheel_year">Tahun</string>
+    <string name="wheel_month">Bulan</string>
+    <string name="wheel_day">Hari</string>
+    <string name="wheel_hour">Jam</string>
+    <string name="wheel_minute">Minit</string>
+    <string name="wheel_second">Saat</string>
+    <string name="wheel_next">Seterusnya</string>
+    <string name="wheel_previous">Sebelumnya</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

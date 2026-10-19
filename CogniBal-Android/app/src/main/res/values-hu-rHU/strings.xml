@@ -10,6 +10,9 @@
     <string name="settings_security">Biztonság és adatvédelem</string>
     <string name="settings_more">További beállítások</string>
     <string name="settings_about">A CogniBal névjegye</string>
+    <string name="settings_feedback">Visszajelzés</string>
+    <string name="feedback_email_subject">Visszajelzés a CogniBalról</string>
+    <string name="feedback_email_unavailable">Nem található e-mail alkalmazás</string>
     <string name="settings_choose">Válasszon egy beállítást</string>
     <string name="language">Nyelv</string>
     <string name="language_follow_system">A rendszer nyelvének használata</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Jelentések</string>
     <string name="shortcut_budget">Költségvetés</string>
     <string name="shortcut_assets">Eszközök</string>
+    <string name="shortcut_overview">Áttekintés</string>
     <string name="shortcut_coming_soon">%1$s hamarosan</string>
     <string name="more_features">Továbbiak</string>
     <string name="default_currency">Alapértelmezett pénznem</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d tétel</item>
         <item quantity="other">%d tétel</item>
     </plurals>
+    <string name="wheel_year">Év</string>
+    <string name="wheel_month">Hónap</string>
+    <string name="wheel_day">Nap</string>
+    <string name="wheel_hour">Óra</string>
+    <string name="wheel_minute">Perc</string>
+    <string name="wheel_second">Másodperc</string>
+    <string name="wheel_next">Következő</string>
+    <string name="wheel_previous">Előző</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

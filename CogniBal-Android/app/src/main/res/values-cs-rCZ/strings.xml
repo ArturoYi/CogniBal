@@ -10,6 +10,9 @@
     <string name="settings_security">Zabezpečení a soukromí</string>
     <string name="settings_more">Další nastavení</string>
     <string name="settings_about">O aplikaci CogniBal</string>
+    <string name="settings_feedback">Zpětná vazba</string>
+    <string name="feedback_email_subject">Zpětná vazba k CogniBal</string>
+    <string name="feedback_email_unavailable">E-mailová aplikace není k dispozici</string>
     <string name="settings_choose">Vyberte nastavení</string>
     <string name="language">Jazyk</string>
     <string name="language_follow_system">Použít jazyk systému</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Přehledy</string>
     <string name="shortcut_budget">Rozpočet</string>
     <string name="shortcut_assets">Majetek</string>
+    <string name="shortcut_overview">Přehled</string>
     <string name="shortcut_coming_soon">%1$s už brzy</string>
     <string name="more_features">Další</string>
     <string name="default_currency">Výchozí měna</string>
@@ -87,4 +91,13 @@
         <item quantity="many">%d záznamu</item>
         <item quantity="other">%d záznamů</item>
     </plurals>
+    <string name="wheel_year">Rok</string>
+    <string name="wheel_month">Měsíc</string>
+    <string name="wheel_day">Den</string>
+    <string name="wheel_hour">Hodina</string>
+    <string name="wheel_minute">Minuta</string>
+    <string name="wheel_second">Sekunda</string>
+    <string name="wheel_next">Další</string>
+    <string name="wheel_previous">Předchozí</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

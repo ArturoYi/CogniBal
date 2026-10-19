@@ -29,6 +29,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AccountBalance
 import androidx.compose.material.icons.rounded.AccountBalanceWallet
 import androidx.compose.material.icons.rounded.BarChart
+import androidx.compose.material.icons.rounded.CalendarMonth
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Contrast
@@ -253,11 +254,14 @@ fun SurplusCard(
 
 /**
  * 设置页快捷账务工具入口。
+ *
+ * [Overview] 是横向的日历总览。页面还没接上，点击只把事件交出去。
  */
 internal enum class SettingsShortcut(
     @StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
+    Overview(R.string.shortcut_overview, Icons.Rounded.CalendarMonth),
     Statistics(R.string.shortcut_statistics, Icons.Rounded.PieChart),
     Reports(R.string.shortcut_reports, Icons.Rounded.BarChart),
     Budget(R.string.shortcut_budget, Icons.Rounded.Savings),
@@ -270,11 +274,18 @@ internal fun SettingsShortcutBar(
     columns: Int = 4,
     modifier: Modifier = Modifier,
 ) {
+    val tools = SettingsShortcut.entries.filter { it != SettingsShortcut.Overview }
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        SettingsShortcut.entries.chunked(columns).forEach { rowItems ->
+        SettingsShortcutItem(
+            shortcut = SettingsShortcut.Overview,
+            isGrid = true,
+            onClick = { onShortcutClick(SettingsShortcut.Overview) },
+            modifier = Modifier.fillMaxWidth(),
+        )
+        tools.chunked(columns).forEach { rowItems ->
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),

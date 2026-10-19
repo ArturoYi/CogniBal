@@ -10,6 +10,9 @@
     <string name="settings_security">Ασφάλεια και απόρρητο</string>
     <string name="settings_more">Περισσότερες ρυθμίσεις</string>
     <string name="settings_about">Σχετικά με το CogniBal</string>
+    <string name="settings_feedback">Σχόλια</string>
+    <string name="feedback_email_subject">Σχόλια για το CogniBal</string>
+    <string name="feedback_email_unavailable">Δεν βρέθηκε εφαρμογή email</string>
     <string name="settings_choose">Επιλέξτε μια ρύθμιση</string>
     <string name="language">Γλώσσα</string>
     <string name="language_follow_system">Χρήση της γλώσσας συστήματος</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Αναφορές</string>
     <string name="shortcut_budget">Προϋπολογισμός</string>
     <string name="shortcut_assets">Περιουσία</string>
+    <string name="shortcut_overview">Επισκόπηση</string>
     <string name="shortcut_coming_soon">Το %1$s έρχεται σύντομα</string>
     <string name="more_features">Περισσότερα</string>
     <string name="default_currency">Προεπιλεγμένο νόμισμα</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d κίνηση</item>
         <item quantity="other">%d κινήσεις</item>
     </plurals>
+    <string name="wheel_year">Έτος</string>
+    <string name="wheel_month">Μήνας</string>
+    <string name="wheel_day">Ημέρα</string>
+    <string name="wheel_hour">Ώρα</string>
+    <string name="wheel_minute">Λεπτό</string>
+    <string name="wheel_second">Δευτερόλεπτο</string>
+    <string name="wheel_next">Επόμενο</string>
+    <string name="wheel_previous">Προηγούμενο</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

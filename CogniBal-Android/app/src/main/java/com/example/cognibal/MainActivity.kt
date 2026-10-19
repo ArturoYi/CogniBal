@@ -19,6 +19,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cognibal.screen.bill.ui.PreloadBillHome
 import com.example.cognibal.screen.index.ui.IndexScreen
 import com.example.cognibal.screen.settings.viewmodel.SettingsViewModel
 import com.example.cognibal.ui.splash.ApplyAppWindowBackground
@@ -97,12 +98,15 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     if (showSplash) {
+                        val homeReady = PreloadBillHome()
                         StartupSplash(
                             iconBounds = iconBounds,
                             // 图标中心重合（约 2px）或等待超时后，再等这一帧画完才撤系统层。
                             onMatchedFrameDrawn = { revealStartupFrame() },
                             // 扇形动画结束，或用户点击跳过、系统关闭动效时，卸下 Compose 覆盖层。
+                            // 账单首页的账户、资产和最近账单都进状态后才揭，避免数字先是 0 再跳成真实值。
                             onFinished = { showSplash = false },
+                            readyToReveal = homeReady,
                         )
                     } else {
                         // 从已结束状态恢复时不会进入 StartupSplash，但系统仍会回调退出动画。

@@ -10,6 +10,9 @@
     <string name="settings_security">Güvenlik ve gizlilik</string>
     <string name="settings_more">Diğer ayarlar</string>
     <string name="settings_about">CogniBal hakkında</string>
+    <string name="settings_feedback">Geri bildirim</string>
+    <string name="feedback_email_subject">CogniBal geri bildirimi</string>
+    <string name="feedback_email_unavailable">E-posta uygulaması bulunamadı</string>
     <string name="settings_choose">Bir ayar seçin</string>
     <string name="language">Dil</string>
     <string name="language_follow_system">Sistem dilini kullan</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Raporlar</string>
     <string name="shortcut_budget">Bütçe</string>
     <string name="shortcut_assets">Varlıklar</string>
+    <string name="shortcut_overview">Genel bakış</string>
     <string name="shortcut_coming_soon">%1$s yakında</string>
     <string name="more_features">Diğer</string>
     <string name="default_currency">Varsayılan para birimi</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d kayıt</item>
         <item quantity="other">%d kayıt</item>
     </plurals>
+    <string name="wheel_year">Yıl</string>
+    <string name="wheel_month">Ay</string>
+    <string name="wheel_day">Gün</string>
+    <string name="wheel_hour">Saat</string>
+    <string name="wheel_minute">Dakika</string>
+    <string name="wheel_second">Saniye</string>
+    <string name="wheel_next">Sonraki</string>
+    <string name="wheel_previous">Önceki</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

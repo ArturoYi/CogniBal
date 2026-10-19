@@ -10,6 +10,9 @@
     <string name="settings_security">Beveiliging en privacy</string>
     <string name="settings_more">Meer instellingen</string>
     <string name="settings_about">Over CogniBal</string>
+    <string name="settings_feedback">Feedback</string>
+    <string name="feedback_email_subject">Feedback over CogniBal</string>
+    <string name="feedback_email_unavailable">Geen e-mailapp gevonden</string>
     <string name="settings_choose">Kies een instelling</string>
     <string name="language">Taal</string>
     <string name="language_follow_system">Systeemtaal gebruiken</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Rapporten</string>
     <string name="shortcut_budget">Budget</string>
     <string name="shortcut_assets">Bezittingen</string>
+    <string name="shortcut_overview">Overzicht</string>
     <string name="shortcut_coming_soon">%1$s komt binnenkort</string>
     <string name="more_features">Meer</string>
     <string name="default_currency">Standaardvaluta</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d boeking</item>
         <item quantity="other">%d boekingen</item>
     </plurals>
+    <string name="wheel_year">Jaar</string>
+    <string name="wheel_month">Maand</string>
+    <string name="wheel_day">Dag</string>
+    <string name="wheel_hour">Uur</string>
+    <string name="wheel_minute">Minuut</string>
+    <string name="wheel_second">Seconde</string>
+    <string name="wheel_next">Volgende</string>
+    <string name="wheel_previous">Vorige</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

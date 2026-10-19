@@ -82,6 +82,9 @@ internal class SettingsViewModel(
                 transient.update { it.copy(showAboutDialog = true) }
             SettingsUiEvent.DismissAboutDialog ->
                 transient.update { it.copy(showAboutDialog = false) }
+            // 日历页还没接上。发信由界面拉起邮件客户端，这里只接住事件。
+            SettingsUiEvent.OpenCalendarOverview,
+            SettingsUiEvent.SendFeedback -> Unit
         }
     }
 

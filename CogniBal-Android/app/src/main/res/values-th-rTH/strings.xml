@@ -10,6 +10,9 @@
     <string name="settings_security">ความปลอดภัยและความเป็นส่วนตัว</string>
     <string name="settings_more">การตั้งค่าเพิ่มเติม</string>
     <string name="settings_about">เกี่ยวกับ CogniBal</string>
+    <string name="settings_feedback">ข้อเสนอแนะ</string>
+    <string name="feedback_email_subject">ข้อเสนอแนะเกี่ยวกับ CogniBal</string>
+    <string name="feedback_email_unavailable">ไม่พบแอปอีเมล</string>
     <string name="settings_choose">เลือกการตั้งค่า</string>
     <string name="language">ภาษา</string>
     <string name="language_follow_system">ใช้ภาษาของระบบ</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">รายงาน</string>
     <string name="shortcut_budget">งบประมาณ</string>
     <string name="shortcut_assets">สินทรัพย์</string>
+    <string name="shortcut_overview">ภาพรวม</string>
     <string name="shortcut_coming_soon">%1$s จะเปิดเร็วๆ นี้</string>
     <string name="more_features">เพิ่มเติม</string>
     <string name="default_currency">สกุลเงินเริ่มต้น</string>
@@ -81,4 +85,13 @@
     <plurals name="entry_count">
         <item quantity="other">%d รายการ</item>
     </plurals>
+    <string name="wheel_year">ปี</string>
+    <string name="wheel_month">เดือน</string>
+    <string name="wheel_day">วัน</string>
+    <string name="wheel_hour">ชั่วโมง</string>
+    <string name="wheel_minute">นาที</string>
+    <string name="wheel_second">วินาที</string>
+    <string name="wheel_next">ถัดไป</string>
+    <string name="wheel_previous">ก่อนหน้า</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

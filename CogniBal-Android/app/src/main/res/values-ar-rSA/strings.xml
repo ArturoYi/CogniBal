@@ -10,6 +10,9 @@
     <string name="settings_security">الأمان والخصوصية</string>
     <string name="settings_more">مزيد من الإعدادات</string>
     <string name="settings_about">حول CogniBal</string>
+    <string name="settings_feedback">ملاحظات</string>
+    <string name="feedback_email_subject">ملاحظات حول CogniBal</string>
+    <string name="feedback_email_unavailable">لا يوجد تطبيق بريد</string>
     <string name="settings_choose">اختر إعدادًا</string>
     <string name="language">اللغة</string>
     <string name="language_follow_system">استخدام لغة النظام</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">تقارير</string>
     <string name="shortcut_budget">الميزانية</string>
     <string name="shortcut_assets">الأصول</string>
+    <string name="shortcut_overview">نظرة عامة</string>
     <string name="shortcut_coming_soon">%1$s قريبًا</string>
     <string name="more_features">المزيد</string>
     <string name="default_currency">العملة الافتراضية</string>
@@ -91,4 +95,13 @@
         <item quantity="many">%d عملية</item>
         <item quantity="other">%d عملية</item>
     </plurals>
+    <string name="wheel_year">سنة</string>
+    <string name="wheel_month">شهر</string>
+    <string name="wheel_day">يوم</string>
+    <string name="wheel_hour">ساعة</string>
+    <string name="wheel_minute">دقيقة</string>
+    <string name="wheel_second">ثانية</string>
+    <string name="wheel_next">التالي</string>
+    <string name="wheel_previous">السابق</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

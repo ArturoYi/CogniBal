@@ -23,17 +23,14 @@ import com.example.cognibal.di.LedgerEntryPoint
 import com.example.cognibal.screen.bill.tool.parseMajorAmount
 import com.example.cognibal.screen.expense.model.AddBillIssue
 import com.example.cognibal.screen.expense.model.toAddBillIssue
-import com.example.cognibal.screen.expense.tool.AmountKey
-import com.example.cognibal.screen.expense.tool.applyAmountKey
 import com.example.cognibal.screen.expense.tool.resolveAccountId
-import com.example.cognibal.screen.expense.tool.resolveCategoryId
 import com.example.cognibal.screen.expense.tool.resolveCounterpartyId
+import com.example.cognibal.screen.expense.tool.sanitizeAmountInput
 import com.example.cognibal.screen.settings.model.CurrencyPreference
 import dagger.hilt.android.EntryPointAccessors
 import java.time.LocalDate
 import java.time.LocalDateTime
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -41,8 +38,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -66,21 +61,22 @@ internal class AddExpenseViewModel(
     private val openedAt = LedgerTime.now()
     private val form = MutableStateFlow(EntryForm(type = initialType, billTime = openedAt))
 
-    private val categoryRows: Flow<List<Category>> = flow {
-        try {
-            categories.seedDefaultsIfEmpty()
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-            // 默认分类没写上时，页面按当前分类表继续。
+    init {
+        viewModelScope.launch {
+            try {
+                categories.seedDefaultsIfEmpty()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                // 默认分类没写上时，页面按当前分类表继续。
+            }
         }
-        emitAll(categories.observeAll())
     }
 
     val uiState: StateFlow<AddExpenseUiState> = combine(
         form,
         accounts.observeEnabled(),
-        categoryRows,
+        categories.observeAll(),
         preferences.preferences,
     ) { draft, accountRows, categoriesRows, prefs ->
         val orderedAccounts = accountRows.sortedWith(
@@ -105,7 +101,11 @@ internal class AddExpenseViewModel(
                     colorKey = category.color,
                 )
             },
-            categoryId = categoryType?.let { resolveCategoryId(draft.categoryId, categoriesRows, it) },
+            categoryId = categoryType?.let { type ->
+                draft.categoryId?.takeIf { id ->
+                    categoriesRows.any { it.id == id && it.isEnable && it.type == type }
+                }
+            },
             accounts = orderedAccounts.map { account ->
                 AccountChoice(
                     id = account.id,
@@ -128,7 +128,7 @@ internal class AddExpenseViewModel(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+        started = SharingStarted.Eagerly,
         initialValue = AddExpenseUiState(type = initialType, billTime = openedAt),
     )
 
@@ -140,57 +140,53 @@ internal class AddExpenseViewModel(
 
     private var visible = false
     private var completed = false
-    private var resetOnNextEnter = false
     private var saveToken = 0
     private var creatingCategory = false
 
-    /** 页面进入组合。上次已经保存、或保存过程中离开，这里换成一张空白表。 */
+    /** 页面进入组合。空白表在离开时已经换好，这里不再改状态，避免第一帧先画出上一张草稿。 */
     fun onEnter() {
         visible = true
-        if (resetOnNextEnter) {
-            resetOnNextEnter = false
-            saveToken += 1
-            form.value = freshForm()
-        }
     }
 
     /**
      * 页面离开组合。未保存的草稿留着。
-     * 保存中离开则作废这一次界面结果：库里的事务仍会提交，下次进来是空白表。
+     * 已经保存、或保存过程中离开，这里立刻换成空白表。库里的事务仍会提交。
+     * 下次进入时 [uiState] 已经是新表，界面不用先闪一下旧内容。
      */
     fun onLeave() {
         visible = false
         if (completed || form.value.saving) {
             completed = false
-            resetOnNextEnter = true
             saveToken += 1
+            form.value = freshForm()
         }
     }
 
     fun onEvent(event: AddExpenseUiEvent) {
         when (event) {
-            is AddExpenseUiEvent.TypeSelected -> edit { it.copy(type = event.type) }
-            is AddExpenseUiEvent.AmountKeyPressed -> edit {
-                it.copy(amountText = applyAmountKey(it.amountText, event.key))
+            is AddExpenseUiEvent.TypeSelected -> edit { current ->
+                if (event.type == current.type || event.type == BillType.Transfer) {
+                    current
+                } else {
+                    current.copy(type = event.type, categoryId = null)
+                }
+            }
+            is AddExpenseUiEvent.AmountChanged -> edit {
+                it.copy(amountText = sanitizeAmountInput(event.value))
             }
             is AddExpenseUiEvent.CategorySelected -> edit { it.copy(categoryId = event.categoryId) }
             is AddExpenseUiEvent.AccountSelected -> edit { it.copy(accountId = event.accountId) }
             is AddExpenseUiEvent.ToAccountSelected -> edit { it.copy(toAccountId = event.accountId) }
             is AddExpenseUiEvent.DatePicked -> edit { state ->
-                val date = event.date
-                state.copy(
-                    billTime = state.billTime
-                        .withYear(date.year)
-                        .withMonth(date.monthValue)
-                        .withDayOfMonth(date.dayOfMonth),
-                )
+                val time = state.billTime.toLocalTime().withNano(0)
+                state.copy(billTime = LocalDateTime.of(event.date, time))
             }
             is AddExpenseUiEvent.TimePicked -> edit { state ->
                 state.copy(
                     billTime = state.billTime
                         .withHour(event.hour)
                         .withMinute(event.minute)
-                        .withSecond(0)
+                        .withSecond(event.second)
                         .withNano(0),
                 )
             }
@@ -337,8 +333,7 @@ internal class AddExpenseViewModel(
             _finished.tryEmit(Unit)
         } else {
             completed = false
-            resetOnNextEnter = true
-            form.update { it.copy(saving = false) }
+            form.value = freshForm()
         }
     }
 
@@ -350,7 +345,7 @@ internal class AddExpenseViewModel(
     private fun freshForm(): EntryForm = EntryForm(type = initialType, billTime = LedgerTime.now())
 
     companion object {
-        private const val STOP_TIMEOUT_MILLIS = 5_000L
+        fun key(typeCode: Int): String = "add-expense-$typeCode"
 
         fun factory(typeCode: Int): ViewModelProvider.Factory = viewModelFactory {
             initializer {
@@ -360,7 +355,8 @@ internal class AddExpenseViewModel(
                     application,
                     LedgerEntryPoint::class.java,
                 )
-                val type = BillType.entries.firstOrNull { it.code == typeCode } ?: BillType.Expense
+                val raw = BillType.entries.firstOrNull { it.code == typeCode } ?: BillType.Expense
+                val type = if (raw == BillType.Transfer) BillType.Expense else raw
                 AddExpenseViewModel(
                     initialType = type,
                     bills = entry.billRepository(),
@@ -423,7 +419,7 @@ internal data class AddExpenseUiState(
 
 internal sealed interface AddExpenseUiEvent {
     data class TypeSelected(val type: BillType) : AddExpenseUiEvent
-    data class AmountKeyPressed(val key: AmountKey) : AddExpenseUiEvent
+    data class AmountChanged(val value: String) : AddExpenseUiEvent
     data class CreateCategory(
         val name: String,
         val iconKey: String,
@@ -433,7 +429,7 @@ internal sealed interface AddExpenseUiEvent {
     data class AccountSelected(val accountId: Long) : AddExpenseUiEvent
     data class ToAccountSelected(val accountId: Long) : AddExpenseUiEvent
     data class DatePicked(val date: LocalDate) : AddExpenseUiEvent
-    data class TimePicked(val hour: Int, val minute: Int) : AddExpenseUiEvent
+    data class TimePicked(val hour: Int, val minute: Int, val second: Int) : AddExpenseUiEvent
     data class RemarkChanged(val value: String) : AddExpenseUiEvent
     data object Save : AddExpenseUiEvent
 }

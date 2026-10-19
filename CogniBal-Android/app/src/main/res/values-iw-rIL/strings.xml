@@ -10,6 +10,9 @@
     <string name="settings_security">אבטחה ופרטיות</string>
     <string name="settings_more">הגדרות נוספות</string>
     <string name="settings_about">על CogniBal</string>
+    <string name="settings_feedback">משוב</string>
+    <string name="feedback_email_subject">משוב על CogniBal</string>
+    <string name="feedback_email_unavailable">לא נמצאה אפליקציית דוא״ל</string>
     <string name="settings_choose">בחרו הגדרה</string>
     <string name="language">שפה</string>
     <string name="language_follow_system">שימוש בשפת המערכת</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">דוחות</string>
     <string name="shortcut_budget">תקציב</string>
     <string name="shortcut_assets">נכסים</string>
+    <string name="shortcut_overview">סקירה</string>
     <string name="shortcut_coming_soon">%1$s בקרוב</string>
     <string name="more_features">עוד</string>
     <string name="default_currency">מטבע ברירת מחדל</string>
@@ -87,4 +91,13 @@
         <item quantity="many">%d רשומות</item>
         <item quantity="other">%d רשומות</item>
     </plurals>
+    <string name="wheel_year">שנה</string>
+    <string name="wheel_month">חודש</string>
+    <string name="wheel_day">יום</string>
+    <string name="wheel_hour">שעה</string>
+    <string name="wheel_minute">דקה</string>
+    <string name="wheel_second">שנייה</string>
+    <string name="wheel_next">הבא</string>
+    <string name="wheel_previous">הקודם</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

@@ -25,9 +25,11 @@ import com.example.cognibal.screen.settings.model.CurrencyPreference
 import dagger.hilt.android.EntryPointAccessors
 import java.time.LocalDateTime
 import java.time.YearMonth
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
@@ -41,23 +43,39 @@ import kotlinx.coroutines.launch
  */
 internal class BillHomeViewModel(
     private val accounts: AccountRepository,
-    bills: BillRepository,
-    budgets: BudgetRepository,
-    categories: CategoryRepository,
-    stats: StatsRepository,
+    private val bills: BillRepository,
+    private val budgets: BudgetRepository,
+    private val categories: CategoryRepository,
+    private val stats: StatsRepository,
     preferences: AppPreferencesRepository,
 ) : ViewModel() {
-    val uiState: StateFlow<BillHomeUiState> = combine(
+    /**
+     * 顶栏只依赖账户和货币。本月收支、最近账单还在查时，这里可以先有当前账户。
+     * 首页初次订阅会先拿到 [AccountBarState.loading]，那一笔不能当成“没有账户”。
+     */
+    val accountBar: StateFlow<AccountBarState> = combine(
         accounts.observeAll(),
         preferences.preferences,
     ) { rows, prefs ->
-        rows to prefs.currency.symbol
-    }.flatMapLatest { (rows, symbol) ->
-        val ordered = rows.sortedWith(
-            compareByDescending<Account> { it.isEnable }.thenBy { it.id },
+        accountBarState(rows, prefs.currency.symbol)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+        initialValue = AccountBarState(),
+    )
+
+    val uiState: StateFlow<BillHomeUiState> = accountBar
+        .filter { bar -> !bar.loading }
+        .flatMapLatest { bar -> homeContent(bar) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
+            initialValue = BillHomeUiState(),
         )
-        val currentId = ordered.firstOrNull { it.isDefault }?.id ?: ordered.firstOrNull()?.id
-        val (total, totalOverflow) = sumBalances(ordered)
+
+    private fun homeContent(bar: AccountBarState): Flow<BillHomeUiState> {
+        val currentId = bar.currentId
+        val (total, totalOverflow) = sumBalances(bar.accounts.map { it.balance })
         val month = YearMonth.now()
         val start = month.atDay(1).atStartOfDay()
         val end = month.plusMonths(1).atDay(1).atStartOfDay()
@@ -71,7 +89,7 @@ internal class BillHomeViewModel(
         } else {
             bills.observeRecent(currentId, RECENT_LIMIT)
         }
-        combine(
+        return combine(
             period,
             recent,
             budgets.observeProgress(),
@@ -81,19 +99,8 @@ internal class BillHomeViewModel(
             val (balance, monthOverflow) = monthBalance(monthSummary)
             BillHomeUiState(
                 loading = false,
-                currencySymbol = symbol,
-                accounts = ordered.map { account ->
-                    AccountItemUi(
-                        id = account.id,
-                        name = account.name,
-                        type = account.type,
-                        iconKey = account.icon,
-                        colorKey = account.color,
-                        balance = account.balance,
-                        enabled = account.isEnable,
-                        selected = account.id == currentId,
-                    )
-                },
+                currencySymbol = bar.currencySymbol,
+                accounts = bar.accounts,
                 currentId = currentId,
                 totalAssets = total,
                 totalOverflow = totalOverflow,
@@ -105,11 +112,7 @@ internal class BillHomeViewModel(
                 recent = billsToRows(latest, names),
             )
         }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
-        initialValue = BillHomeUiState(),
-    )
+    }
 
     fun onEvent(event: BillHomeUiEvent) {
         when (event) {
@@ -141,6 +144,13 @@ internal class BillHomeViewModel(
         }
     }
 }
+
+internal data class AccountBarState(
+    val loading: Boolean = true,
+    val currencySymbol: String = CurrencyPreference.CNY.symbol,
+    val accounts: List<AccountItemUi> = emptyList(),
+    val currentId: Long? = null,
+)
 
 internal data class AccountItemUi(
     val id: Long,
@@ -250,11 +260,35 @@ private fun monthBalance(summary: PeriodAmountSummary): Pair<Long, Boolean> {
     }
 }
 
-private fun sumBalances(accounts: List<Account>): Pair<Long, Boolean> {
+private fun accountBarState(rows: List<Account>, symbol: String): AccountBarState {
+    val ordered = rows.sortedWith(
+        compareByDescending<Account> { it.isEnable }.thenBy { it.id },
+    )
+    val currentId = ordered.firstOrNull { it.isDefault }?.id ?: ordered.firstOrNull()?.id
+    return AccountBarState(
+        loading = false,
+        currencySymbol = symbol,
+        currentId = currentId,
+        accounts = ordered.map { account ->
+            AccountItemUi(
+                id = account.id,
+                name = account.name,
+                type = account.type,
+                iconKey = account.icon,
+                colorKey = account.color,
+                balance = account.balance,
+                enabled = account.isEnable,
+                selected = account.id == currentId,
+            )
+        },
+    )
+}
+
+private fun sumBalances(balances: List<Long>): Pair<Long, Boolean> {
     var total = 0L
-    for (account in accounts) {
+    for (balance in balances) {
         try {
-            total = Math.addExact(total, account.balance)
+            total = Math.addExact(total, balance)
         } catch (_: ArithmeticException) {
             return 0L to true
         }

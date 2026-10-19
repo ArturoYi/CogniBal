@@ -10,6 +10,9 @@
     <string name="settings_security">Säkerhet och integritet</string>
     <string name="settings_more">Fler inställningar</string>
     <string name="settings_about">Om CogniBal</string>
+    <string name="settings_feedback">Feedback</string>
+    <string name="feedback_email_subject">Feedback om CogniBal</string>
+    <string name="feedback_email_unavailable">Ingen e-postapp hittades</string>
     <string name="settings_choose">Välj en inställning</string>
     <string name="language">Språk</string>
     <string name="language_follow_system">Använd systemspråk</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Rapporter</string>
     <string name="shortcut_budget">Budget</string>
     <string name="shortcut_assets">Tillgångar</string>
+    <string name="shortcut_overview">Översikt</string>
     <string name="shortcut_coming_soon">%1$s kommer snart</string>
     <string name="more_features">Mer</string>
     <string name="default_currency">Standardvaluta</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d händelse</item>
         <item quantity="other">%d händelser</item>
     </plurals>
+    <string name="wheel_year">År</string>
+    <string name="wheel_month">Månad</string>
+    <string name="wheel_day">Dag</string>
+    <string name="wheel_hour">Timme</string>
+    <string name="wheel_minute">Minut</string>
+    <string name="wheel_second">Sekund</string>
+    <string name="wheel_next">Nästa</string>
+    <string name="wheel_previous">Föregående</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

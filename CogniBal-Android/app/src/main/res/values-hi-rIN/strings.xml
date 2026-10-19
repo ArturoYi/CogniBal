@@ -10,6 +10,9 @@
     <string name="settings_security">सुरक्षा और गोपनीयता</string>
     <string name="settings_more">और सेटिंग</string>
     <string name="settings_about">CogniBal के बारे में</string>
+    <string name="settings_feedback">प्रतिक्रिया</string>
+    <string name="feedback_email_subject">CogniBal पर प्रतिक्रिया</string>
+    <string name="feedback_email_unavailable">कोई ईमेल ऐप नहीं मिला</string>
     <string name="settings_choose">कोई सेटिंग चुनें</string>
     <string name="language">भाषा</string>
     <string name="language_follow_system">सिस्टम की भाषा का उपयोग करें</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">रिपोर्ट</string>
     <string name="shortcut_budget">बजट</string>
     <string name="shortcut_assets">संपत्ति</string>
+    <string name="shortcut_overview">अवलोकन</string>
     <string name="shortcut_coming_soon">%1$s जल्द आ रहा है</string>
     <string name="more_features">और</string>
     <string name="default_currency">डिफ़ॉल्ट मुद्रा</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d प्रविष्टि</item>
         <item quantity="other">%d प्रविष्टियाँ</item>
     </plurals>
+    <string name="wheel_year">वर्ष</string>
+    <string name="wheel_month">महीना</string>
+    <string name="wheel_day">दिन</string>
+    <string name="wheel_hour">घंटा</string>
+    <string name="wheel_minute">मिनट</string>
+    <string name="wheel_second">सेकंड</string>
+    <string name="wheel_next">अगला</string>
+    <string name="wheel_previous">पिछला</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

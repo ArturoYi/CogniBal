@@ -10,6 +10,9 @@
     <string name="settings_security">Seguridad at privacy</string>
     <string name="settings_more">Iba pang setting</string>
     <string name="settings_about">Tungkol sa CogniBal</string>
+    <string name="settings_feedback">Feedback</string>
+    <string name="feedback_email_subject">Feedback sa CogniBal</string>
+    <string name="feedback_email_unavailable">Walang nahanap na email app</string>
     <string name="settings_choose">Pumili ng setting</string>
     <string name="language">Wika</string>
     <string name="language_follow_system">Gamitin ang wika ng system</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Mga ulat</string>
     <string name="shortcut_budget">Badyet</string>
     <string name="shortcut_assets">Mga asset</string>
+    <string name="shortcut_overview">Pangkalahatang-ideya</string>
     <string name="shortcut_coming_soon">Malapit na ang %1$s</string>
     <string name="more_features">Higit pa</string>
     <string name="default_currency">Default na pera</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d tala</item>
         <item quantity="other">%d tala</item>
     </plurals>
+    <string name="wheel_year">Taon</string>
+    <string name="wheel_month">Buwan</string>
+    <string name="wheel_day">Araw</string>
+    <string name="wheel_hour">Oras</string>
+    <string name="wheel_minute">Minuto</string>
+    <string name="wheel_second">Segundo</string>
+    <string name="wheel_next">Susunod</string>
+    <string name="wheel_previous">Nakaraan</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

@@ -3,7 +3,7 @@ package com.example.cognibal.navigation
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
@@ -53,6 +53,10 @@ internal fun wechatPop(): ContentTransform {
     )
 }
 
-private fun pageSlide() = tween<IntOffset>(durationMillis = 300, easing = PageSlideEasing)
+private fun pageSlide() = tween<IntOffset>(
+    durationMillis = PageSlideDurationMillis,
+    easing = FastOutSlowInEasing,
+)
 
-private val PageSlideEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
+/** 和 [pageSlide] 同一时长。导航条等这一段结束再改内容区尺寸。 */
+internal const val PageSlideDurationMillis = 280

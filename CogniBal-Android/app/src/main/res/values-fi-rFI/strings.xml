@@ -10,6 +10,9 @@
     <string name="settings_security">Turvallisuus ja tietosuoja</string>
     <string name="settings_more">Lisää asetuksia</string>
     <string name="settings_about">Tietoja CogniBalista</string>
+    <string name="settings_feedback">Palaute</string>
+    <string name="feedback_email_subject">Palaute CogniBalista</string>
+    <string name="feedback_email_unavailable">Sähköpostisovellusta ei löydy</string>
     <string name="settings_choose">Valitse asetus</string>
     <string name="language">Kieli</string>
     <string name="language_follow_system">Käytä järjestelmän kieltä</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Raportit</string>
     <string name="shortcut_budget">Budjetti</string>
     <string name="shortcut_assets">Varat</string>
+    <string name="shortcut_overview">Yleiskatsaus</string>
     <string name="shortcut_coming_soon">%1$s tulossa pian</string>
     <string name="more_features">Lisää</string>
     <string name="default_currency">Oletusvaluutta</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d kirjaus</item>
         <item quantity="other">%d kirjausta</item>
     </plurals>
+    <string name="wheel_year">Vuosi</string>
+    <string name="wheel_month">Kuukausi</string>
+    <string name="wheel_day">Päivä</string>
+    <string name="wheel_hour">Tunti</string>
+    <string name="wheel_minute">Minuutti</string>
+    <string name="wheel_second">Sekunti</string>
+    <string name="wheel_next">Seuraava</string>
+    <string name="wheel_previous">Edellinen</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

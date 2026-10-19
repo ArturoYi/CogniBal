@@ -34,6 +34,9 @@
     <string name="settings_security">安全与隐私</string>
     <string name="settings_more">更多设置</string>
     <string name="settings_about">关于知余</string>
+    <string name="settings_feedback">反馈</string>
+    <string name="feedback_email_subject">知余反馈</string>
+    <string name="feedback_email_unavailable">没有找到邮件应用</string>
     <string name="settings_choose">选择一项设置</string>
     <string name="language">语言</string>
     <string name="language_follow_system">使用系统语言</string>
@@ -62,6 +65,7 @@
     <string name="shortcut_reports">报表</string>
     <string name="shortcut_budget">预算</string>
     <string name="shortcut_assets">资产</string>
+    <string name="shortcut_overview">总览</string>
     <string name="shortcut_coming_soon">%1$s即将开放</string>
     <string name="more_features">更多功能</string>
     <string name="default_currency">默认货币符号</string>
@@ -180,6 +184,7 @@
     <string name="bill_entry_category">分类</string>
     <string name="bill_entry_no_category">还没有这个类型的分类。</string>
     <string name="bill_entry_account">账户</string>
+    <string name="bill_entry_into_account">记入%1$s</string>
     <string name="bill_entry_no_account">先新建一个启用的账户，再记账单。</string>
     <string name="bill_entry_from">转出</string>
     <string name="bill_entry_to">转入</string>
@@ -221,4 +226,13 @@
     <plurals name="entry_count">
         <item quantity="other">%d笔</item>
     </plurals>
+    <string name="wheel_year">年</string>
+    <string name="wheel_month">月</string>
+    <string name="wheel_day">日</string>
+    <string name="wheel_hour">时</string>
+    <string name="wheel_minute">分</string>
+    <string name="wheel_second">秒</string>
+    <string name="wheel_next">下一项</string>
+    <string name="wheel_previous">上一项</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

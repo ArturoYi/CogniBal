@@ -10,6 +10,9 @@
     <string name="settings_security">Bảo mật và quyền riêng tư</string>
     <string name="settings_more">Cài đặt khác</string>
     <string name="settings_about">Giới thiệu CogniBal</string>
+    <string name="settings_feedback">Phản hồi</string>
+    <string name="feedback_email_subject">Phản hồi về CogniBal</string>
+    <string name="feedback_email_unavailable">Không tìm thấy ứng dụng email</string>
     <string name="settings_choose">Chọn một mục cài đặt</string>
     <string name="language">Ngôn ngữ</string>
     <string name="language_follow_system">Dùng ngôn ngữ hệ thống</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Báo cáo</string>
     <string name="shortcut_budget">Ngân sách</string>
     <string name="shortcut_assets">Tài sản</string>
+    <string name="shortcut_overview">Tổng quan</string>
     <string name="shortcut_coming_soon">%1$s sắp ra mắt</string>
     <string name="more_features">Thêm</string>
     <string name="default_currency">Tiền tệ mặc định</string>
@@ -81,4 +85,13 @@
     <plurals name="entry_count">
         <item quantity="other">%d bút toán</item>
     </plurals>
+    <string name="wheel_year">Năm</string>
+    <string name="wheel_month">Tháng</string>
+    <string name="wheel_day">Ngày</string>
+    <string name="wheel_hour">Giờ</string>
+    <string name="wheel_minute">Phút</string>
+    <string name="wheel_second">Giây</string>
+    <string name="wheel_next">Tiếp</string>
+    <string name="wheel_previous">Trước</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

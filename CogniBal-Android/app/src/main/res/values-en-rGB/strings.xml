@@ -10,6 +10,9 @@
     <string name="settings_security">Security and privacy</string>
     <string name="settings_more">More settings</string>
     <string name="settings_about">About CogniBal</string>
+    <string name="settings_feedback">Feedback</string>
+    <string name="feedback_email_subject">CogniBal feedback</string>
+    <string name="feedback_email_unavailable">No email app found</string>
     <string name="settings_choose">Choose a setting</string>
     <string name="language">Language</string>
     <string name="language_follow_system">Use system language</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Reports</string>
     <string name="shortcut_budget">Budget</string>
     <string name="shortcut_assets">Assets</string>
+    <string name="shortcut_overview">Overview</string>
     <string name="shortcut_coming_soon">%1$s is coming soon</string>
     <string name="more_features">More</string>
     <string name="default_currency">Default currency</string>
@@ -83,4 +87,13 @@
         <item quantity="one">%d entry</item>
         <item quantity="other">%d entries</item>
     </plurals>
+    <string name="wheel_year">Year</string>
+    <string name="wheel_month">Month</string>
+    <string name="wheel_day">Day</string>
+    <string name="wheel_hour">Hour</string>
+    <string name="wheel_minute">Minute</string>
+    <string name="wheel_second">Second</string>
+    <string name="wheel_next">Next</string>
+    <string name="wheel_previous">Previous</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

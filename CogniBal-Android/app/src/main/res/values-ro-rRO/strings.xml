@@ -10,6 +10,9 @@
     <string name="settings_security">Securitate și confidențialitate</string>
     <string name="settings_more">Mai multe setări</string>
     <string name="settings_about">Despre CogniBal</string>
+    <string name="settings_feedback">Feedback</string>
+    <string name="feedback_email_subject">Feedback pentru CogniBal</string>
+    <string name="feedback_email_unavailable">Nu există o aplicație de e-mail</string>
     <string name="settings_choose">Alege o setare</string>
     <string name="language">Limbă</string>
     <string name="language_follow_system">Folosește limba sistemului</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Rapoarte</string>
     <string name="shortcut_budget">Buget</string>
     <string name="shortcut_assets">Active</string>
+    <string name="shortcut_overview">Prezentare</string>
     <string name="shortcut_coming_soon">%1$s va fi disponibil în curând</string>
     <string name="more_features">Mai mult</string>
     <string name="default_currency">Monedă implicită</string>
@@ -85,4 +89,13 @@
         <item quantity="few">%d înregistrări</item>
         <item quantity="other">%d de înregistrări</item>
     </plurals>
+    <string name="wheel_year">An</string>
+    <string name="wheel_month">Lună</string>
+    <string name="wheel_day">Zi</string>
+    <string name="wheel_hour">Oră</string>
+    <string name="wheel_minute">Minut</string>
+    <string name="wheel_second">Secundă</string>
+    <string name="wheel_next">Următorul</string>
+    <string name="wheel_previous">Anterior</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

@@ -10,6 +10,9 @@
     <string name="settings_security">Безопасность и конфиденциальность</string>
     <string name="settings_more">Другие настройки</string>
     <string name="settings_about">О CogniBal</string>
+    <string name="settings_feedback">Отзыв</string>
+    <string name="feedback_email_subject">Отзыв о CogniBal</string>
+    <string name="feedback_email_unavailable">Почтовое приложение не найдено</string>
     <string name="settings_choose">Выберите настройку</string>
     <string name="language">Язык</string>
     <string name="language_follow_system">Язык системы</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">Отчёты</string>
     <string name="shortcut_budget">Бюджет</string>
     <string name="shortcut_assets">Активы</string>
+    <string name="shortcut_overview">Обзор</string>
     <string name="shortcut_coming_soon">%1$s скоро появится</string>
     <string name="more_features">Ещё</string>
     <string name="default_currency">Валюта по умолчанию</string>
@@ -87,4 +91,13 @@
         <item quantity="many">%d записей</item>
         <item quantity="other">%d записи</item>
     </plurals>
+    <string name="wheel_year">Год</string>
+    <string name="wheel_month">Месяц</string>
+    <string name="wheel_day">День</string>
+    <string name="wheel_hour">Час</string>
+    <string name="wheel_minute">Минута</string>
+    <string name="wheel_second">Секунда</string>
+    <string name="wheel_next">Далее</string>
+    <string name="wheel_previous">Назад</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

@@ -46,7 +46,6 @@ import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInWindow
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -201,6 +200,7 @@ fun StartupSplash(
     onFinished: () -> Unit,
     modifier: Modifier = Modifier,
     previewProgress: Float? = null,
+    readyToReveal: Boolean = true,
 ) {
     val context = LocalContext.current
     val reduceMotion = remember(context) {
@@ -235,15 +235,8 @@ fun StartupSplash(
     }
 
     val appBackground = MaterialTheme.colorScheme.background.toArgb()
-    val inspection = LocalInspectionMode.current
     var motionFinished by remember { mutableStateOf(previewProgress != null) }
     var dismissRequested by remember { mutableStateOf(false) }
-    var startupReady by remember { mutableStateOf(inspection || previewProgress != null) }
-    LaunchedEffect(inspection, previewProgress) {
-        if (inspection || previewProgress != null) return@LaunchedEffect
-        LedgerStartup.ensureDefaultAccount(context)
-        startupReady = true
-    }
     LaunchedEffect(appBackground, previewProgress) {
         if (previewProgress != null) return@LaunchedEffect
         // Theme window background stays black for the gap frame. After this black overlay
@@ -273,9 +266,9 @@ fun StartupSplash(
         }
         motionFinished = true
     }
-    LaunchedEffect(motionFinished, dismissRequested, startupReady, previewProgress) {
+    LaunchedEffect(motionFinished, dismissRequested, readyToReveal, previewProgress) {
         if (previewProgress != null) return@LaunchedEffect
-        if (startupReady && (motionFinished || dismissRequested)) {
+        if (readyToReveal && (motionFinished || dismissRequested)) {
             onFinished()
         }
     }

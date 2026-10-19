@@ -1,6 +1,10 @@
 package com.example.cognibal.screen.settings.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +25,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Backup
 import androidx.compose.material.icons.rounded.Info
+import androidx.compose.material.icons.rounded.Mail
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Security
 import androidx.compose.material.icons.rounded.Tune
@@ -79,20 +84,39 @@ internal fun SettingsListRoute(
     val context = LocalContext.current
     val cacheClearedMessage = stringResource(R.string.cache_cleared)
     val openSourceMessage = stringResource(R.string.open_source_toast)
+    val feedbackSubject = stringResource(R.string.feedback_email_subject)
+    val feedbackUnavailable = stringResource(R.string.feedback_email_unavailable)
     val shortcutComingSoon = SettingsShortcut.entries.associateWith { shortcut ->
         stringResource(R.string.shortcut_coming_soon, stringResource(shortcut.labelRes))
     }
     val onEvent = { event: SettingsUiEvent ->
         viewModel.onEvent(event)
-        if (event == SettingsUiEvent.ConfirmClearCache) {
-            Toast.makeText(context, cacheClearedMessage, Toast.LENGTH_SHORT).show()
+        when (event) {
+            SettingsUiEvent.ConfirmClearCache ->
+                Toast.makeText(context, cacheClearedMessage, Toast.LENGTH_SHORT).show()
+            SettingsUiEvent.OpenCalendarOverview ->
+                Toast.makeText(
+                    context,
+                    shortcutComingSoon.getValue(SettingsShortcut.Overview),
+                    Toast.LENGTH_SHORT,
+                ).show()
+            SettingsUiEvent.SendFeedback -> {
+                if (!context.composeFeedbackEmail(feedbackSubject)) {
+                    Toast.makeText(context, feedbackUnavailable, Toast.LENGTH_SHORT).show()
+                }
+            }
+            else -> Unit
         }
     }
     SettingsScreen(
         uiState = uiState,
         onEvent = onEvent,
         onOpenShortcut = { shortcut ->
-            Toast.makeText(context, shortcutComingSoon.getValue(shortcut), Toast.LENGTH_SHORT).show()
+            if (shortcut == SettingsShortcut.Overview) {
+                onEvent(SettingsUiEvent.OpenCalendarOverview)
+            } else {
+                Toast.makeText(context, shortcutComingSoon.getValue(shortcut), Toast.LENGTH_SHORT).show()
+            }
         },
         onOpenSourceLicenses = {
             Toast.makeText(context, openSourceMessage, Toast.LENGTH_SHORT).show()
@@ -108,7 +132,7 @@ internal fun SettingsListRoute(
  * 核心视觉与结构：
  * 1. 柔和主色+中性灰打底，无刺眼高饱和，无突兀边框；
  * 2. 统一圆角 (20.dp) 与轻阴影，模块按意图分层分组，富有律动与呼吸感；
- * 3. 窄屏自上而下流畅展开：使用统计 -> 精炼总盈余 -> 偏好与安全 -> 通用与支持 -> 底部横向工具栏（统计、报表、预算、资产）；
+ * 3. 窄屏自上而下流畅展开：使用统计 -> 精炼总盈余 -> 日历总览与快捷入口 -> 备份、安全、外观 -> 通用与支持，反馈在最底；
  * 4. 宽屏（折叠屏展开/平板/桌面）自适应双栏并排：左侧财务看板（盈余与分析工具），右侧系统偏好设置，比例舒适饱满。
  */
 @Composable
@@ -433,11 +457,6 @@ private data class SettingsPageEntry(
 
 private val preferenceAndSecurityEntries = listOf(
     SettingsPageEntry(
-        icon = Icons.Rounded.Palette,
-        titleRes = R.string.settings_appearance,
-        key = AppearanceSettings,
-    ),
-    SettingsPageEntry(
         icon = Icons.Rounded.Backup,
         titleRes = R.string.settings_backup,
         key = BackupSettings,
@@ -446,6 +465,11 @@ private val preferenceAndSecurityEntries = listOf(
         icon = Icons.Rounded.Security,
         titleRes = R.string.settings_security,
         key = SecuritySettings,
+    ),
+    SettingsPageEntry(
+        icon = Icons.Rounded.Palette,
+        titleRes = R.string.settings_appearance,
+        key = AppearanceSettings,
     ),
 )
 
@@ -459,6 +483,11 @@ private val systemAndSupportEntries = listOf(
         icon = Icons.Rounded.Info,
         titleRes = R.string.settings_about,
         event = SettingsUiEvent.OpenAboutDialog,
+    ),
+    SettingsEntry(
+        icon = Icons.Rounded.Mail,
+        titleRes = R.string.settings_feedback,
+        event = SettingsUiEvent.SendFeedback,
     ),
 )
 
@@ -495,6 +524,21 @@ private fun SettingsCardGroup(
                 onClick = { onEvent(entry.event) },
             )
         }
+    }
+}
+
+private const val FEEDBACK_EMAIL = "lzm.cyr@gmail.com"
+
+/** 打开系统邮件的写信界面，收件人已填好。没有可处理的邮件应用时返回 false。 */
+private fun Context.composeFeedbackEmail(subject: String): Boolean {
+    val intent = Intent(Intent.ACTION_SENDTO).apply {
+        data = Uri.parse("mailto:$FEEDBACK_EMAIL?subject=${Uri.encode(subject)}")
+    }
+    return try {
+        startActivity(intent)
+        true
+    } catch (_: ActivityNotFoundException) {
+        false
     }
 }
 

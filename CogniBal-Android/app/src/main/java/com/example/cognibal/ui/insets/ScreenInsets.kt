@@ -83,6 +83,7 @@ fun listContentPadding(): PaddingValues = screenContentWindowInsets().asPaddingV
  * 把内容收进输入法可见区域。调用前需要有界宽高（例如 [fillMaxSize]），并放在 [verticalScroll] 之前。
  *
  * 父级若已经用 [screenSafeDrawing] 或 [listContentPadding] 处理了输入法，就不要再加这一层。
+ * 会跟着页面移动重测的侧滑页不要用它，输入法关闭时用 [androidx.compose.foundation.layout.imePadding]。
  */
 fun Modifier.imeFit(): Modifier = fitInside(WindowInsetsRulers.Ime.current)
 

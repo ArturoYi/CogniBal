@@ -10,6 +10,9 @@
     <string name="settings_security">セキュリティとプライバシー</string>
     <string name="settings_more">その他の設定</string>
     <string name="settings_about">CogniBal について</string>
+    <string name="settings_feedback">フィードバック</string>
+    <string name="feedback_email_subject">CogniBal へのご意見</string>
+    <string name="feedback_email_unavailable">メールアプリが見つかりません</string>
     <string name="settings_choose">設定を選択</string>
     <string name="language">言語</string>
     <string name="language_follow_system">システムの言語に合わせる</string>
@@ -38,6 +41,7 @@
     <string name="shortcut_reports">レポート</string>
     <string name="shortcut_budget">予算</string>
     <string name="shortcut_assets">資産</string>
+    <string name="shortcut_overview">概要</string>
     <string name="shortcut_coming_soon">%1$sは近日公開</string>
     <string name="more_features">その他</string>
     <string name="default_currency">既定の通貨</string>
@@ -81,4 +85,13 @@
     <plurals name="entry_count">
         <item quantity="other">%d件</item>
     </plurals>
+    <string name="wheel_year">年</string>
+    <string name="wheel_month">月</string>
+    <string name="wheel_day">日</string>
+    <string name="wheel_hour">時</string>
+    <string name="wheel_minute">分</string>
+    <string name="wheel_second">秒</string>
+    <string name="wheel_next">次へ</string>
+    <string name="wheel_previous">前へ</string>
+    <string name="wheel_column_value">%1$s %2$s</string>
 </resources>

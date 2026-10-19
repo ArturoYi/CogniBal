@@ -35,6 +35,12 @@ internal sealed interface SettingsUiEvent {
     data object ConfirmClearCache : SettingsUiEvent
     data object OpenAboutDialog : SettingsUiEvent
     data object DismissAboutDialog : SettingsUiEvent
+
+    /** 打开日历总览。页面稍后接入。 */
+    data object OpenCalendarOverview : SettingsUiEvent
+
+    /** 用系统邮件客户端给开发者写反馈。 */
+    data object SendFeedback : SettingsUiEvent
 }
 
 internal const val DEFAULT_CACHE_SIZE = "12.6 MB"
