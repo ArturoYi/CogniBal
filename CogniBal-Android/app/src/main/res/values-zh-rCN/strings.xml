@@ -67,6 +67,15 @@
     <string name="shortcut_assets">资产</string>
     <string name="shortcut_overview">总览</string>
     <string name="shortcut_coming_soon">%1$s即将开放</string>
+    <string name="insight_previous_month">上个月</string>
+    <string name="insight_next_month">下个月</string>
+    <string name="insight_empty">这段时间还没有账单</string>
+    <string name="overview_empty_day">这一天还没有账单</string>
+    <string name="overview_today">今天</string>
+    <string name="overview_day_amounts_cd">%1$s，收入 %2$s，支出 %3$s</string>
+    <string name="reports_span_six">近6个月</string>
+    <string name="reports_span_twelve">近12个月</string>
+    <string name="reports_chart_cd">各月收入和支出</string>
     <string name="more_features">更多功能</string>
     <string name="default_currency">默认货币符号</string>
     <string name="haptic_feedback">操作触感反馈</string>

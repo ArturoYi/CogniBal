@@ -53,6 +53,18 @@ internal data object BackupSettings : NavKey
 @Serializable
 internal data object SecuritySettings : NavKey
 
+/** 统计。按分类看一个月的支出或收入。 */
+@Serializable
+internal data object Statistics : NavKey
+
+/** 总览。一个月的日历，点开某一天的账单。 */
+@Serializable
+internal data object Overview : NavKey
+
+/** 报表。近几个月的收支趋势。 */
+@Serializable
+internal data object Reports : NavKey
+
 /**
  * 首页两个标签。各自有一条返回栈。
  *
@@ -82,4 +94,7 @@ internal val settingsDetailKeys: Set<NavKey> = setOf(
     AppearanceSettings,
     BackupSettings,
     SecuritySettings,
+    Statistics,
+    Overview,
+    Reports,
 )

@@ -14,7 +14,7 @@ import androidx.datastore.preferences.preferencesDataStore
 /**
  * 偏好 DataStore。委托挂在文件顶层，整个进程只有这一份实例。
  *
- * 文件损坏时用空配置替换，Repository 再把它解释成默认的 [com.example.cognibal.screen.settings.model.AppPreferences]。
+ * 文件损坏时用空配置替换，Repository 再把它解释成默认的 [com.example.cognibal.screen.feature.settings.model.AppPreferences]。
  * 旧版 SharedPreferences（`cognibal_theme_preferences`）在首次读取时迁入同名键，迁完后由 DataStore 删掉旧文件。
  */
 val Context.appPreferencesDataStore: DataStore<Preferences> by preferencesDataStore(

@@ -67,6 +67,15 @@
     <string name="shortcut_assets">資產</string>
     <string name="shortcut_overview">總覽</string>
     <string name="shortcut_coming_soon">%1$s即將推出</string>
+    <string name="insight_previous_month">上個月</string>
+    <string name="insight_next_month">下個月</string>
+    <string name="insight_empty">這段時間還沒有賬單</string>
+    <string name="overview_empty_day">這一天還沒有賬單</string>
+    <string name="overview_today">今天</string>
+    <string name="overview_day_amounts_cd">%1$s，收入 %2$s，支出 %3$s</string>
+    <string name="reports_span_six">近6個月</string>
+    <string name="reports_span_twelve">近12個月</string>
+    <string name="reports_chart_cd">各月收入和支出</string>
     <string name="more_features">更多功能</string>
     <string name="default_currency">預設貨幣符號</string>
     <string name="haptic_feedback">操作觸感回饋</string>

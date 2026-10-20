@@ -12,17 +12,20 @@ import androidx.compose.runtime.staticCompositionLocalOf
 /**
  * 顶层窗口与导航骨架的共享状态。
  *
- * [windowAdaptiveInfo] 在 [com.example.cognibal.screen.index.ui.IndexScreen] 里用
+ * [windowAdaptiveInfo] 在 [com.example.cognibal.screen.feature.home.IndexScreen] 里用
  * `currentWindowAdaptiveInfoV2()` 算一次。后续屏幕读这里，
  * 这样 large / extra-large 宽度断点全应用一致。
  *
- * 要收起导航条时，在副作用里改 [isNavigationVisible]。骨架会立刻让出或收回这块区域。
+ * 窄屏底栏不占内容槽高度，画在页面下面。[navigationOverlayInsets] 是它盖住的那一截，
+ * 首页用它把底色收到栏上方，二级页不收，滑进来时高度不变。
+ * 要收起底栏时，在副作用里改 [isNavigationVisible]。底栏不再绘制，首页也不再留这块高度。
  */
 @Stable
 class CogniBalScaffoldInfo(
     val windowAdaptiveInfo: WindowAdaptiveInfo,
     val navigationSuiteType: NavigationSuiteType,
     val navigationConsumedInsets: WindowInsets,
+    val navigationOverlayInsets: WindowInsets,
     private val navigationVisibleState: MutableState<Boolean>,
 ) {
     var isNavigationVisible: Boolean

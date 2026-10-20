@@ -2,11 +2,13 @@ package com.example.cognibal.ui.insets
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,10 +18,13 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -28,6 +33,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import com.example.cognibal.ui.background.currentPageBackgroundColor
 import com.example.cognibal.ui.scaffold.LocalCogniBalScaffold
+
+/**
+ * 首页底栏已经在 [HomeTabChrome] 里把底边留出来。这里再计底部 inset 会垫出两份。
+ * 二级页不包那一层，底部仍按整窗安全区计算。
+ */
+private val LocalHomeNavigationClearsBottom = staticCompositionLocalOf { false }
 
 /**
  * 导航骨架还没消费掉的安全绘制区：状态栏、刘海、剩余导航栏和输入法。
@@ -39,14 +50,52 @@ import com.example.cognibal.ui.scaffold.LocalCogniBalScaffold
 @Composable
 fun screenContentWindowInsets(): WindowInsets {
     val safeDrawing = WindowInsets.safeDrawing
-    val consumed = LocalCogniBalScaffold.current?.navigationConsumedInsets ?: return safeDrawing
-    return safeDrawing.exclude(consumed)
+    val consumed = LocalCogniBalScaffold.current?.navigationConsumedInsets
+    val remaining = if (consumed == null) safeDrawing else safeDrawing.exclude(consumed)
+    return if (LocalHomeNavigationClearsBottom.current) {
+        remaining.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal)
+    } else {
+        remaining
+    }
+}
+
+/**
+ * 窄屏首页的外框。底栏画在这一层下面，所以底色和内容都收到栏的上方，栏才露得出来。
+ *
+ * 底边取栏高和系统底边（含输入法）的较大值。二级页不是首页标签，不走这里，铺满后盖住底栏。
+ * 内容槽高度始终不变，底栏被盖住或露出来都不会把页面撑高或压矮。
+ */
+@Composable
+internal fun HomeTabChrome(
+    isHomeTab: Boolean,
+    content: @Composable () -> Unit,
+) {
+    val overlay = LocalCogniBalScaffold.current?.navigationOverlayInsets
+    val density = LocalDensity.current
+    if (!isHomeTab || overlay == null || overlay.getBottom(density) == 0) {
+        content()
+        return
+    }
+    val bottomClearance = overlay.union(
+        WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom),
+    )
+    CompositionLocalProvider(LocalHomeNavigationClearsBottom provides true) {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .windowInsetsPadding(bottomClearance)
+                .consumeWindowInsets(bottomClearance),
+        ) {
+            content()
+        }
+    }
 }
 
 /**
  * 屏幕根节点的安全区。已经包含输入法。
  *
- * 放在 Index 内容槽里。底栏或侧栏占用的系统栏 inset 已由内容槽消费，这里只会补上剩余部分。
+ * 放在 Index 内容槽里。侧栏占用的系统栏 inset 已由内容槽消费，窄屏底栏由首页外框消费。
+ * 这里只会补上剩余部分。
  * 输入区若改走 [imeFit]，这条链上就只保留其中一种。
  */
 fun Modifier.screenSafeDrawing(): Modifier = safeDrawingPadding()

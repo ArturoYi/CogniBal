@@ -13,6 +13,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import com.example.cognibal.ui.background.PageSolidBackground
+import com.example.cognibal.ui.insets.HomeTabChrome
 import androidx.navigation3.scene.NavigationBackHandler
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.scene.SceneState
@@ -67,8 +68,10 @@ private fun rememberHomeEntries(
 private fun <T : Any> rememberPageSolidBackgroundDecorator(): NavEntryDecorator<T> {
     return remember {
         NavEntryDecorator { entry ->
-            PageSolidBackground {
-                entry.Content()
+            HomeTabChrome(isHomeTab = entry.metadata[HomeTabMetadata] == true) {
+                PageSolidBackground {
+                    entry.Content()
+                }
             }
         }
     }

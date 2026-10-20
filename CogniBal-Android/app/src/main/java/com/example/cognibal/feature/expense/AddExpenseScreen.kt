@@ -1,0 +1,838 @@
+package com.example.cognibal.screen.feature.expense
+
+import android.text.format.DateFormat
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.cognibal.R
+import com.example.cognibal.data.database.model.BillType
+import com.example.cognibal.screen.feature.bill.model.accountColorValue
+import com.example.cognibal.screen.feature.expense.model.AddBillIssue
+import com.example.cognibal.screen.feature.expense.model.categoryIcon
+import com.example.cognibal.screen.feature.expense.state.AccountChoice
+import com.example.cognibal.screen.feature.expense.state.AddExpenseUiEvent
+import com.example.cognibal.screen.feature.expense.state.AddExpenseUiState
+import com.example.cognibal.screen.feature.expense.state.CategoryChoice
+import com.example.cognibal.screen.feature.expense.state.CategoryCreateResult
+import com.example.cognibal.ui.background.PageBackgroundHost
+import com.example.cognibal.ui.background.RequestPageBackground
+import com.example.cognibal.ui.insets.screenContentWindowInsets
+import com.example.cognibal.ui.interaction.interactiveClick
+import com.example.cognibal.ui.preview.FormFactorPreviews
+import com.example.cognibal.ui.theme.CogniBalTheme
+import com.example.cognibal.ui.theme.appColors
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
+import kotlinx.coroutines.launch
+import com.example.cognibal.screen.feature.expense.model.onCategory
+import com.example.cognibal.screen.feature.expense.model.messageRes
+
+/**
+ * 记一笔。顶栏切换支出和收入，先点分类，再填金额和备注。
+ * 金额和备注都用系统键盘，页面不自动抢焦点。返回直接离开这一页。
+ * 账单记入当前展示的账本，账本本身不再做成一行选择。
+ */
+@Composable
+internal fun AddExpenseRoute(
+    typeCode: Int,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: AddExpenseViewModel = viewModel(
+        key = AddExpenseViewModel.key(typeCode),
+        factory = AddExpenseViewModel.factory(typeCode),
+    ),
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showCreate by rememberSaveable { mutableStateOf(false) }
+    var showDate by rememberSaveable { mutableStateOf(false) }
+    var showTime by rememberSaveable { mutableStateOf(false) }
+    var createError by remember { mutableStateOf<AddBillIssue?>(null) }
+    DisposableEffect(viewModel) {
+        viewModel.onEnter()
+        onDispose { viewModel.onLeave() }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.finished.collect { onBack() }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.categoryCreated.collect { result ->
+            when (result) {
+                is CategoryCreateResult.Saved -> {
+                    showCreate = false
+                    createError = null
+                }
+                is CategoryCreateResult.Failed -> createError = result.issue
+            }
+        }
+    }
+    AddExpenseScreen(
+        uiState = uiState,
+        onEvent = viewModel::onEvent,
+        onBack = onBack,
+        showCreateCategory = showCreate,
+        createError = createError,
+        onShowCreateCategory = {
+            createError = null
+            showCreate = true
+        },
+        onDismissCreateCategory = {
+            showCreate = false
+            createError = null
+        },
+        showDate = showDate,
+        showTime = showTime,
+        onShowDate = { showDate = true },
+        onShowTime = { showTime = true },
+        onDismissDate = { showDate = false },
+        onDismissTime = { showTime = false },
+        modifier = modifier,
+    )
+}
+
+@Composable
+internal fun AddExpenseScreen(
+    uiState: AddExpenseUiState,
+    onEvent: (AddExpenseUiEvent) -> Unit,
+    onBack: () -> Unit,
+    modifier: Modifier = Modifier,
+    isEdit: Boolean = false,
+    onDelete: () -> Unit = {},
+    showCreateCategory: Boolean = false,
+    createError: AddBillIssue? = null,
+    onShowCreateCategory: () -> Unit = {},
+    onDismissCreateCategory: () -> Unit = {},
+    showDate: Boolean = false,
+    showTime: Boolean = false,
+    onShowDate: () -> Unit = {},
+    onShowTime: () -> Unit = {},
+    onDismissDate: () -> Unit = {},
+    onDismissTime: () -> Unit = {},
+) {
+    val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val categorySelected = uiState.categoryId != null
+    val account = uiState.accounts.firstOrNull { it.id == uiState.accountId }
+    val horizontalInsets = screenContentWindowInsets().only(WindowInsetsSides.Horizontal)
+    RequestPageBackground()
+    Column(modifier.fillMaxSize()) {
+        TypeBar(
+            type = uiState.type,
+            enabled = !uiState.saving,
+            onBack = onBack,
+            onType = { onEvent(AddExpenseUiEvent.TypeSelected(it)) },
+        )
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+                .windowInsetsPadding(horizontalInsets)
+                .imePadding(),
+            contentAlignment = Alignment.TopCenter,
+        ) {
+            if (uiState.ready) Column(
+                modifier = Modifier
+                    .widthIn(max = FormMaxWidth)
+                    .fillMaxSize(),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp, bottom = 16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    if (account != null) {
+                        Text(
+                            text = stringResource(R.string.bill_entry_into_account, account.name),
+                            color = MaterialTheme.appColors.textTertiary,
+                            fontSize = 13.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 4.dp),
+                        )
+                    }
+                    CategorySection(
+                        categories = uiState.categories,
+                        selectedId = uiState.categoryId,
+                        enabled = !uiState.saving,
+                        onSelect = { onEvent(AddExpenseUiEvent.CategorySelected(it)) },
+                        onCreate = onShowCreateCategory,
+                    )
+                    if (categorySelected) {
+                        EntryFields(
+                            uiState = uiState,
+                            isEdit = isEdit,
+                            onEvent = onEvent,
+                            onDelete = onDelete,
+                            onPickDate = onShowDate,
+                            onPickTime = onShowTime,
+                        )
+                    } else {
+                        Spacer(Modifier.windowInsetsPadding(navigationBottomInset()))
+                    }
+                }
+                if (categorySelected) {
+                    SaveBar(
+                        saving = uiState.saving,
+                        includeBottomInset = !imeVisible,
+                        onSave = { onEvent(AddExpenseUiEvent.Save) },
+                    )
+                }
+            }
+        }
+    }
+    if (showCreateCategory) {
+        CreateCategoryDialog(
+            error = createError,
+            onConfirm = { name, iconKey, colorHex ->
+                onEvent(AddExpenseUiEvent.CreateCategory(name, iconKey, colorHex))
+            },
+            onDismiss = onDismissCreateCategory,
+        )
+    }
+    if (showDate) {
+        BillDateDialog(
+            initial = uiState.billTime.toLocalDate(),
+            onConfirm = { date ->
+                onEvent(AddExpenseUiEvent.DatePicked(date))
+                onDismissDate()
+            },
+            onDismiss = onDismissDate,
+        )
+    }
+    if (showTime) {
+        BillTimeDialog(
+            hour = uiState.billTime.hour,
+            minute = uiState.billTime.minute,
+            second = uiState.billTime.second,
+            onConfirm = { hour, minute, second ->
+                onEvent(AddExpenseUiEvent.TimePicked(hour, minute, second))
+                onDismissTime()
+            },
+            onDismiss = onDismissTime,
+        )
+    }
+}
+
+@Composable
+private fun TypeBar(
+    type: BillType,
+    enabled: Boolean,
+    onBack: () -> Unit,
+    onType: (BillType) -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(
+                screenContentWindowInsets().only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+            )
+            .heightIn(min = 56.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .interactiveClick(enabled = enabled, onClick = onBack),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                contentDescription = stringResource(R.string.navigate_back),
+                tint = colors.textPrimary,
+            )
+        }
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TypeChip(
+                label = stringResource(R.string.bill_fab_expense),
+                selected = type == BillType.Expense,
+                color = colors.expense,
+                enabled = enabled,
+                onClick = { onType(BillType.Expense) },
+            )
+            Spacer(Modifier.width(8.dp))
+            TypeChip(
+                label = stringResource(R.string.bill_fab_income),
+                selected = type == BillType.Income,
+                color = colors.income,
+                enabled = enabled,
+                onClick = { onType(BillType.Income) },
+            )
+        }
+        Spacer(Modifier.size(48.dp))
+    }
+}
+
+@Composable
+private fun TypeChip(
+    label: String,
+    selected: Boolean,
+    color: Color,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    Text(
+        text = label,
+        color = if (selected) color.onCategory() else colors.textSecondary,
+        fontSize = 15.sp,
+        fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+        modifier = Modifier
+            .semantics { this.selected = selected }
+            .background(
+                if (selected) color else colors.tagBackground,
+                RoundedCornerShape(20.dp),
+            )
+            .interactiveClick(enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    )
+}
+
+@Composable
+private fun CategorySection(
+    categories: List<CategoryChoice>,
+    selectedId: Long?,
+    enabled: Boolean,
+    onSelect: (Long) -> Unit,
+    onCreate: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = stringResource(R.string.bill_entry_category),
+            color = colors.textSecondary,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium,
+            modifier = Modifier.padding(start = 4.dp),
+        )
+        if (categories.isEmpty()) {
+            Text(
+                text = stringResource(R.string.bill_entry_no_category),
+                color = colors.textTertiary,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 4.dp),
+            )
+        }
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            categories.forEach { category ->
+                CategoryTile(
+                    category = category,
+                    selected = category.id == selectedId,
+                    enabled = enabled,
+                    onClick = { onSelect(category.id) },
+                )
+            }
+            NewCategoryTile(enabled = enabled, onClick = onCreate)
+        }
+    }
+}
+
+@Composable
+private fun CategoryTile(
+    category: CategoryChoice,
+    selected: Boolean,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val tint = accountColorValue(category.colorKey)
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(76.dp)
+            .semantics(mergeDescendants = true) { this.selected = selected }
+            .interactiveClick(enabled = enabled, role = Role.RadioButton, onClick = onClick)
+            .padding(4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(if (selected) tint else colors.tagBackground, RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = categoryIcon(category.iconKey),
+                contentDescription = null,
+                tint = if (selected) tint.onCategory() else tint,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Text(
+            text = category.name,
+            color = if (selected) tint else colors.textSecondary,
+            fontSize = 12.sp,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .width(68.dp),
+        )
+    }
+}
+
+@Composable
+private fun NewCategoryTile(
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(76.dp)
+            .interactiveClick(enabled = enabled, onClick = onClick)
+            .padding(4.dp),
+    ) {
+        Box(
+            modifier = Modifier
+                .size(44.dp)
+                .background(colors.tagBackground, RoundedCornerShape(14.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Rounded.Add,
+                contentDescription = stringResource(R.string.bill_entry_new_category),
+                tint = colors.primary,
+                modifier = Modifier.size(22.dp),
+            )
+        }
+        Text(
+            text = stringResource(R.string.bill_entry_new_category),
+            color = colors.primary,
+            fontSize = 12.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .width(68.dp),
+        )
+    }
+}
+
+@Composable
+private fun EntryFields(
+    uiState: AddExpenseUiState,
+    isEdit: Boolean,
+    onEvent: (AddExpenseUiEvent) -> Unit,
+    onDelete: () -> Unit,
+    onPickDate: () -> Unit,
+    onPickTime: () -> Unit,
+) {
+    val focusManager = LocalFocusManager.current
+    val amountBringIntoView = remember { BringIntoViewRequester() }
+    LaunchedEffect(Unit) {
+        amountBringIntoView.bringIntoView()
+    }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        AmountField(
+            amountText = uiState.amountText,
+            symbol = uiState.currencySymbol,
+            type = uiState.type,
+            enabled = !uiState.saving,
+            bringIntoView = amountBringIntoView,
+            onChange = { onEvent(AddExpenseUiEvent.AmountChanged(it)) },
+            onNext = { focusManager.moveFocus(FocusDirection.Down) },
+        )
+        RemarkField(
+            value = uiState.remark,
+            enabled = !uiState.saving,
+            onChange = { onEvent(AddExpenseUiEvent.RemarkChanged(it)) },
+            onDone = { focusManager.clearFocus() },
+        )
+        ClockRow(
+            label = stringResource(R.string.bill_entry_date),
+            value = localizedBillDate(uiState.billTime),
+            enabled = !uiState.saving,
+            onClick = {
+                focusManager.clearFocus()
+                onPickDate()
+            },
+        )
+        ClockRow(
+            label = stringResource(R.string.bill_entry_time),
+            value = localizedBillTime(uiState.billTime),
+            enabled = !uiState.saving,
+            onClick = {
+                focusManager.clearFocus()
+                onPickTime()
+            },
+        )
+        val issue = uiState.issue
+        if (issue != null) {
+            Text(
+                text = stringResource(issue.messageRes()),
+                color = MaterialTheme.appColors.expense,
+                fontSize = 14.sp,
+                lineHeight = 20.sp,
+            )
+        }
+        if (isEdit) {
+            TextButton(
+                onClick = onDelete,
+                enabled = !uiState.saving,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(
+                    text = stringResource(R.string.bill_entry_delete),
+                    color = MaterialTheme.appColors.expense,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AmountField(
+    amountText: String,
+    symbol: String,
+    type: BillType,
+    enabled: Boolean,
+    bringIntoView: BringIntoViewRequester,
+    onChange: (String) -> Unit,
+    onNext: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val amountColor = type.amountColor()
+    val scope = rememberCoroutineScope()
+    var focused by remember { mutableStateOf(false) }
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    LaunchedEffect(focused, imeBottom) {
+        if (focused) bringIntoView.bringIntoView()
+    }
+    OutlinedTextField(
+        value = amountText,
+        onValueChange = onChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoView)
+            .onFocusChanged { state ->
+                focused = state.isFocused
+                if (state.isFocused) scope.launch { bringIntoView.bringIntoView() }
+            },
+        enabled = enabled,
+        textStyle = TextStyle(
+            color = amountColor,
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold,
+        ),
+        label = { Text(stringResource(R.string.bill_entry_amount)) },
+        placeholder = { Text(stringResource(R.string.bill_entry_amount_hint)) },
+        prefix = {
+            Text(
+                text = symbol,
+                color = amountColor,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Decimal,
+            imeAction = ImeAction.Next,
+        ),
+        keyboardActions = KeyboardActions(onNext = { onNext() }),
+        shape = RoundedCornerShape(16.dp),
+        colors = entryFieldColors(textColor = amountColor, prefixColor = amountColor),
+    )
+}
+
+@Composable
+private fun RemarkField(
+    value: String,
+    enabled: Boolean,
+    onChange: (String) -> Unit,
+    onDone: () -> Unit,
+) {
+    val bringIntoView = remember { BringIntoViewRequester() }
+    val scope = rememberCoroutineScope()
+    var focused by remember { mutableStateOf(false) }
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    LaunchedEffect(focused, imeBottom) {
+        if (focused) bringIntoView.bringIntoView()
+    }
+    OutlinedTextField(
+        value = value,
+        onValueChange = onChange,
+        modifier = Modifier
+            .fillMaxWidth()
+            .bringIntoViewRequester(bringIntoView)
+            .onFocusChanged { state ->
+                focused = state.isFocused
+                if (state.isFocused) scope.launch { bringIntoView.bringIntoView() }
+            },
+        enabled = enabled,
+        label = { Text(stringResource(R.string.account_field_remark)) },
+        placeholder = { Text(stringResource(R.string.account_field_remark_hint)) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { onDone() }),
+        shape = RoundedCornerShape(16.dp),
+        colors = entryFieldColors(),
+    )
+}
+
+@Composable
+private fun ClockRow(
+    label: String,
+    value: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(colors.cardBackground, RoundedCornerShape(16.dp))
+            .interactiveClick(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = label, color = colors.textSecondary, fontSize = 14.sp)
+        Text(
+            text = value,
+            color = colors.textPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun localizedBillDate(time: LocalDateTime): String {
+    val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val formatter = remember(locale) {
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+    }
+    return time.format(formatter)
+}
+
+@Composable
+private fun localizedBillTime(time: LocalDateTime): String {
+    val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+    val use24Hour = DateFormat.is24HourFormat(LocalContext.current)
+    val pattern = remember(locale, use24Hour) {
+        DateFormat.getBestDateTimePattern(locale, if (use24Hour) "Hms" else "hms")
+    }
+    val formatter = remember(pattern, locale) { DateTimeFormatter.ofPattern(pattern, locale) }
+    return time.format(formatter)
+}
+
+@Composable
+private fun entryFieldColors(
+    textColor: Color = MaterialTheme.appColors.textPrimary,
+    prefixColor: Color = textColor,
+) = OutlinedTextFieldDefaults.colors(
+    focusedTextColor = textColor,
+    unfocusedTextColor = textColor,
+    disabledTextColor = MaterialTheme.appColors.textSecondary,
+    focusedContainerColor = MaterialTheme.appColors.cardBackground,
+    unfocusedContainerColor = MaterialTheme.appColors.cardBackground,
+    disabledContainerColor = MaterialTheme.appColors.cardBackground,
+    cursorColor = MaterialTheme.appColors.primary,
+    focusedBorderColor = MaterialTheme.appColors.primary,
+    unfocusedBorderColor = MaterialTheme.appColors.divider,
+    focusedLabelColor = MaterialTheme.appColors.primary,
+    unfocusedLabelColor = MaterialTheme.appColors.textSecondary,
+    focusedPlaceholderColor = MaterialTheme.appColors.textTertiary,
+    unfocusedPlaceholderColor = MaterialTheme.appColors.textTertiary,
+    focusedPrefixColor = prefixColor,
+    unfocusedPrefixColor = prefixColor,
+)
+
+@Composable
+private fun SaveBar(
+    saving: Boolean,
+    includeBottomInset: Boolean,
+    onSave: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val bottomInset = navigationBottomInset()
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(
+                if (includeBottomInset) {
+                    Modifier
+                        .windowInsetsPadding(bottomInset)
+                        .consumeWindowInsets(bottomInset)
+                } else {
+                    Modifier
+                },
+            )
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Button(
+            onClick = onSave,
+            enabled = !saving,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.primary,
+                contentColor = colors.onPrimary,
+                disabledContainerColor = colors.primary.copy(alpha = 0.4f),
+                disabledContentColor = colors.onPrimary.copy(alpha = 0.7f),
+            ),
+        ) {
+            Text(
+                text = stringResource(R.string.bill_entry_save),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+            )
+        }
+    }
+}
+
+@Composable
+private fun navigationBottomInset() = screenContentWindowInsets()
+    .exclude(WindowInsets.ime)
+    .only(WindowInsetsSides.Bottom)
+
+@Composable
+private fun BillType.amountColor(): Color {
+    val colors = MaterialTheme.appColors
+    return when (this) {
+        BillType.Expense -> colors.expense
+        BillType.Income -> colors.income
+        BillType.Transfer -> colors.textPrimary
+    }
+}
+
+private val FormMaxWidth = 640.dp
+
+@FormFactorPreviews
+@Composable
+private fun AddExpenseTagsPreview() {
+    CogniBalTheme {
+        PageBackgroundHost {
+            AddExpenseScreen(
+                uiState = previewState(categoryId = null, amountText = ""),
+                onEvent = {},
+                onBack = {},
+            )
+        }
+    }
+}
+
+@FormFactorPreviews
+@Composable
+private fun AddExpenseAmountPreview() {
+    CogniBalTheme {
+        PageBackgroundHost {
+            AddExpenseScreen(
+                uiState = previewState(categoryId = 1L, amountText = "128.50"),
+                onEvent = {},
+                onBack = {},
+            )
+        }
+    }
+}
+
+private fun previewState(categoryId: Long?, amountText: String): AddExpenseUiState {
+    val categories = listOf(
+        CategoryChoice(1, "餐饮", "restaurant", "#FFD96C6C"),
+        CategoryChoice(2, "交通", "directions_bus", "#FF78A898"),
+        CategoryChoice(3, "购物", "shopping_bag", "#FFE0A15A"),
+        CategoryChoice(4, "居住", "home", "#FF7EA0C4"),
+    )
+    return AddExpenseUiState(
+        ready = true,
+        type = BillType.Expense,
+        amountText = amountText,
+        categories = categories,
+        categoryId = categoryId,
+        accounts = listOf(AccountChoice(1, "现金", "cash", "teal")),
+        accountId = 1L,
+        billTime = LocalDateTime.of(2026, 10, 18, 9, 30),
+        currencySymbol = "¥",
+    )
+}

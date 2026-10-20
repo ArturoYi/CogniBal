@@ -6,9 +6,9 @@ import androidx.datastore.preferences.core.MutablePreferences
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
-import com.example.cognibal.screen.settings.model.AppPreferences
-import com.example.cognibal.screen.settings.model.CurrencyPreference
-import com.example.cognibal.screen.settings.model.DarkModePreference
+import com.example.cognibal.screen.feature.settings.model.AppPreferences
+import com.example.cognibal.screen.feature.settings.model.CurrencyPreference
+import com.example.cognibal.screen.feature.settings.model.DarkModePreference
 import com.example.cognibal.ui.theme.AppThemeStyle
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers

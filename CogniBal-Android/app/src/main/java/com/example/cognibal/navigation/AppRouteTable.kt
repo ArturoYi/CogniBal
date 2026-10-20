@@ -7,16 +7,19 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
-import com.example.cognibal.screen.bill.ui.AccountDetailPlaceholder
-import com.example.cognibal.screen.bill.ui.AccountEditorRoute
-import com.example.cognibal.screen.bill.ui.BillHistoryRoute
-import com.example.cognibal.screen.bill.ui.BillRoute
-import com.example.cognibal.screen.expense.ui.AddExpenseRoute
-import com.example.cognibal.screen.settings.ui.AppearanceSettingsRoute
-import com.example.cognibal.screen.settings.ui.BackupSettingsRoute
-import com.example.cognibal.screen.settings.ui.SecuritySettingsRoute
-import com.example.cognibal.screen.settings.ui.SettingsDetailPlaceholder
-import com.example.cognibal.screen.settings.ui.SettingsListRoute
+import com.example.cognibal.screen.feature.bill.account.AccountDetailPlaceholder
+import com.example.cognibal.screen.feature.bill.account.AccountEditorRoute
+import com.example.cognibal.screen.feature.bill.history.BillHistoryRoute
+import com.example.cognibal.screen.feature.bill.BillRoute
+import com.example.cognibal.screen.feature.expense.AddExpenseRoute
+import com.example.cognibal.screen.feature.settings.appearance.AppearanceSettingsRoute
+import com.example.cognibal.screen.feature.settings.backup.BackupSettingsRoute
+import com.example.cognibal.screen.feature.settings.overview.OverviewRoute
+import com.example.cognibal.screen.feature.settings.reports.ReportsRoute
+import com.example.cognibal.screen.feature.settings.security.SecuritySettingsRoute
+import com.example.cognibal.screen.feature.settings.SettingsDetailPlaceholder
+import com.example.cognibal.screen.feature.settings.SettingsListRoute
+import com.example.cognibal.screen.feature.settings.statistics.StatisticsRoute
 
 /**
  * 路由表。每个目的地只在这里绑定一次界面。
@@ -88,6 +91,27 @@ internal fun EntryProviderScope<NavKey>.appRoutes(navigator: AppNavigator) {
         metadata = ListDetailSceneStrategy.detailPane(),
     ) {
         SecuritySettingsRoute(
+            onBack = dropUnlessResumed(block = navigator::back),
+        )
+    }
+    entry<Statistics>(
+        metadata = ListDetailSceneStrategy.detailPane(),
+    ) {
+        StatisticsRoute(
+            onBack = dropUnlessResumed(block = navigator::back),
+        )
+    }
+    entry<Overview>(
+        metadata = ListDetailSceneStrategy.detailPane(),
+    ) {
+        OverviewRoute(
+            onBack = dropUnlessResumed(block = navigator::back),
+        )
+    }
+    entry<Reports>(
+        metadata = ListDetailSceneStrategy.detailPane(),
+    ) {
+        ReportsRoute(
             onBack = dropUnlessResumed(block = navigator::back),
         )
     }

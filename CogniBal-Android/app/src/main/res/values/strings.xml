@@ -104,6 +104,15 @@
     <string name="shortcut_assets">Assets</string>
     <string name="shortcut_overview">Overview</string>
     <string name="shortcut_coming_soon">%1$s is coming soon</string>
+    <string name="insight_previous_month">Previous month</string>
+    <string name="insight_next_month">Next month</string>
+    <string name="insight_empty">No bills in this period</string>
+    <string name="overview_empty_day">No bills on this day</string>
+    <string name="overview_today">Today</string>
+    <string name="overview_day_amounts_cd">%1$s, income %2$s, expense %3$s</string>
+    <string name="reports_span_six">6 months</string>
+    <string name="reports_span_twelve">12 months</string>
+    <string name="reports_chart_cd">Income and expense by month</string>
     <string name="more_features">More</string>
     <string name="default_currency">Default currency</string>
     <string name="haptic_feedback">Haptic feedback</string>
