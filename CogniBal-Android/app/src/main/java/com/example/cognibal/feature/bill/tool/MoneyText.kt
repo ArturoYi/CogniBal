@@ -18,6 +18,14 @@ internal fun formatMinorAmount(amount: Long, locale: Locale = Locale.getDefault(
     return if (negative) "-$text" else text
 }
 
+/** 编辑框里的金额，不带分组符。0 或负数留空。 */
+internal fun minorToInput(amount: Long): String {
+    if (amount <= 0L) return ""
+    val major = amount / 100
+    val minor = (amount % 100).toInt()
+    return if (minor == 0) major.toString() else "$major.${minor.toString().padStart(2, '0')}"
+}
+
 /**
  * 把用户输入的主单位金额收成分。
  *

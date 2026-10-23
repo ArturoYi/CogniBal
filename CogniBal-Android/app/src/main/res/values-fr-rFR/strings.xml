@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Créer un fichier de sauvegarde à emporter</string>
     <string name="backup_import">Importer la sauvegarde</string>
     <string name="backup_import_subtitle">Restaurer les opérations depuis un fichier</string>
-    <string name="backup_nearby">Partage à proximité</string>
-    <string name="backup_nearby_subtitle">Envoyer une sauvegarde à un appareil à proximité</string>
+    <string name="backup_nearby">Partage Bluetooth</string>
+    <string name="backup_nearby_subtitle">Envoyer l\'archive chiffrée à un appareil à proximité par Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d jour</item>

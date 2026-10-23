@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Yanında götürebileceğin bir yedek dosyası oluştur</string>
     <string name="backup_import">Yedeği içe aktar</string>
     <string name="backup_import_subtitle">İşlemleri bir yedek dosyasından geri yükle</string>
-    <string name="backup_nearby">Yakında paylaş</string>
-    <string name="backup_nearby_subtitle">Yedeği yakındaki bir cihaza gönder</string>
+    <string name="backup_nearby">Bluetooth ile paylaş</string>
+    <string name="backup_nearby_subtitle">Şifreli yedeği yakındaki bir cihaza Bluetooth ile gönder</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d gündür</item>

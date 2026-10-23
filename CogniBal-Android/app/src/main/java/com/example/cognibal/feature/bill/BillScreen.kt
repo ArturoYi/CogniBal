@@ -51,6 +51,7 @@ import com.example.cognibal.screen.feature.expense.AddExpenseViewModel
 import com.example.cognibal.R
 import com.example.cognibal.data.database.model.AccountType
 import com.example.cognibal.data.database.model.BillType
+import com.example.cognibal.data.repository.BudgetLevel
 import com.example.cognibal.screen.feature.bill.model.accountColorValue
 import com.example.cognibal.screen.feature.bill.model.accountIconImage
 import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
@@ -85,6 +86,7 @@ internal fun BillRoute(
     onCreateAccount: () -> Unit,
     onEditAccount: (Long) -> Unit,
     onViewAll: (Long) -> Unit,
+    onOpenBudget: () -> Unit,
     modifier: Modifier = Modifier,
     homeViewModel: BillHomeViewModel = viewModel(factory = BillHomeViewModel.Factory),
 ) {
@@ -105,6 +107,7 @@ internal fun BillRoute(
             val accountId = uiState.currentId ?: return@BillScreen
             onViewAll(accountId)
         },
+        onOpenBudget = onOpenBudget,
         modifier = modifier,
     )
 }
@@ -165,6 +168,7 @@ internal fun BillScreen(
     onCreateAccount: () -> Unit,
     onEditAccount: (Long) -> Unit,
     onViewAll: () -> Unit,
+    onOpenBudget: () -> Unit,
     modifier: Modifier = Modifier,
     headerState: BillHomeUiState = uiState,
 ) {
@@ -190,6 +194,7 @@ internal fun BillScreen(
             BillHomeList(
                 uiState = uiState,
                 onViewAll = onViewAll,
+                onOpenBudget = onOpenBudget,
             )
         }
     }
@@ -469,6 +474,7 @@ private fun BillScreenPreview() {
                 onCreateAccount = {},
                 onEditAccount = {},
                 onViewAll = {},
+                onOpenBudget = {},
             )
         }
     }
@@ -490,7 +496,7 @@ private val previewAccounts = BillHomeUiState(
             spent = 246_000L,
             limit = 500_000L,
             ratio = 0.49f,
-            over = false,
+            level = BudgetLevel.Normal,
         ),
     ),
     recent = listOf(

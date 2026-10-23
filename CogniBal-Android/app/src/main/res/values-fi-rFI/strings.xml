@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Luo tiedosto, jonka voit ottaa mukaan</string>
     <string name="backup_import">Tuo varmuuskopio</string>
     <string name="backup_import_subtitle">Palauta tapahtumat varmuuskopiotiedostosta</string>
-    <string name="backup_nearby">Jako lähellä</string>
-    <string name="backup_nearby_subtitle">Lähetä varmuuskopio lähellä olevalle laitteelle</string>
+    <string name="backup_nearby">Jako Bluetoothilla</string>
+    <string name="backup_nearby_subtitle">Lähetä salattu varmuuskopio lähellä olevalle laitteelle Bluetoothilla</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d päivä</item>

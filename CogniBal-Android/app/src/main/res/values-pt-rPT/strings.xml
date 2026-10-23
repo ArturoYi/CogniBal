@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Criar um ficheiro de cópia de segurança para levar consigo</string>
     <string name="backup_import">Importar cópia</string>
     <string name="backup_import_subtitle">Restaurar movimentos a partir de um ficheiro de cópia</string>
-    <string name="backup_nearby">Compartilhar por perto</string>
-    <string name="backup_nearby_subtitle">Enviar uma cópia para um dispositivo próximo</string>
+    <string name="backup_nearby">Partilhar por Bluetooth</string>
+    <string name="backup_nearby_subtitle">Enviar a cópia encriptada para um dispositivo próximo por Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d dia</item>

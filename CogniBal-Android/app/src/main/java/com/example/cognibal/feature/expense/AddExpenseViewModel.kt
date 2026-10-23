@@ -12,6 +12,9 @@ import com.example.cognibal.data.database.model.CategoryType
 import com.example.cognibal.data.preferences.AppPreferencesRepository
 import com.example.cognibal.data.repository.AccountRepository
 import com.example.cognibal.data.repository.BillRepository
+import com.example.cognibal.data.repository.BudgetImpact
+import com.example.cognibal.data.repository.BudgetLevel
+import com.example.cognibal.data.repository.BudgetRepository
 import com.example.cognibal.data.repository.CategoryRepository
 import com.example.cognibal.data.repository.EntryDraft
 import com.example.cognibal.data.repository.EntryType
@@ -38,8 +41,11 @@ import com.example.cognibal.screen.feature.expense.state.AddExpenseUiEvent
 import com.example.cognibal.screen.feature.expense.state.AddExpenseUiState
 import com.example.cognibal.screen.feature.expense.state.CategoryChoice
 import com.example.cognibal.screen.feature.expense.state.CategoryCreateResult
+import com.example.cognibal.screen.feature.expense.state.OverBudgetPrompt
+import com.example.cognibal.screen.feature.settings.budget.BudgetNotifier
 import com.example.cognibal.screen.feature.expense.model.toAddBillIssue
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -56,9 +62,11 @@ import kotlinx.coroutines.launch
 internal class AddExpenseViewModel(
     private val initialType: BillType,
     private val bills: BillRepository,
+    private val budgets: BudgetRepository,
     private val categories: CategoryRepository,
+    private val preferences: AppPreferencesRepository,
+    private val notifier: BudgetNotifier,
     accounts: AccountRepository,
-    preferences: AppPreferencesRepository,
 ) : ViewModel() {
     private val openedAt = LedgerTime.now()
     private val form = MutableStateFlow(EntryForm(type = initialType, billTime = openedAt))
@@ -127,6 +135,7 @@ internal class AddExpenseViewModel(
             currencySymbol = prefs.currency.symbol,
             issue = draft.issue,
             saving = draft.saving,
+            overBudgetPrompt = draft.overBudgetPrompt,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -197,12 +206,23 @@ internal class AddExpenseViewModel(
             }
             is AddExpenseUiEvent.CreateCategory -> createCategory(event)
             AddExpenseUiEvent.Save -> save()
+            AddExpenseUiEvent.ConfirmOverBudget -> {
+                form.update { it.copy(acceptOverBudget = true, overBudgetPrompt = null) }
+                save()
+            }
+            AddExpenseUiEvent.DismissOverBudget -> form.update {
+                it.copy(overBudgetPrompt = null, acceptOverBudget = false)
+            }
         }
     }
 
     private fun edit(block: (EntryForm) -> EntryForm) {
         form.update { current ->
-            if (current.saving) current else block(current).copy(issue = null)
+            if (current.saving) {
+                current
+            } else {
+                block(current).copy(issue = null, acceptOverBudget = false, overBudgetPrompt = null)
+            }
         }
     }
 
@@ -273,6 +293,22 @@ internal class AddExpenseViewModel(
         val token = beginSave()
         viewModelScope.launch {
             try {
+                val impacts = if (entryType == EntryType.Expense) {
+                    budgets.impactsOfExpense(categoryId, snapshot.billTime, amount)
+                } else {
+                    emptyList()
+                }
+                if (token != saveToken) return@launch
+                val over = impacts.filter { it.levelAfter() == BudgetLevel.Over }
+                if (over.isNotEmpty() && !form.value.acceptOverBudget) {
+                    form.update {
+                        it.copy(
+                            saving = false,
+                            overBudgetPrompt = over.toPrompt(snapshot.categories),
+                        )
+                    }
+                    return@launch
+                }
                 bills.insert(
                     EntryDraft(
                         type = entryType,
@@ -283,6 +319,10 @@ internal class AddExpenseViewModel(
                         remark = snapshot.remark,
                     ),
                 )
+                if (token != saveToken) return@launch
+                if (entryType == EntryType.Expense && preferences.preferences.first().budgetNotify) {
+                    notifier.publish(impacts, snapshot.categories.associate { it.id to it.name })
+                }
                 finishSave(token)
             } catch (cancellation: CancellationException) {
                 throw cancellation
@@ -362,13 +402,26 @@ internal class AddExpenseViewModel(
                 AddExpenseViewModel(
                     initialType = type,
                     bills = entry.billRepository(),
+                    budgets = entry.budgetRepository(),
                     accounts = entry.accountRepository(),
                     categories = entry.categoryRepository(),
                     preferences = AppPreferencesRepository.create(application),
+                    notifier = BudgetNotifier(application),
                 )
             }
         }
     }
+}
+
+private fun List<BudgetImpact>.toPrompt(categories: List<CategoryChoice>): OverBudgetPrompt {
+    val names = mapNotNull { impact ->
+        val categoryId = impact.budget.categoryId ?: return@mapNotNull null
+        categories.firstOrNull { it.id == categoryId }?.name
+    }
+    return OverBudgetPrompt(
+        includesGlobal = any { it.budget.categoryId == null },
+        categoryNames = names,
+    )
 }
 
 private fun BillType.categoryType(): CategoryType? = when (this) {
@@ -387,4 +440,6 @@ private data class EntryForm(
     val remark: String = "",
     val issue: AddBillIssue? = null,
     val saving: Boolean = false,
+    val overBudgetPrompt: OverBudgetPrompt? = null,
+    val acceptOverBudget: Boolean = false,
 )

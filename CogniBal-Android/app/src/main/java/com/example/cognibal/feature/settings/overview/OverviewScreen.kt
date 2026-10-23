@@ -8,6 +8,9 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,13 +18,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,13 +53,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cognibal.R
 import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.screen.feature.bill.BillEntryRow
 import com.example.cognibal.screen.feature.bill.state.BillRowUi
+import com.example.cognibal.screen.feature.settings.overview.state.OverviewCategoryOption
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewDayAmount
+import com.example.cognibal.screen.feature.settings.overview.state.OverviewKind
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewUiEvent
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewUiState
 import com.example.cognibal.ui.background.PageBackgroundHost
@@ -61,11 +78,17 @@ import java.time.temporal.WeekFields
 import java.util.Locale
 import com.example.cognibal.screen.feature.settings.SettingsSubpage
 import com.example.cognibal.screen.feature.settings.component.InsightCard
+import com.example.cognibal.screen.feature.settings.component.InsightSegments
 import com.example.cognibal.screen.feature.settings.component.MoneySummary
 import com.example.cognibal.screen.feature.settings.component.MonthStepper
 import com.example.cognibal.screen.feature.settings.component.formatMonthDay
 import com.example.cognibal.screen.feature.settings.component.formatYearMonth
 import com.example.cognibal.screen.feature.settings.component.moneyText
+import com.example.cognibal.ui.interaction.interactiveClick
+import com.example.cognibal.ui.picker.CogniBalWheelDateTimePicker
+import com.example.cognibal.ui.picker.WheelDateTime
+import com.example.cognibal.ui.picker.WheelDateTimeMode
+import com.example.cognibal.ui.picker.WheelDateTimeRules
 
 /** 总览入口。日历和当天账单来自 ViewModel。 */
 @Composable
@@ -93,17 +116,26 @@ internal fun OverviewScreen(
     val colors = MaterialTheme.appColors
     val today = LocalDate.now()
     val amounts = uiState.days.associateBy { day -> day.day }
+    var pickingMonth by rememberSaveable { mutableStateOf(false) }
+    var filtering by rememberSaveable { mutableStateOf(false) }
+    val monthLabel = formatYearMonth(uiState.month)
     SettingsSubpage(
         title = stringResource(R.string.shortcut_overview),
         onBack = onBack,
         modifier = modifier,
     ) {
-        InsightCard {
+        InsightCard(
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+            itemSpacing = 2.dp,
+        ) {
             MonthStepper(
-                label = formatYearMonth(uiState.month),
+                label = monthLabel,
                 canGoNext = uiState.canGoNext,
                 onPrevious = { onEvent(OverviewUiEvent.PreviousMonth) },
                 onNext = { onEvent(OverviewUiEvent.NextMonth) },
+                onLabelClick = { pickingMonth = true },
+                labelDescription = stringResource(R.string.overview_pick_month_cd, monthLabel),
+                compact = true,
             )
             MoneySummary(
                 income = uiState.income,
@@ -111,6 +143,7 @@ internal fun OverviewScreen(
                 balance = uiState.balance,
                 balanceOverflow = uiState.balanceOverflow,
                 currencySymbol = uiState.currencySymbol,
+                compact = true,
             )
         }
         InsightCard {
@@ -124,7 +157,10 @@ internal fun OverviewScreen(
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 Text(
                     text = formatMonthDay(uiState.selectedDay),
                     color = colors.textPrimary,
@@ -143,10 +179,21 @@ internal fun OverviewScreen(
                         modifier = Modifier.padding(start = 8.dp),
                     )
                 }
+                Spacer(modifier = Modifier.weight(1f))
+                DayFilterButton(
+                    active = uiState.filterActive,
+                    onClick = { filtering = true },
+                )
             }
             if (!uiState.loading && uiState.bills.isEmpty()) {
                 Text(
-                    text = stringResource(R.string.overview_empty_day),
+                    text = stringResource(
+                        if (uiState.dayHasBills) {
+                            R.string.overview_empty_filter
+                        } else {
+                            R.string.overview_empty_day
+                        },
+                    ),
                     color = colors.textTertiary,
                     fontSize = 14.sp,
                 )
@@ -157,6 +204,296 @@ internal fun OverviewScreen(
             }
         }
     }
+    if (pickingMonth) {
+        YearMonthDialog(
+            month = uiState.month,
+            onConfirm = { month ->
+                pickingMonth = false
+                onEvent(OverviewUiEvent.SelectMonth(month))
+            },
+            onDismiss = { pickingMonth = false },
+        )
+    }
+    if (filtering) {
+        DayFilterDialog(
+            kind = uiState.kind,
+            categories = uiState.categories,
+            selectedIds = uiState.selectedCategoryIds,
+            onKind = { kind -> onEvent(OverviewUiEvent.SetKind(kind)) },
+            onToggleCategory = { id -> onEvent(OverviewUiEvent.ToggleCategory(id)) },
+            onClear = { onEvent(OverviewUiEvent.ClearFilter) },
+            onDismiss = { filtering = false },
+        )
+    }
+}
+
+@Composable
+private fun DayFilterButton(
+    active: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    Box(
+        modifier = Modifier
+            .size(40.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (active) colors.primary.copy(alpha = if (colors.isDark) 0.22f else 0.12f) else Color.Transparent)
+            .interactiveClick(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            imageVector = Icons.Rounded.FilterList,
+            contentDescription = stringResource(R.string.overview_filter),
+            tint = if (active) colors.primary else colors.textSecondary,
+            modifier = Modifier.size(22.dp),
+        )
+    }
+}
+
+@Composable
+private fun YearMonthDialog(
+    month: YearMonth,
+    onConfirm: (YearMonth) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var value by remember(month) {
+        mutableStateOf(WheelDateTime.of(month.year, month.monthValue, 1))
+    }
+    val now = YearMonth.now()
+    val colors = MaterialTheme.appColors
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(shape = RoundedCornerShape(28.dp), color = colors.cardBackground) {
+            Column(
+                modifier = Modifier.padding(top = 20.dp, bottom = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = stringResource(R.string.overview_pick_month),
+                    color = colors.textPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+                Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+                    CogniBalWheelDateTimePicker(
+                        value = value,
+                        onValueChange = { value = it },
+                        mode = WheelDateTimeMode.YearMonth,
+                        minTime = WheelDateTime.of(WheelDateTimeRules.DefaultMinYear, 1, 1),
+                        maxTime = WheelDateTime.of(now.year, now.monthValue, 1),
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
+                    }
+                    TextButton(
+                        onClick = { onConfirm(YearMonth.of(value.year, value.month)) },
+                    ) {
+                        Text(
+                            text = stringResource(R.string.done),
+                            color = colors.primary,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun DayFilterDialog(
+    kind: OverviewKind,
+    categories: List<OverviewCategoryOption>,
+    selectedIds: Set<Long>,
+    onKind: (OverviewKind) -> Unit,
+    onToggleCategory: (Long) -> Unit,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val expenseLabel = stringResource(R.string.bill_fab_expense)
+    val incomeLabel = stringResource(R.string.bill_fab_income)
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            modifier = Modifier.widthIn(max = 420.dp),
+            shape = RoundedCornerShape(28.dp),
+            color = colors.cardBackground,
+        ) {
+            Column(modifier = Modifier.padding(top = 20.dp, bottom = 12.dp)) {
+                Text(
+                    text = stringResource(R.string.overview_filter),
+                    color = colors.textPrimary,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+                Text(
+                    text = stringResource(R.string.overview_filter_type),
+                    color = colors.textSecondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(start = 24.dp, top = 16.dp, end = 24.dp),
+                )
+                InsightSegments(
+                    labels = listOf(
+                        stringResource(R.string.overview_filter_all),
+                        expenseLabel,
+                        incomeLabel,
+                    ),
+                    selectedIndex = when (kind) {
+                        OverviewKind.All -> 0
+                        OverviewKind.Expense -> 1
+                        OverviewKind.Income -> 2
+                    },
+                    onSelect = { index ->
+                        onKind(
+                            when (index) {
+                                1 -> OverviewKind.Expense
+                                2 -> OverviewKind.Income
+                                else -> OverviewKind.All
+                            },
+                        )
+                    },
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+                )
+                Text(
+                    text = stringResource(R.string.bill_entry_category),
+                    color = colors.textSecondary,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+                Column(
+                    modifier = Modifier
+                        .heightIn(max = 280.dp)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 20.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (categories.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.bill_entry_no_category),
+                            color = colors.textTertiary,
+                            fontSize = 14.sp,
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        )
+                    } else if (kind == OverviewKind.All) {
+                        CategoryGroup(
+                            title = expenseLabel,
+                            categories = categories.filter { category -> category.expense },
+                            selectedIds = selectedIds,
+                            onToggle = onToggleCategory,
+                        )
+                        CategoryGroup(
+                            title = incomeLabel,
+                            categories = categories.filter { category -> !category.expense },
+                            selectedIds = selectedIds,
+                            onToggle = onToggleCategory,
+                        )
+                    } else {
+                        CategoryChips(
+                            categories = categories,
+                            selectedIds = selectedIds,
+                            onToggle = onToggleCategory,
+                        )
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(onClick = onClear) {
+                        Text(text = stringResource(R.string.overview_filter_clear), color = colors.textTertiary)
+                    }
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            text = stringResource(R.string.done),
+                            color = colors.primary,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CategoryGroup(
+    title: String,
+    categories: List<OverviewCategoryOption>,
+    selectedIds: Set<Long>,
+    onToggle: (Long) -> Unit,
+) {
+    if (categories.isEmpty()) return
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = title,
+            color = MaterialTheme.appColors.textTertiary,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(start = 4.dp),
+        )
+        CategoryChips(
+            categories = categories,
+            selectedIds = selectedIds,
+            onToggle = onToggle,
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CategoryChips(
+    categories: List<OverviewCategoryOption>,
+    selectedIds: Set<Long>,
+    onToggle: (Long) -> Unit,
+) {
+    FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        categories.forEach { category ->
+            CategoryFilterChip(
+                name = category.name,
+                selected = category.id in selectedIds,
+                onClick = { onToggle(category.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun CategoryFilterChip(
+    name: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    Text(
+        text = name,
+        color = if (selected) colors.onPrimary else colors.textPrimary,
+        fontSize = 13.sp,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        modifier = Modifier
+            .widthIn(max = 168.dp)
+            .clip(RoundedCornerShape(99.dp))
+            .background(if (selected) colors.primary else colors.tagBackground)
+            .semantics { this.selected = selected }
+            .interactiveClick(role = Role.Checkbox, onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    )
 }
 
 @Composable

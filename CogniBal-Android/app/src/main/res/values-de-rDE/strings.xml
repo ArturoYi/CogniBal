@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Eine Sicherungsdatei zum Mitnehmen erstellen</string>
     <string name="backup_import">Sicherung importieren</string>
     <string name="backup_import_subtitle">Buchungen aus einer Sicherungsdatei wiederherstellen</string>
-    <string name="backup_nearby">Nearby Share</string>
-    <string name="backup_nearby_subtitle">Eine Sicherung an ein Gerät in der Nähe senden</string>
+    <string name="backup_nearby">Per Bluetooth teilen</string>
+    <string name="backup_nearby_subtitle">Das verschlüsselte Archiv per Bluetooth an ein Gerät in der Nähe senden</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d Tag</item>

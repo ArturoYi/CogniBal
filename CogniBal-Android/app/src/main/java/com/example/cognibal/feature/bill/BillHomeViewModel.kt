@@ -13,13 +13,17 @@ import com.example.cognibal.data.database.query.PeriodAmountSummary
 import com.example.cognibal.data.preferences.AppPreferencesRepository
 import com.example.cognibal.data.repository.AccountRepository
 import com.example.cognibal.data.repository.BillRepository
+import com.example.cognibal.data.repository.BudgetMath
 import com.example.cognibal.data.repository.BudgetProgress
 import com.example.cognibal.data.repository.BudgetRepository
 import com.example.cognibal.data.repository.CategoryRepository
 import com.example.cognibal.data.repository.StatsRepository
+import com.example.cognibal.data.repository.assetAccountOrder
+import com.example.cognibal.data.repository.sumMinorAmounts
 import com.example.cognibal.di.LedgerEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import java.time.YearMonth
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -50,6 +54,18 @@ internal class BillHomeViewModel(
     private val stats: StatsRepository,
     preferences: AppPreferencesRepository,
 ) : ViewModel() {
+    init {
+        viewModelScope.launch {
+            try {
+                budgets.ensureCurrentPeriods()
+            } catch (cancellation: CancellationException) {
+                throw cancellation
+            } catch (_: Exception) {
+                // 没补上下个周期时，首页仍显示已经覆盖今天的预算。
+            }
+        }
+    }
+
     /**
      * 顶栏只依赖账户和货币。本月收支、最近账单还在查时，这里可以先有当前账户。
      * 首页初次订阅会先拿到 [AccountBarState.loading]，那一笔不能当成“没有账户”。
@@ -76,7 +92,7 @@ internal class BillHomeViewModel(
 
     private fun homeContent(bar: AccountBarState): Flow<BillHomeUiState> {
         val currentId = bar.currentId
-        val (total, totalOverflow) = sumBalances(bar.accounts.map { it.balance })
+        val (total, totalOverflow) = sumMinorAmounts(bar.accounts.map { it.balance })
         val month = YearMonth.now()
         val start = month.atDay(1).atStartOfDay()
         val end = month.plusMonths(1).atDay(1).atStartOfDay()
@@ -161,11 +177,6 @@ private fun activeBudgets(
         .map { item ->
             val limit = item.budget.limitAmount
             val spent = item.spentAmount
-            val ratio = if (limit <= 0L) {
-                0f
-            } else {
-                (spent.toDouble() / limit.toDouble()).toFloat().coerceIn(0f, 1f)
-            }
             val categoryId = item.budget.categoryId
             BudgetProgressUi(
                 id = item.budget.id,
@@ -174,8 +185,8 @@ private fun activeBudgets(
                     (categoryId == null || categories[categoryId] == null),
                 spent = spent,
                 limit = limit,
-                ratio = ratio,
-                over = limit > 0L && spent > limit,
+                ratio = BudgetMath.progressFraction(spent, limit),
+                level = item.level(),
             )
         }
 }
@@ -189,9 +200,7 @@ private fun monthBalance(summary: PeriodAmountSummary): Pair<Long, Boolean> {
 }
 
 private fun accountBarState(rows: List<Account>, symbol: String): AccountBarState {
-    val ordered = rows.sortedWith(
-        compareByDescending<Account> { it.isEnable }.thenBy { it.id },
-    )
+    val ordered = rows.sortedWith(assetAccountOrder(Account::isEnable, Account::id))
     val currentId = ordered.firstOrNull { it.isDefault }?.id ?: ordered.firstOrNull()?.id
     return AccountBarState(
         loading = false,
@@ -212,14 +221,3 @@ private fun accountBarState(rows: List<Account>, symbol: String): AccountBarStat
     )
 }
 
-private fun sumBalances(balances: List<Long>): Pair<Long, Boolean> {
-    var total = 0L
-    for (balance in balances) {
-        try {
-            total = Math.addExact(total, balance)
-        } catch (_: ArithmeticException) {
-            return 0L to true
-        }
-    }
-    return total to false
-}

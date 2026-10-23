@@ -39,6 +39,7 @@ internal object Keys {
     val darkMode = stringPreferencesKey("key_dark_mode")
     val hapticFeedback = booleanPreferencesKey("key_haptic_feedback")
     val currency = stringPreferencesKey("key_currency")
+    val budgetNotify = booleanPreferencesKey("key_budget_notify")
 
     /** 旧版当前账户。启动时迁进 account.is_default 后删除。 */
     val selectedAccountId = longPreferencesKey("key_selected_account_id")

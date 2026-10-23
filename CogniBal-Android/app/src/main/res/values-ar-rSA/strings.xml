@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">إنشاء ملف نسخة يمكنك أخذه معك</string>
     <string name="backup_import">استيراد النسخة</string>
     <string name="backup_import_subtitle">استعادة العمليات من ملف النسخة</string>
-    <string name="backup_nearby">المشاركة القريبة</string>
-    <string name="backup_nearby_subtitle">إرسال نسخة إلى جهاز قريب</string>
+    <string name="backup_nearby">مشاركة عبر Bluetooth</string>
+    <string name="backup_nearby_subtitle">إرسال النسخة المشفرة إلى جهاز قريب عبر Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="zero">%d يوم</item>

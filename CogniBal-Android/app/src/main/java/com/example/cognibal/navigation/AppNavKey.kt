@@ -65,6 +65,14 @@ internal data object Overview : NavKey
 @Serializable
 internal data object Reports : NavKey
 
+/** 预算。本月支出上限，以及以往周期。 */
+@Serializable
+internal data object Budget : NavKey
+
+/** 资产。全部账户余额拆成净资产、资产和负债。 */
+@Serializable
+internal data object Assets : NavKey
+
 /**
  * 首页两个标签。各自有一条返回栈。
  *
@@ -97,4 +105,6 @@ internal val settingsDetailKeys: Set<NavKey> = setOf(
     Statistics,
     Overview,
     Reports,
+    Budget,
+    Assets,
 )

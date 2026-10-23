@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Buat file cadangan yang bisa Anda bawa</string>
     <string name="backup_import">Impor cadangan</string>
     <string name="backup_import_subtitle">Pulihkan transaksi dari file cadangan</string>
-    <string name="backup_nearby">Berbagi di sekitar</string>
-    <string name="backup_nearby_subtitle">Kirim cadangan ke perangkat di sekitar</string>
+    <string name="backup_nearby">Bagikan lewat Bluetooth</string>
+    <string name="backup_nearby_subtitle">Kirim cadangan terenkripsi ke perangkat di sekitar lewat Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="other">%d hari</item>

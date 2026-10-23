@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">יצירת קובץ גיבוי שאפשר לקחת</string>
     <string name="backup_import">ייבוא גיבוי</string>
     <string name="backup_import_subtitle">שחזור תנועות מקובץ גיבוי</string>
-    <string name="backup_nearby">שיתוף בקרבת מקום</string>
-    <string name="backup_nearby_subtitle">שליחת גיבוי למכשיר קרוב</string>
+    <string name="backup_nearby">שיתוף Bluetooth</string>
+    <string name="backup_nearby_subtitle">שליחת הגיבוי המוצפן למכשיר קרוב ב-Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">יום %d</item>

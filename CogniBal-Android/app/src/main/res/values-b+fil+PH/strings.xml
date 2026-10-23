@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Gumawa ng backup file na maaari mong dalhin</string>
     <string name="backup_import">I-import ang backup</string>
     <string name="backup_import_subtitle">Ibalik ang mga tala mula sa backup file</string>
-    <string name="backup_nearby">Pagbabahagi sa malapit</string>
-    <string name="backup_nearby_subtitle">Magpadala ng backup sa kalapit na device</string>
+    <string name="backup_nearby">Ibahagi sa Bluetooth</string>
+    <string name="backup_nearby_subtitle">Ipadala ang naka-encrypt na backup sa malapit na device gamit ang Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d araw</item>

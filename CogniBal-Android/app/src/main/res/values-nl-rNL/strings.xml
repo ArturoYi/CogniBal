@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Een back-upbestand maken om mee te nemen</string>
     <string name="backup_import">Back-up importeren</string>
     <string name="backup_import_subtitle">Boekingen terugzetten vanuit een back-upbestand</string>
-    <string name="backup_nearby">Delen in de buurt</string>
-    <string name="backup_nearby_subtitle">Een back-up naar een apparaat in de buurt sturen</string>
+    <string name="backup_nearby">Delen via Bluetooth</string>
+    <string name="backup_nearby_subtitle">Stuur het versleutelde archief via Bluetooth naar een apparaat in de buurt</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d dag</item>

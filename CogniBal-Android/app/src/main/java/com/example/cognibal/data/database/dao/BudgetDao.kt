@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.Flow
  * 预算表，以及“这条预算已经花了多少”的实时查询。
  *
  * 子查询读的是 bill，不把结果写回 budget。账单或预算一变，Room 会重新发出 Flow。
+ * 改历史流水、把流水改到另一个周期，都会在下一次查询里算进对应区间，不靠缓存。
+ *
+ * 总预算走 `(type, billTime)`，分类预算走 `(type, categoryId, billTime)`，
+ * 只扫该周期里的支出，不扫整张账单表。
  * `budgetType = 0` 是全局预算；否则只加总同一个分类的支出。
  */
 @Dao
@@ -52,17 +56,23 @@ interface BudgetDao {
     @Query(
         """
         SELECT budget.id AS budgetId,
-               COALESCE((
-                   SELECT SUM(bill.amount)
-                   FROM bill
-                   WHERE bill.type = 0
-                     AND bill.billTime >= budget.periodStart
-                     AND bill.billTime < budget.periodEnd
-                     AND (
-                         budget.budgetType = 0
-                         OR bill.categoryId = budget.categoryId
-                     )
-               ), 0) AS spentAmount
+               CASE
+                   WHEN budget.budgetType = 0 THEN COALESCE((
+                       SELECT SUM(bill.amount)
+                       FROM bill
+                       WHERE bill.type = 0
+                         AND bill.billTime >= budget.periodStart
+                         AND bill.billTime < budget.periodEnd
+                   ), 0)
+                   ELSE COALESCE((
+                       SELECT SUM(bill.amount)
+                       FROM bill
+                       WHERE bill.type = 0
+                         AND bill.categoryId = budget.categoryId
+                         AND bill.billTime >= budget.periodStart
+                         AND bill.billTime < budget.periodEnd
+                   ), 0)
+               END AS spentAmount
         FROM budget
         """,
     )

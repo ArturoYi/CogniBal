@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Создать файл копии, который можно забрать с собой</string>
     <string name="backup_import">Импорт копии</string>
     <string name="backup_import_subtitle">Восстановить операции из файла копии</string>
-    <string name="backup_nearby">Обмен рядом</string>
-    <string name="backup_nearby_subtitle">Отправить копию на устройство поблизости</string>
+    <string name="backup_nearby">Обмен по Bluetooth</string>
+    <string name="backup_nearby_subtitle">Отправить зашифрованную копию на устройство рядом по Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d день</item>

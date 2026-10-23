@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Cipta fail sandaran yang boleh dibawa</string>
     <string name="backup_import">Import sandaran</string>
     <string name="backup_import_subtitle">Pulihkan transaksi daripada fail sandaran</string>
-    <string name="backup_nearby">Kongsi berdekatan</string>
-    <string name="backup_nearby_subtitle">Hantar sandaran ke peranti berdekatan</string>
+    <string name="backup_nearby">Kongsi Bluetooth</string>
+    <string name="backup_nearby_subtitle">Hantar sandaran disulitkan ke peranti berdekatan melalui Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="other">%d hari</item>

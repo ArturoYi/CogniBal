@@ -90,6 +90,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cognibal.R
+import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
 import com.example.cognibal.screen.feature.settings.model.AppPreferences
 import com.example.cognibal.screen.feature.settings.model.CurrencyPreference
 import com.example.cognibal.screen.feature.settings.model.DarkModePreference
@@ -135,13 +136,19 @@ fun UserStatsHeader(
  */
 @Composable
 fun SurplusCard(
-    surplus: Double,
+    surplus: Long,
+    surplusOverflow: Boolean,
     isVisible: Boolean,
     currencySymbol: String,
     onToggleVisibility: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
+    val amountColor = when {
+        surplusOverflow -> colors.textSecondary
+        surplus < 0L -> colors.expense
+        else -> colors.textPrimary
+    }
 
     Surface(
         modifier = modifier
@@ -221,23 +228,34 @@ fun SurplusCard(
                     transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(180)) },
                     label = "surplusAmount",
                 ) { visible ->
-                    if (visible) {
+                    if (visible && surplusOverflow) {
+                        Text(
+                            text = stringResource(R.string.account_balance_overflow),
+                            color = amountColor,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Medium,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    } else if (visible) {
                         Row(
                             verticalAlignment = Alignment.Bottom,
                         ) {
                             Text(
                                 text = currencySymbol,
-                                color = colors.textPrimary,
+                                color = amountColor,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(bottom = 2.dp, end = 4.dp),
                             )
                             Text(
-                                text = "%,.2f".format(surplus),
-                                color = colors.textPrimary,
+                                text = formatMinorAmount(surplus),
+                                color = amountColor,
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = (-0.5).sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     } else {
@@ -258,7 +276,7 @@ fun SurplusCard(
 /**
  * 设置页快捷账务工具入口。
  *
- * 总览、统计、报表打开对应页面。预算和资产还没接上。
+ * 总览、统计、报表、预算、资产打开对应页面。
  */
 internal enum class SettingsShortcut(
     @StringRes val labelRes: Int,

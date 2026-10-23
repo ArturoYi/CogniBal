@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">持ち出せるバックアップファイルを作る</string>
     <string name="backup_import">バックアップを読み込む</string>
     <string name="backup_import_subtitle">バックアップファイルから明細を復元</string>
-    <string name="backup_nearby">ニアバイシェア</string>
-    <string name="backup_nearby_subtitle">近くのデバイスにバックアップを送る</string>
+    <string name="backup_nearby">Bluetooth で共有</string>
+    <string name="backup_nearby_subtitle">暗号化したバックアップを近くの端末へ Bluetooth で送る</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="other">%d日</item>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- 只暴露准备分享的加密压缩包，不开放整个缓存目录。 -->
+    <cache-path
+        name="backup-share"
+        path="backup-share/" />
+</paths>

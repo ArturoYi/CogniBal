@@ -283,6 +283,7 @@ private fun WheelDateTimeMode.fields(): List<WheelField> = when (this) {
         WheelField.Hour,
         WheelField.Minute,
     )
+    WheelDateTimeMode.YearMonth -> listOf(WheelField.Year, WheelField.Month)
 }
 
 private fun WheelDateTime.component(field: WheelField): Int = when (field) {

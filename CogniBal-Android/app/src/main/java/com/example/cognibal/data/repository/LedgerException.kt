@@ -27,6 +27,8 @@ enum class LedgerReject {
     BudgetCategoryRequired,
     BudgetCategoryMustBeExpense,
     BudgetCategoryForbidden,
+    /** 同一范围的两个启用预算，周期相交。一笔支出不能同时命中它们。 */
+    BudgetOverlap,
     InvalidAlertPercent,
     InvalidPeriod,
     InvalidLimit,

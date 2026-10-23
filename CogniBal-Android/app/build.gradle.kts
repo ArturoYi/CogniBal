@@ -34,6 +34,10 @@ android {
                 // AGP 9.3：同时压缩无用代码和资源，并混淆。调试包不受影响。
                 enable = true
             }
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
         }
     }
     compileOptions {
@@ -92,6 +96,10 @@ dependencies {
 
     // 业务 JSON 导入导出，不负责 SQLite 文件本身。
     implementation(libs.kotlinx.serialization.json)
+    // 把 JSON 账本打成带密码的 AES zip。解密只在导入时发生。
+    implementation(libs.zip4j)
+    // 蓝牙迁移的 X25519 与 HKDF。数据密钥只在内存里，不进这个口令包。
+    implementation(libs.bouncycastle)
 
     // 全局返回栈。路由表在 navigation 包，设置二级页是其中的目的地。
     implementation(libs.androidx.navigation3.runtime)

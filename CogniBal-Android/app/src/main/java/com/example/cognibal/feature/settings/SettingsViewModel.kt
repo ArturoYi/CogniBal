@@ -6,7 +6,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.cognibal.data.preferences.AppPreferencesRepository
+import com.example.cognibal.data.repository.AccountRepository
+import com.example.cognibal.data.repository.toAssetSnapshot
+import com.example.cognibal.di.LedgerEntryPoint
 import com.example.cognibal.screen.feature.settings.model.AppPreferences
+import com.example.cognibal.screen.feature.settings.state.DEFAULT_CACHE_SIZE
+import com.example.cognibal.screen.feature.settings.state.SettingsUiEvent
+import com.example.cognibal.screen.feature.settings.state.SettingsUiState
+import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,18 +21,17 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import com.example.cognibal.screen.feature.settings.state.DEFAULT_CACHE_SIZE
-import com.example.cognibal.screen.feature.settings.state.SettingsUiEvent
-import com.example.cognibal.screen.feature.settings.state.SettingsUiState
 
 /**
  * 设置与应用主题的唯一状态持有者。
  *
  * 挂在 Activity 上：入口用 [preferences] 决定主题，设置页用 [uiState] 画分组列表。
  * 两边拿到的是同一个 ViewModel，写入只走仓库，不直接碰 DataStore。
+ * 总盈余是全部账户余额之和，和资产页净资产同一套加法。
  */
 internal class SettingsViewModel(
     private val repository: AppPreferencesRepository,
+    accounts: AccountRepository,
 ) : ViewModel() {
     /**
      * 应用级偏好。Activity 进入组合就开始收集，启动动画期间 DataStore 有时间读完。
@@ -39,13 +45,19 @@ internal class SettingsViewModel(
 
     private val transient = MutableStateFlow(SettingsTransientState())
 
-    val uiState: StateFlow<SettingsUiState> = combine(preferences, transient) { prefs, extra ->
+    val uiState: StateFlow<SettingsUiState> = combine(
+        preferences,
+        accounts.observeAll(),
+        transient,
+    ) { prefs, rows, extra ->
+        val snapshot = rows.toAssetSnapshot()
         SettingsUiState(
             preferences = prefs,
             cacheSizeText = extra.cacheSizeText,
             daysInUse = extra.daysInUse,
             totalRecordsCount = extra.totalRecordsCount,
-            totalSurplus = extra.totalSurplus,
+            totalSurplus = snapshot.net,
+            surplusOverflow = snapshot.netOverflow,
             isSurplusVisible = extra.isSurplusVisible,
             showMoreDialog = extra.showMoreDialog,
             showCurrencyDialog = extra.showCurrencyDialog,
@@ -98,7 +110,6 @@ internal class SettingsViewModel(
         val cacheSizeText: String = DEFAULT_CACHE_SIZE,
         val daysInUse: Int = 18,
         val totalRecordsCount: Int = 42,
-        val totalSurplus: Double = 12850.00,
         val isSurplusVisible: Boolean = false,
         val showMoreDialog: Boolean = false,
         val showCurrencyDialog: Boolean = false,
@@ -113,8 +124,13 @@ internal class SettingsViewModel(
             initializer {
                 val application = this[ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY]
                     ?: error("SettingsViewModel 需要 Application")
+                val entry = EntryPointAccessors.fromApplication(
+                    application,
+                    LedgerEntryPoint::class.java,
+                )
                 SettingsViewModel(
                     repository = AppPreferencesRepository.create(application),
+                    accounts = entry.accountRepository(),
                 )
             }
         }

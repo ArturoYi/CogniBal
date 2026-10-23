@@ -13,6 +13,8 @@ data class AppPreferences(
     val darkMode: DarkModePreference = DarkModePreference.DARK,
     val hapticFeedback: Boolean = true,
     val currency: CurrencyPreference = CurrencyPreference.CNY,
+    /** 接近或超过预算时是否推送通知。默认关闭。 */
+    val budgetNotify: Boolean = false,
 ) {
     /** 把“跟随系统 / 强制浅色 / 强制暗色”收成主题实际要用的深浅。 */
     fun useDarkTheme(isSystemInDarkTheme: Boolean): Boolean = when (darkMode) {

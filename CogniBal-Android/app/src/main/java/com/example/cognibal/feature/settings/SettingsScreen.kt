@@ -57,7 +57,9 @@ import androidx.navigation3.runtime.NavKey
 import androidx.window.core.layout.WindowSizeClass
 import com.example.cognibal.R
 import com.example.cognibal.navigation.AppearanceSettings
+import com.example.cognibal.navigation.Assets
 import com.example.cognibal.navigation.BackupSettings
+import com.example.cognibal.navigation.Budget
 import com.example.cognibal.navigation.Overview
 import com.example.cognibal.navigation.Reports
 import com.example.cognibal.navigation.SecuritySettings
@@ -321,6 +323,7 @@ private fun SettingsHome(
                         )
                         SurplusCard(
                             surplus = uiState.totalSurplus,
+                            surplusOverflow = uiState.surplusOverflow,
                             isVisible = uiState.isSurplusVisible,
                             currencySymbol = preferences.currency.symbol,
                             onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
@@ -361,6 +364,7 @@ private fun SettingsHome(
                 )
                 SurplusCard(
                     surplus = uiState.totalSurplus,
+                    surplusOverflow = uiState.surplusOverflow,
                     isVisible = uiState.isSurplusVisible,
                     currencySymbol = preferences.currency.symbol,
                     onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
@@ -476,8 +480,8 @@ private fun SettingsShortcut.page(): NavKey? = when (this) {
     SettingsShortcut.Overview -> Overview
     SettingsShortcut.Statistics -> Statistics
     SettingsShortcut.Reports -> Reports
-    SettingsShortcut.Budget,
-    SettingsShortcut.Assets -> null
+    SettingsShortcut.Budget -> Budget
+    SettingsShortcut.Assets -> Assets
 }
 
 private val systemAndSupportEntries = listOf(
@@ -590,7 +594,10 @@ private fun SettingsScreenMonochromeDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = true) {
         PageBackgroundHost {
             SettingsScreen(
-                uiState = SettingsUiState(isSurplusVisible = true),
+                uiState = SettingsUiState(
+                    isSurplusVisible = true,
+                    totalSurplus = 1_285_000L,
+                ),
                 onEvent = {},
                 onOpenShortcut = {},
                 onOpenSourceLicenses = {},

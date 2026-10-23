@@ -34,5 +34,27 @@ object DatabaseMigrations {
         }
     }
 
-    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2)
+    /**
+     * 账单增加 `(type, categoryId, billTime)`。
+     * 分类预算按这个范围求和，避免每笔支出都扫完整张账单表。
+     */
+    val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                """
+                CREATE INDEX IF NOT EXISTS `index_bill_type_categoryId_billTime`
+                ON `bill` (`type`, `categoryId`, `billTime`)
+                """.trimIndent(),
+            )
+        }
+    }
+
+    /** 月预算可以不从 1 日开始。空值表示旧数据，按当时的周期起点。 */
+    val MIGRATION_3_4: Migration = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `budget` ADD COLUMN `cycleDay` INTEGER")
+        }
+    }
+
+    val ALL: Array<Migration> = arrayOf(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
 }

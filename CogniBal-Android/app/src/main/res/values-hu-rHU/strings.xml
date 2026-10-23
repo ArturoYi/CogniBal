@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Egy magával vihető mentési fájl készítése</string>
     <string name="backup_import">Mentés importálása</string>
     <string name="backup_import_subtitle">Tételek visszaállítása egy mentési fájlból</string>
-    <string name="backup_nearby">Megosztás a közelben</string>
-    <string name="backup_nearby_subtitle">Mentés küldése egy közeli eszközre</string>
+    <string name="backup_nearby">Megosztás Bluetoothon</string>
+    <string name="backup_nearby_subtitle">A titkosított mentés küldése egy közeli eszközre Bluetoothon</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d napja</item>

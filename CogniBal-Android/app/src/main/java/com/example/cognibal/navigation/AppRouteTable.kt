@@ -17,6 +17,8 @@ import com.example.cognibal.screen.feature.settings.backup.BackupSettingsRoute
 import com.example.cognibal.screen.feature.settings.overview.OverviewRoute
 import com.example.cognibal.screen.feature.settings.reports.ReportsRoute
 import com.example.cognibal.screen.feature.settings.security.SecuritySettingsRoute
+import com.example.cognibal.screen.feature.settings.budget.BudgetRoute
+import com.example.cognibal.screen.feature.settings.assets.AssetsRoute
 import com.example.cognibal.screen.feature.settings.SettingsDetailPlaceholder
 import com.example.cognibal.screen.feature.settings.SettingsListRoute
 import com.example.cognibal.screen.feature.settings.statistics.StatisticsRoute
@@ -38,6 +40,7 @@ internal fun EntryProviderScope<NavKey>.appRoutes(navigator: AppNavigator) {
             onCreateAccount = { navigator.navigate(AccountEditor()) },
             onEditAccount = { accountId -> navigator.navigate(AccountEditor(accountId)) },
             onViewAll = { accountId -> navigator.navigate(BillHistory(accountId)) },
+            onOpenBudget = { navigator.navigate(Budget) },
             modifier = Modifier.fillMaxSize(),
         )
     }
@@ -113,6 +116,21 @@ internal fun EntryProviderScope<NavKey>.appRoutes(navigator: AppNavigator) {
     ) {
         ReportsRoute(
             onBack = dropUnlessResumed(block = navigator::back),
+        )
+    }
+    entry<Budget>(
+        metadata = ListDetailSceneStrategy.detailPane(),
+    ) {
+        BudgetRoute(
+            onBack = dropUnlessResumed(block = navigator::back),
+        )
+    }
+    entry<Assets>(
+        metadata = ListDetailSceneStrategy.detailPane(),
+    ) {
+        AssetsRoute(
+            onBack = dropUnlessResumed(block = navigator::back),
+            onOpenAccount = { accountId -> navigator.navigate(AccountEditor(accountId)) },
         )
     }
 }

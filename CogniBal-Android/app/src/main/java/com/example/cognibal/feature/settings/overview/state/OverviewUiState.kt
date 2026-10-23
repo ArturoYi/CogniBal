@@ -11,6 +11,20 @@ internal data class OverviewDayAmount(
     val income: Long,
 )
 
+/** 当天账单按支出或收入筛选。全部时两类都留下。 */
+internal enum class OverviewKind {
+    All,
+    Expense,
+    Income,
+}
+
+/** 筛选用的分类。支出和收入分开，转账没有分类。 */
+internal data class OverviewCategoryOption(
+    val id: Long,
+    val name: String,
+    val expense: Boolean,
+)
+
 internal data class OverviewUiState(
     val loading: Boolean = true,
     val month: YearMonth = YearMonth.now(),
@@ -23,10 +37,20 @@ internal data class OverviewUiState(
     val balanceOverflow: Boolean = false,
     val days: List<OverviewDayAmount> = emptyList(),
     val bills: List<BillRowUi> = emptyList(),
+    /** 选中那天在筛选前是否有账单。用来区分「这天没账」和「筛完是空的」。 */
+    val dayHasBills: Boolean = false,
+    val kind: OverviewKind = OverviewKind.All,
+    val categories: List<OverviewCategoryOption> = emptyList(),
+    val selectedCategoryIds: Set<Long> = emptySet(),
+    val filterActive: Boolean = false,
 )
 
 internal sealed interface OverviewUiEvent {
     data object PreviousMonth : OverviewUiEvent
     data object NextMonth : OverviewUiEvent
+    data class SelectMonth(val month: YearMonth) : OverviewUiEvent
     data class SelectDay(val day: LocalDate) : OverviewUiEvent
+    data class SetKind(val kind: OverviewKind) : OverviewUiEvent
+    data class ToggleCategory(val categoryId: Long) : OverviewUiEvent
+    data object ClearFilter : OverviewUiEvent
 }

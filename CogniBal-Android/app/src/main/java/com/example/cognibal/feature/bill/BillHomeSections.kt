@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cognibal.R
 import com.example.cognibal.data.database.model.BillType
+import com.example.cognibal.data.repository.BudgetLevel
 import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
 import com.example.cognibal.screen.feature.bill.state.BillHomeUiState
 import com.example.cognibal.screen.feature.bill.state.BillRowUi
@@ -65,6 +66,7 @@ import com.example.cognibal.screen.feature.bill.state.BudgetProgressUi
 import com.example.cognibal.ui.insets.screenContentWindowInsets
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.appColors
+import com.example.cognibal.ui.theme.budgetNearColor
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -79,9 +81,11 @@ private val HomeContentMaxWidth = 840.dp
 internal fun BillHomeList(
     uiState: BillHomeUiState,
     onViewAll: () -> Unit,
+    onOpenBudget: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val contentPadding = billPageListPadding(extraBottom = 16.dp)
+    val banner = budgetHomeBanner(uiState.budgets)
     LazyColumn(
         modifier = modifier
             .widthIn(max = HomeContentMaxWidth)
@@ -95,6 +99,15 @@ internal fun BillHomeList(
         }
         item(key = "month") {
             MonthOverviewCard(uiState = uiState)
+        }
+        if (banner != null) {
+            item(key = "budget-banner") {
+                BudgetStatusBanner(
+                    over = banner.over,
+                    text = banner.text,
+                    onClick = onOpenBudget,
+                )
+            }
         }
         if (uiState.budgets.isNotEmpty()) {
             item(key = "budgets") {
@@ -256,13 +269,20 @@ private fun BudgetCard(
                 .interactiveClick(onClick = { expanded = !expanded }),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = stringResource(R.string.bill_budget_title),
-                color = colors.textPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = stringResource(R.string.bill_budget_title),
+                    color = colors.textPrimary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = stringResource(R.string.budget_home_scope),
+                    color = colors.textTertiary,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
             Icon(
                 imageVector = if (expanded) Icons.Rounded.ExpandLess else Icons.Rounded.ExpandMore,
                 contentDescription = null,
@@ -310,7 +330,7 @@ private fun BudgetRow(
             Text(
                 text = currencySymbol + formatMinorAmount(budget.spent) +
                     " / " + currencySymbol + formatMinorAmount(budget.limit),
-                color = if (budget.over) colors.expense else colors.textSecondary,
+                color = if (budget.level == BudgetLevel.Normal) colors.textSecondary else budgetTint(budget.level, colors.isDark, colors.expense),
                 fontSize = 12.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -323,11 +343,72 @@ private fun BudgetRow(
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(99.dp)),
-            color = if (budget.over) colors.expense else colors.primary,
+            color = if (budget.level == BudgetLevel.Normal) colors.primary else budgetTint(budget.level, colors.isDark, colors.expense),
             trackColor = colors.tagBackground,
             drawStopIndicator = {},
         )
     }
+}
+
+@Composable
+internal fun BudgetStatusBanner(
+    over: Boolean,
+    text: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
+    val colors = MaterialTheme.appColors
+    val tint = if (over) colors.expense else budgetNearColor(colors.isDark)
+    val clickable = if (onClick == null) {
+        Modifier
+    } else {
+        Modifier.interactiveClick(onClick = onClick)
+    }
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(clickable),
+        shape = RoundedCornerShape(16.dp),
+        color = tint.copy(alpha = 0.14f),
+    ) {
+        Text(
+            text = text,
+            color = tint,
+            fontSize = 14.sp,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        )
+    }
+}
+
+private data class HomeBanner(val over: Boolean, val text: String)
+
+@Composable
+private fun budgetHomeBanner(budgets: List<BudgetProgressUi>): HomeBanner? {
+    val concerning = budgets.filter { it.level != BudgetLevel.Normal }
+    if (concerning.isEmpty()) return null
+    val over = concerning.any { it.level == BudgetLevel.Over }
+    val worst = if (over) BudgetLevel.Over else BudgetLevel.Near
+    val separator = stringResource(R.string.budget_name_separator)
+    val global = stringResource(R.string.bill_budget_global)
+    val missing = stringResource(R.string.bill_budget_missing)
+    val names = concerning.filter { it.level == worst }.joinToString(separator) { budget ->
+        when {
+            budget.missingCategory -> missing
+            budget.categoryName == null -> global
+            else -> budget.categoryName
+        }
+    }
+    return HomeBanner(
+        over = over,
+        text = stringResource(if (over) R.string.budget_banner_over else R.string.budget_banner_near, names),
+    )
+}
+
+private fun budgetTint(level: BudgetLevel, dark: Boolean, expense: Color): Color = when (level) {
+    BudgetLevel.Over -> expense
+    BudgetLevel.Near -> budgetNearColor(dark)
+    BudgetLevel.Normal -> expense
 }
 
 @Composable

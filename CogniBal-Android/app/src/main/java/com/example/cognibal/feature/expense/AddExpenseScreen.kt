@@ -34,6 +34,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -283,6 +284,49 @@ internal fun AddExpenseScreen(
                 onDismissTime()
             },
             onDismiss = onDismissTime,
+        )
+    }
+    val prompt = uiState.overBudgetPrompt
+    if (prompt != null) {
+        val colors = MaterialTheme.appColors
+        val separator = stringResource(R.string.budget_name_separator)
+        val globalName = stringResource(R.string.bill_budget_global)
+        val names = buildList {
+            if (prompt.includesGlobal) add(globalName)
+            addAll(prompt.categoryNames)
+        }.joinToString(separator)
+        AlertDialog(
+            onDismissRequest = { onEvent(AddExpenseUiEvent.DismissOverBudget) },
+            title = {
+                Text(
+                    text = stringResource(R.string.budget_over_title),
+                    color = colors.textPrimary,
+                    fontWeight = FontWeight.Bold,
+                )
+            },
+            text = {
+                Text(
+                    text = stringResource(R.string.budget_over_message, names),
+                    color = colors.textSecondary,
+                    lineHeight = 20.sp,
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = { onEvent(AddExpenseUiEvent.ConfirmOverBudget) }) {
+                    Text(
+                        text = stringResource(R.string.budget_over_confirm),
+                        color = colors.expense,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { onEvent(AddExpenseUiEvent.DismissOverBudget) }) {
+                    Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
+                }
+            },
+            containerColor = colors.cardBackground,
+            shape = RoundedCornerShape(20.dp),
         )
     }
 }

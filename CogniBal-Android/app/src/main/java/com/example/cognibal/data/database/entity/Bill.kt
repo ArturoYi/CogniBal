@@ -40,6 +40,7 @@ import java.time.LocalDateTime
         Index("accountId"),
         Index("categoryId"),
         Index(value = ["type", "billTime"]),
+        Index(value = ["type", "categoryId", "billTime"]),
         Index(value = ["type", "createTime"]),
     ],
 )

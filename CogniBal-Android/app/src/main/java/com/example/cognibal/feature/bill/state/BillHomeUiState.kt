@@ -5,6 +5,7 @@ import com.example.cognibal.data.database.entity.Category
 import com.example.cognibal.data.database.model.AccountType
 import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.screen.feature.settings.model.CurrencyPreference
+import com.example.cognibal.data.repository.BudgetLevel
 import java.time.LocalDateTime
 
 internal data class AccountBarState(
@@ -41,7 +42,7 @@ internal data class BudgetProgressUi(
     val spent: Long,
     val limit: Long,
     val ratio: Float,
-    val over: Boolean,
+    val level: BudgetLevel,
 )
 
 internal data class BillHomeUiState(

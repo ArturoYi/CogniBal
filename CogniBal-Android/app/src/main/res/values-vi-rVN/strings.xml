@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Tạo tệp sao lưu để mang theo</string>
     <string name="backup_import">Nhập bản sao lưu</string>
     <string name="backup_import_subtitle">Khôi phục giao dịch từ tệp sao lưu</string>
-    <string name="backup_nearby">Chia sẻ lân cận</string>
-    <string name="backup_nearby_subtitle">Gửi bản sao lưu tới thiết bị ở gần</string>
+    <string name="backup_nearby">Chia sẻ Bluetooth</string>
+    <string name="backup_nearby_subtitle">Gửi bản sao lưu đã mã hóa tới thiết bị gần qua Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="other">%d ngày</item>

@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Creează un fișier de copie pe care îl poți lua cu tine</string>
     <string name="backup_import">Importă copia</string>
     <string name="backup_import_subtitle">Restaurează înregistrările dintr-un fișier de copie</string>
-    <string name="backup_nearby">Partajare în apropiere</string>
-    <string name="backup_nearby_subtitle">Trimite o copie către un dispozitiv din apropiere</string>
+    <string name="backup_nearby">Partajare Bluetooth</string>
+    <string name="backup_nearby_subtitle">Trimite copia criptată către un dispozitiv din apropiere prin Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d zi</item>

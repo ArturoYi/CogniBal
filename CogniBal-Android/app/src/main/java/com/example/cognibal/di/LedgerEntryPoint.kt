@@ -1,5 +1,7 @@
 package com.example.cognibal.di
 
+import com.example.cognibal.data.backup.LedgerBackup
+import com.example.cognibal.data.backup.bluetooth.BackupBluetooth
 import com.example.cognibal.data.repository.AccountRepository
 import com.example.cognibal.data.repository.BillRepository
 import com.example.cognibal.data.repository.BudgetRepository
@@ -27,4 +29,8 @@ interface LedgerEntryPoint {
     fun categoryRepository(): CategoryRepository
 
     fun statsRepository(): StatsRepository
+
+    fun ledgerBackup(): LedgerBackup
+
+    fun backupBluetooth(): BackupBluetooth
 }

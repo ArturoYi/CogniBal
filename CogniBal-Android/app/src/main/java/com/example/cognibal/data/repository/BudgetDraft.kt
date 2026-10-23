@@ -10,6 +10,8 @@ data class BudgetDraft(
     val limitAmount: Long,
     val alertPercent: Int,
     val periodType: BudgetPeriodType,
+    /** 月预算的起始日。1 是自然月。其他周期为空。 */
+    val cycleDay: Int? = null,
     val periodStart: LocalDateTime,
     val periodEnd: LocalDateTime,
     val remark: String?,

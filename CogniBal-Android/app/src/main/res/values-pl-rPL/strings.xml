@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Utwórz plik kopii, który możesz zabrać</string>
     <string name="backup_import">Importuj kopię</string>
     <string name="backup_import_subtitle">Przywróć operacje z pliku kopii</string>
-    <string name="backup_nearby">Udostępnianie w pobliżu</string>
-    <string name="backup_nearby_subtitle">Wyślij kopię na urządzenie w pobliżu</string>
+    <string name="backup_nearby">Udostępnianie Bluetooth</string>
+    <string name="backup_nearby_subtitle">Wyślij zaszyfrowaną kopię na urządzenie w pobliżu przez Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d dzień</item>

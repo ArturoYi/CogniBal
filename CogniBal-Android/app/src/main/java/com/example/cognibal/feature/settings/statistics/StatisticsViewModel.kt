@@ -5,34 +5,37 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.cognibal.data.database.entity.Category
 import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.data.database.query.CategoryAmountSummary
 import com.example.cognibal.data.preferences.AppPreferencesRepository
 import com.example.cognibal.data.repository.CategoryRepository
 import com.example.cognibal.data.repository.StatsRepository
 import com.example.cognibal.di.LedgerEntryPoint
+import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsKind
+import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsUiEvent
+import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsUiState
+import com.example.cognibal.screen.feature.settings.tool.balanceOf
 import com.example.cognibal.screen.feature.settings.tool.cappedToCurrent
 import com.example.cognibal.screen.feature.settings.tool.endExclusive
 import com.example.cognibal.screen.feature.settings.tool.startInclusive
 import dagger.hilt.android.EntryPointAccessors
+import java.time.LocalDateTime
 import java.time.YearMonth
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import com.example.cognibal.screen.feature.settings.statistics.state.CategoryShareUi
-import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsKind
-import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsUiEvent
-import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsUiState
 
 /**
- * 统计页。看一个月里支出或收入的分类构成。
+ * 统计页。看一个月里的分类构成。
  *
- * 月份和收支类型留在这里。金额来自账单汇总，分类名来自分类表。
+ * 月份和三档留在这里。全部档同时要支出和收入的分类；单档只订阅那一档。
+ * 图的扇区在这里算好，界面不再对金额做聚合。
  */
 internal class StatisticsViewModel(
     private val stats: StatsRepository,
@@ -45,28 +48,7 @@ internal class StatisticsViewModel(
     val uiState: StateFlow<StatisticsUiState> = combine(month, kind) { currentMonth, currentKind ->
         currentMonth to currentKind
     }.flatMapLatest { (currentMonth, currentKind) ->
-        val start = currentMonth.startInclusive()
-        val end = currentMonth.endExclusive()
-        combine(
-            stats.observePeriod(start, end),
-            stats.observeCategoryBreakdown(currentKind.toBillType(), start, end),
-            categories.observeAll(),
-            preferences.preferences,
-        ) { period, breakdown, categoryRows, prefs ->
-            val total = when (currentKind) {
-                StatisticsKind.Expense -> period.expenseAmount
-                StatisticsKind.Income -> period.incomeAmount
-            }
-            StatisticsUiState(
-                loading = false,
-                month = currentMonth,
-                canGoNext = currentMonth < YearMonth.now(),
-                kind = currentKind,
-                currencySymbol = prefs.currency.symbol,
-                total = total,
-                categories = categoryShares(breakdown, categoryRows, total),
-            )
-        }
+        observe(currentMonth, currentKind)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
@@ -77,9 +59,66 @@ internal class StatisticsViewModel(
         when (event) {
             StatisticsUiEvent.PreviousMonth -> month.update { it.minusMonths(1) }
             StatisticsUiEvent.NextMonth -> month.update { it.plusMonths(1).cappedToCurrent() }
-            StatisticsUiEvent.ShowExpense -> kind.value = StatisticsKind.Expense
-            StatisticsUiEvent.ShowIncome -> kind.value = StatisticsKind.Income
+            is StatisticsUiEvent.SelectKind -> kind.value = event.kind
         }
+    }
+
+    private fun observe(month: YearMonth, kind: StatisticsKind): Flow<StatisticsUiState> {
+        val start = month.startInclusive()
+        val end = month.endExclusive()
+        return combine(
+            stats.observePeriod(start, end),
+            breakdown(kind, BillType.Expense, start, end),
+            breakdown(kind, BillType.Income, start, end),
+            categories.observeAll(),
+            preferences.preferences,
+        ) { period, expenseRows, incomeRows, categoryRows, prefs ->
+            val (total, overflow) = when (kind) {
+                StatisticsKind.Expense -> period.expenseAmount to false
+                StatisticsKind.Income -> period.incomeAmount to false
+                StatisticsKind.All -> balanceOf(period.incomeAmount, period.expenseAmount)
+            }
+            val sections = statisticsSections(
+                kind = kind,
+                expenseRows = expenseRows,
+                incomeRows = incomeRows,
+                categories = categoryRows,
+                expenseTotal = period.expenseAmount,
+                incomeTotal = period.incomeAmount,
+            )
+            StatisticsUiState(
+                loading = false,
+                month = month,
+                canGoNext = month < YearMonth.now(),
+                kind = kind,
+                currencySymbol = prefs.currency.symbol,
+                total = total,
+                totalOverflow = overflow,
+                slices = statisticsSlices(
+                    kind = kind,
+                    sections = sections,
+                    expenseTotal = period.expenseAmount,
+                    incomeTotal = period.incomeAmount,
+                ),
+                sections = sections,
+            )
+        }
+    }
+
+    /** 单档不订阅另一档，避免翻月时多打一轮分类汇总。 */
+    private fun breakdown(
+        kind: StatisticsKind,
+        type: BillType,
+        start: LocalDateTime,
+        end: LocalDateTime,
+    ): Flow<List<CategoryAmountSummary>> {
+        val needed = when (kind) {
+            StatisticsKind.All -> true
+            StatisticsKind.Expense -> type == BillType.Expense
+            StatisticsKind.Income -> type == BillType.Income
+        }
+        if (!needed) return flowOf(emptyList<CategoryAmountSummary>())
+        return stats.observeCategoryBreakdown(type, start, end)
     }
 
     companion object {
@@ -101,37 +140,4 @@ internal class StatisticsViewModel(
             }
         }
     }
-}
-
-private fun StatisticsKind.toBillType(): BillType = when (this) {
-    StatisticsKind.Expense -> BillType.Expense
-    StatisticsKind.Income -> BillType.Income
-}
-
-private fun categoryShares(
-    rows: List<CategoryAmountSummary>,
-    categories: List<Category>,
-    total: Long,
-): List<CategoryShareUi> {
-    val byId = categories.associateBy { it.id }
-    return rows
-        .filter { row -> row.amount > 0L }
-        .sortedByDescending { row -> row.amount }
-        .map { row ->
-            val category = byId[row.categoryId]
-            val ratio = if (total <= 0L) {
-                0f
-            } else {
-                (row.amount.toDouble() / total.toDouble()).toFloat().coerceIn(0f, 1f)
-            }
-            CategoryShareUi(
-                id = row.categoryId,
-                name = category?.name,
-                missing = category == null,
-                iconKey = category?.icon ?: "",
-                colorKey = category?.color ?: "#FF8A8A8A",
-                amount = row.amount,
-                ratio = ratio,
-            )
-        }
 }

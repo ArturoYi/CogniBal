@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">สร้างไฟล์สำรองที่นำไปด้วยได้</string>
     <string name="backup_import">นำเข้าข้อมูลสำรอง</string>
     <string name="backup_import_subtitle">กู้รายการจากไฟล์สำรอง</string>
-    <string name="backup_nearby">แชร์ใกล้เคียง</string>
-    <string name="backup_nearby_subtitle">ส่งข้อมูลสำรองไปยังอุปกรณ์ใกล้เคียง</string>
+    <string name="backup_nearby">แชร์ผ่านบลูทูธ</string>
+    <string name="backup_nearby_subtitle">ส่งไฟล์สำรองที่เข้ารหัสไปยังอุปกรณ์ใกล้เคียงผ่านบลูทูธ</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="other">%d วัน</item>

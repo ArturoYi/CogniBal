@@ -56,6 +56,10 @@ interface BillDao {
     @Query("SELECT * FROM bill WHERE id = :id")
     suspend fun getById(id: Long): Bill?
 
+    /** 保险柜里的在用条目。没有账单就视为空库，蓝牙迁移不会发送。 */
+    @Query("SELECT COUNT(*) FROM bill")
+    suspend fun count(): Int
+
     @Query("SELECT COUNT(*) FROM bill WHERE accountId = :accountId")
     suspend fun countByAccount(accountId: Long): Int
 
@@ -221,4 +225,37 @@ interface BillDao {
         startInclusive: LocalDateTime,
         endExclusive: LocalDateTime,
     ): Flow<TransferAmountSummary>
+
+    /**
+     * 一个周期里的全部支出，给总预算用。
+     * 走 `(type, billTime)`，不含收入和转账。
+     */
+    @Query(
+        """
+        SELECT COALESCE(SUM(amount), 0) FROM bill
+        WHERE type = 0
+          AND billTime >= :startInclusive
+          AND billTime < :endExclusive
+        """,
+    )
+    suspend fun sumExpense(
+        startInclusive: LocalDateTime,
+        endExclusive: LocalDateTime,
+    ): Long
+
+    /** 一个周期里某个分类的支出，给分类预算用。走 `(type, categoryId, billTime)`。 */
+    @Query(
+        """
+        SELECT COALESCE(SUM(amount), 0) FROM bill
+        WHERE type = 0
+          AND categoryId = :categoryId
+          AND billTime >= :startInclusive
+          AND billTime < :endExclusive
+        """,
+    )
+    suspend fun sumCategoryExpense(
+        categoryId: Long,
+        startInclusive: LocalDateTime,
+        endExclusive: LocalDateTime,
+    ): Long
 }

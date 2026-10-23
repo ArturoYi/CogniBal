@@ -6,7 +6,7 @@
     <string name="add_expense">Add expense</string>
     <string name="navigate_back">Back</string>
     <string name="settings_appearance">Appearance</string>
-    <string name="settings_backup">Backup</string>
+    <string name="settings_backup">Backup and migration</string>
     <string name="settings_security">Security and privacy</string>
     <string name="settings_more">More settings</string>
     <string name="settings_about">About CogniBal</string>
@@ -71,13 +71,13 @@
     <string name="security_app_lock">App lock</string>
     <string name="security_app_lock_subtitle">Verify your identity before opening the app</string>
     <string name="backup_save">Back up</string>
-    <string name="backup_save_subtitle">Save the current bills on this device</string>
+    <string name="backup_save_subtitle">Encrypt the current ledger and save it on this device</string>
     <string name="backup_export">Export backup</string>
-    <string name="backup_export_subtitle">Create a backup file you can take with you</string>
+    <string name="backup_export_subtitle">Share the encrypted archive. A backup is created first if needed</string>
     <string name="backup_import">Import backup</string>
-    <string name="backup_import_subtitle">Restore bills from a backup file</string>
-    <string name="backup_nearby">Nearby Share</string>
-    <string name="backup_nearby_subtitle">Send a backup to a nearby device</string>
+    <string name="backup_import_subtitle">Restore the ledger from the backup on this device</string>
+    <string name="backup_nearby">Bluetooth migration</string>
+    <string name="backup_nearby_subtitle">Send the whole vault from the old phone. The new phone receives it</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d day</item>

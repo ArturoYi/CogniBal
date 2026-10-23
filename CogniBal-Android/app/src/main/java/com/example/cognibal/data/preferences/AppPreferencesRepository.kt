@@ -52,6 +52,10 @@ internal class AppPreferencesRepository(
         update { it[Keys.currency] = currency.name }
     }
 
+    suspend fun setBudgetNotify(enabled: Boolean) {
+        update { it[Keys.budgetNotify] = enabled }
+    }
+
     private suspend fun update(transform: (MutablePreferences) -> Unit) {
         withContext(Dispatchers.IO) {
             try {
@@ -75,6 +79,7 @@ private fun Preferences.toAppPreferences(): AppPreferences {
         darkMode = DarkModePreference.fromId(this[Keys.darkMode]),
         hapticFeedback = this[Keys.hapticFeedback] ?: true,
         currency = enumValueOrDefault(this[Keys.currency], CurrencyPreference.CNY),
+        budgetNotify = this[Keys.budgetNotify] ?: false,
     )
 }
 

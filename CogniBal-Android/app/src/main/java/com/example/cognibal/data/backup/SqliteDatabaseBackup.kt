@@ -100,15 +100,18 @@ internal object SqliteRestore {
             }
             if (version > AppDatabase.VERSION) {
                 clearPending(directory)
+                discardPendingAttachments(context)
                 writeError(directory, "备份来自更新的数据库版本 $version")
                 return
             }
             pendingDb.copyTo(File(directory, AppDatabase.NAME), overwrite = true)
             copyOrDelete(File(directory, PENDING_WAL), File(directory, WAL))
             copyOrDelete(File(directory, PENDING_SHM), File(directory, SHM))
+            swapPendingAttachments(context)
             clearPending(directory)
         } catch (exception: BackupException) {
             clearPending(directory)
+            discardPendingAttachments(context)
             writeError(directory, exception.message ?: "整库恢复失败")
         }
     }
@@ -119,6 +122,55 @@ internal object SqliteRestore {
         val message = file.readText()
         file.delete()
         return message.ifBlank { null }
+    }
+
+    /**
+     * 把已经核对过的库文件放进 pending。附件目录一起换，下次冷启动才动正在打开的库。
+     * 调用方要先确认 schema 不比本机新。这里再读一次文件头，避免把坏文件标成可恢复。
+     */
+    fun stagePrepared(
+        context: Context,
+        database: File,
+        wal: File?,
+        shm: File?,
+        attachments: File?,
+    ) {
+        val directory = databaseDirectory(context)
+        directory.mkdirs()
+        clearPending(directory)
+        discardPendingAttachments(context)
+        val version = readSqliteUserVersion(database)
+        if (version <= 0) throw BackupException.Format("备份不是本应用的账单库")
+        if (version > AppDatabase.VERSION) throw BackupException.NewerDatabase(version)
+        try {
+            database.copyTo(File(directory, PENDING_DB), overwrite = true)
+            if (wal != null && wal.isFile) wal.copyTo(File(directory, PENDING_WAL), overwrite = true)
+            if (shm != null && shm.isFile) shm.copyTo(File(directory, PENDING_SHM), overwrite = true)
+            if (attachments != null && attachments.exists()) {
+                val pending = pendingAttachments(context)
+                if (pending.exists()) pending.deleteRecursively()
+                if (!attachments.copyRecursively(pending, overwrite = true)) {
+                    throw BackupException.Io("无法准备附件")
+                }
+            }
+            File(directory, MARKER).writeText("ready")
+        } catch (exception: BackupException) {
+            clearPending(directory)
+            discardPendingAttachments(context)
+            throw exception
+        } catch (exception: java.io.IOException) {
+            clearPending(directory)
+            discardPendingAttachments(context)
+            throw BackupException.Io("无法准备整库恢复", exception)
+        }
+    }
+
+    fun userVersion(database: File): Int = readSqliteUserVersion(database)
+
+    /** 迁移没有完成时丢掉已经准备好的替换，避免下次启动换成半次导入。 */
+    fun discardPrepared(context: Context) {
+        clearPending(databaseDirectory(context))
+        discardPendingAttachments(context)
     }
 
     fun stageFromZip(context: Context, input: InputStream) {
@@ -195,6 +247,31 @@ internal object SqliteRestore {
         }
     }
 
+    private fun pendingAttachments(context: Context): File {
+        return File(context.applicationContext.filesDir, ATTACHMENTS_PENDING)
+    }
+
+    private fun discardPendingAttachments(context: Context) {
+        pendingAttachments(context).deleteRecursively()
+    }
+
+    private fun swapPendingAttachments(context: Context) {
+        val pending = pendingAttachments(context)
+        if (!pending.exists()) return
+        val live = File(context.applicationContext.filesDir, ATTACHMENTS_LIVE)
+        val previous = File(context.applicationContext.filesDir, ATTACHMENTS_PREVIOUS)
+        if (previous.exists()) previous.deleteRecursively()
+        val hadLive = live.exists()
+        if (hadLive && !live.renameTo(previous)) {
+            throw BackupException.Io("无法替换附件")
+        }
+        if (!pending.renameTo(live)) {
+            if (hadLive) previous.renameTo(live)
+            throw BackupException.Io("无法替换附件")
+        }
+        if (previous.exists()) previous.deleteRecursively()
+    }
+
     private fun writeError(directory: File, message: String) {
         File(directory, ERROR_FILE).writeText(message)
     }
@@ -222,6 +299,9 @@ internal object SqliteRestore {
 
     private const val HEADER_BYTES: Int = 100
     private const val DEFAULT_BUFFER: Int = 8 * 1024
+    private const val ATTACHMENTS_LIVE: String = "attachments"
+    private const val ATTACHMENTS_PENDING: String = "attachments.pending"
+    private const val ATTACHMENTS_PREVIOUS: String = "attachments.previous"
 }
 
 internal fun databaseDirectory(context: Context): File {

@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Lag en fil du kan ta med deg</string>
     <string name="backup_import">Importer kopi</string>
     <string name="backup_import_subtitle">Gjenopprett poster fra en sikkerhetskopi</string>
-    <string name="backup_nearby">Deling i nærheten</string>
-    <string name="backup_nearby_subtitle">Send en kopi til en enhet i nærheten</string>
+    <string name="backup_nearby">Del via Bluetooth</string>
+    <string name="backup_nearby_subtitle">Send den krypterte kopien til en enhet i nærheten via Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d dag</item>

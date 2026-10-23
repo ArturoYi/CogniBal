@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Vytvořit soubor zálohy, který si můžete odnést</string>
     <string name="backup_import">Importovat zálohu</string>
     <string name="backup_import_subtitle">Obnovit pohyby ze souboru zálohy</string>
-    <string name="backup_nearby">Sdílení nablízku</string>
-    <string name="backup_nearby_subtitle">Poslat zálohu do zařízení nablízku</string>
+    <string name="backup_nearby">Sdílení přes Bluetooth</string>
+    <string name="backup_nearby_subtitle">Poslat šifrovanou zálohu na blízké zařízení přes Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d den</item>

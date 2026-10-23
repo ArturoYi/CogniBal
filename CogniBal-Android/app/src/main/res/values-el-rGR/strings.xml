@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">Δημιουργία αρχείου αντιγράφου που μπορείτε να πάρετε μαζί σας</string>
     <string name="backup_import">Εισαγωγή αντιγράφου</string>
     <string name="backup_import_subtitle">Επαναφορά κινήσεων από αρχείο αντιγράφου</string>
-    <string name="backup_nearby">Κοινή χρήση κοντά</string>
-    <string name="backup_nearby_subtitle">Αποστολή αντιγράφου σε κοντινή συσκευή</string>
+    <string name="backup_nearby">Κοινή χρήση Bluetooth</string>
+    <string name="backup_nearby_subtitle">Αποστολή του κρυπτογραφημένου αντιγράφου σε κοντινή συσκευή μέσω Bluetooth</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d ημέρα</item>

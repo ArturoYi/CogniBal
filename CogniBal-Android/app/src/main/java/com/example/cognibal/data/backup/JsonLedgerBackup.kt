@@ -17,6 +17,7 @@ import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.data.database.model.BudgetPeriodType
 import com.example.cognibal.data.database.model.BudgetType
 import com.example.cognibal.data.database.model.CategoryType
+import com.example.cognibal.data.repository.BudgetMath
 import com.example.cognibal.data.repository.LedgerReject
 import com.example.cognibal.data.repository.onIo
 import java.io.InputStream
@@ -132,7 +133,13 @@ class JsonLedgerBackup @Inject constructor(
                 throw BackupException.Rejected(LedgerReject.InvalidPeriod)
             }
             if (budget.limitAmount <= 0L) throw BackupException.Rejected(LedgerReject.InvalidLimit)
-            if (budget.alertPercent !in 0..100) throw BackupException.Rejected(LedgerReject.InvalidAlertPercent)
+            if (!BudgetMath.alertPercentAllowed(budget.alertPercent)) {
+                throw BackupException.Rejected(LedgerReject.InvalidAlertPercent)
+            }
+            val cycleDay = budget.cycleDay
+            if (cycleDay != null && (budget.periodType != BudgetPeriodType.Month || cycleDay !in 1..31)) {
+                throw BackupException.Rejected(LedgerReject.InvalidPeriod)
+            }
             when (budget.budgetType) {
                 BudgetType.Global -> {
                     if (budget.categoryId != null) throw BackupException.Rejected(LedgerReject.BudgetCategoryForbidden)
@@ -145,6 +152,26 @@ class JsonLedgerBackup @Inject constructor(
                         throw BackupException.Rejected(LedgerReject.BudgetCategoryMustBeExpense)
                     }
                 }
+            }
+        }
+        val enabled = budgets.filter { it.isEnable }
+        for (index in enabled.indices) {
+            val left = enabled[index]
+            for (otherIndex in index + 1 until enabled.size) {
+                val right = enabled[otherIndex]
+                val sameScope = BudgetMath.sameDimension(
+                    left.budgetType,
+                    left.categoryId,
+                    right.budgetType,
+                    right.categoryId,
+                )
+                val overlap = BudgetMath.overlaps(
+                    left.periodStart,
+                    left.periodEnd,
+                    right.periodStart,
+                    right.periodEnd,
+                )
+                if (sameScope && overlap) throw BackupException.Rejected(LedgerReject.BudgetOverlap)
             }
         }
     }
@@ -222,6 +249,7 @@ private data class BudgetRecord(
     val limitAmount: Long,
     val alertPercent: Int,
     val periodType: Int,
+    val cycleDay: Int? = null,
     val periodStart: String,
     val periodEnd: String,
     val isEnable: Boolean,
@@ -273,6 +301,7 @@ private fun Budget.toRecord() = BudgetRecord(
     limitAmount = limitAmount,
     alertPercent = alertPercent,
     periodType = periodType.code,
+    cycleDay = cycleDay,
     periodStart = LedgerTime.encode(periodStart),
     periodEnd = LedgerTime.encode(periodEnd),
     isEnable = isEnable,
@@ -333,6 +362,7 @@ private fun BudgetRecord.toEntity(): Budget = Budget(
     limitAmount = limitAmount,
     alertPercent = alertPercent,
     periodType = code(BudgetPeriodType::fromCode, periodType, "预算周期"),
+    cycleDay = cycleDay,
     periodStart = time(periodStart),
     periodEnd = time(periodEnd),
     isEnable = isEnable,

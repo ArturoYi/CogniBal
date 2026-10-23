@@ -34,6 +34,7 @@ internal data class AddExpenseUiState(
     val currencySymbol: String = CurrencyPreference.CNY.symbol,
     val issue: AddBillIssue? = null,
     val saving: Boolean = false,
+    val overBudgetPrompt: OverBudgetPrompt? = null,
 )
 
 internal sealed interface AddExpenseUiEvent {
@@ -51,9 +52,17 @@ internal sealed interface AddExpenseUiEvent {
     data class TimePicked(val hour: Int, val minute: Int, val second: Int) : AddExpenseUiEvent
     data class RemarkChanged(val value: String) : AddExpenseUiEvent
     data object Save : AddExpenseUiEvent
+    data object ConfirmOverBudget : AddExpenseUiEvent
+    data object DismissOverBudget : AddExpenseUiEvent
 }
 
 internal sealed interface CategoryCreateResult {
     data class Saved(val id: Long) : CategoryCreateResult
     data class Failed(val issue: AddBillIssue) : CategoryCreateResult
 }
+
+/** 记下这笔支出会让哪些预算达到 100%。 */
+internal data class OverBudgetPrompt(
+    val includesGlobal: Boolean,
+    val categoryNames: List<String>,
+)

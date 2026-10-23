@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">साथ ले जाने योग्य बैकअप फ़ाइल बनाएँ</string>
     <string name="backup_import">बैकअप आयात करें</string>
     <string name="backup_import_subtitle">बैकअप फ़ाइल से लेन-देन पुनर्स्थापित करें</string>
-    <string name="backup_nearby">आस-पास साझा करें</string>
-    <string name="backup_nearby_subtitle">पास के डिवाइस पर बैकअप भेजें</string>
+    <string name="backup_nearby">ब्लूटूथ से साझा करें</string>
+    <string name="backup_nearby_subtitle">एन्क्रिप्टेड बैकअप को आस-पास के डिवाइस पर ब्लूटूथ से भेजें</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="one">%d दिन</item>

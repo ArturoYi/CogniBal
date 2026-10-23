@@ -76,8 +76,8 @@
     <string name="backup_export_subtitle">가져갈 수 있는 백업 파일 만들기</string>
     <string name="backup_import">백업 가져오기</string>
     <string name="backup_import_subtitle">백업 파일에서 내역 복원</string>
-    <string name="backup_nearby">근처 공유</string>
-    <string name="backup_nearby_subtitle">근처 기기로 백업 보내기</string>
+    <string name="backup_nearby">블루투스 공유</string>
+    <string name="backup_nearby_subtitle">암호화된 백업을 블루투스로 가까운 기기에 보냅니다</string>
     <string name="app_version_footer">CogniBal %1$s</string>
     <plurals name="day_count">
         <item quantity="other">%d일</item>
