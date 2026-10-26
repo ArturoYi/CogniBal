@@ -8,72 +8,83 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // =========================================================================
-// 方案一：暖奶油青绿（Warm Cream）调色板
-// 页面底色为温暖温和的暖奶油米，搭配低饱和奶油青绿，长时间阅读不累眼
+// 中性色两套主题共用，来自 Open Color gray。
+// 浅色：页面 gray 1，卡片和底栏 gray 0。暗色：页面 gray 9，卡片和底栏 gray 8。
+// 切换深浅色时整组一起换，切换青绿 / 黑白时中性色不动。
 // =========================================================================
 
-// --- 方案一 浅色（Light）原色常量 ---
-val WarmCreamLight_Background = Color(0xFFF8F7F2)       // 背景底色（暖奶油米，非死白）
-val WarmCreamLight_CardBackground = Color(0xFFFFFFFF)   // 卡片底色（柔和白，在暖奶油米底上有微浮层）
-val WarmCreamLight_Primary = Color(0xFF78A898)          // 主色（奶油青绿）：主按钮、高亮、选中态、结余正数
-val WarmCreamLight_OnPrimary = Color(0xFFFFFFFF)        // 主色上的文字图标
-val WarmCreamLight_Secondary = Color(0xFFD7E6E1)        // 辅助浅青绿：标签背景、进度条底色
-val WarmCreamLight_OnSecondary = Color(0xFF264A3F)      // 辅助浅青绿上的前景色
-val WarmCreamLight_Expense = Color(0xFFD96C6C)          // 强调红：超支金额、负债、亏损
-val WarmCreamLight_TextPrimary = Color(0xFF262626)      // 正文黑：账单标题、主要数字，非纯黑
-val WarmCreamLight_TextSecondary = Color(0xFF666666)    // 次要文字：备注、分类小字、辅助说明
-val WarmCreamLight_TextTertiary = Color(0xFFA3A3A3)     // 占位 / 弱化文字：提示文字、禁用态
-val WarmCreamLight_Divider = Color(0xFFE5E3DD)          // 分割线：浅分割，和奶油底色自然融合
-val WarmCreamLight_NavBar = Color(0xFFFFFFFF)           // 导航底栏底色
+private val LightBackground = OpenColor.Gray1
+private val LightCard = OpenColor.Gray0
+private val LightTextPrimary = OpenColor.Gray9
+private val LightTextSecondary = OpenColor.Gray7
+private val LightTextTertiary = OpenColor.Gray6
+private val LightDivider = OpenColor.Gray3
+private val LightOnAccent = OpenColor.Gray0
 
-// --- 方案一 暗色（Dark）适配原色常量 ---
-// 延续温暖温和调性，采用深暖炭灰（带极微温润橄榄调），避免冷黑与高刺眼对比
-val WarmCreamDark_Background = Color(0xFF191B1A)        // 页面底色（深暖炭灰，温润护眼）
-val WarmCreamDark_CardBackground = Color(0xFF232725)    // 卡片底色（微抬高的深暖灰容器）
-val WarmCreamDark_Primary = Color(0xFF8BBFB0)           // 主色（暗色提亮奶油青绿，保证识别度）
-val WarmCreamDark_OnPrimary = Color(0xFF0E2C22)         // 主色上的文字
-val WarmCreamDark_Secondary = Color(0xFF283D36)         // 辅助深青绿淡块（暗色下的标签/色块容器）
-val WarmCreamDark_OnSecondary = Color(0xFFD7E6E1)       // 辅助深青绿上的浅色文字
-val WarmCreamDark_Expense = Color(0xFFE27B7B)           // 强调红（暗色提亮，醒目且柔和）
-val WarmCreamDark_TextPrimary = Color(0xFFE8E7E2)       // 正文文字（暖米白，与奶油调呼应，非冷白）
-val WarmCreamDark_TextSecondary = Color(0xFF9E9D97)     // 次要文字（温润中灰）
-val WarmCreamDark_TextTertiary = Color(0xFF686864)      // 占位 / 弱化文字（暗灰）
-val WarmCreamDark_Divider = Color(0xFF2E312F)           // 暗调分割线
-val WarmCreamDark_NavBar = Color(0xFF1F2321)            // 导航底栏底色
+private val DarkBackground = OpenColor.Gray9
+private val DarkCard = OpenColor.Gray8
+private val DarkTextPrimary = OpenColor.Gray1
+private val DarkTextSecondary = OpenColor.Gray5
+private val DarkTextTertiary = OpenColor.Gray6
+private val DarkDivider = OpenColor.Gray7
+private val DarkOnAccent = OpenColor.Gray9
 
 // =========================================================================
-// 方案二：黑白色（Monochrome）调色板
-// 极简墨灰纸色，避开纯黑与纯白。对比足够阅读，长时间看不刺眼
+// 方案一：青绿。浅色按钮和收入用 teal 9，白字才过对比度；暗色改用 teal 4。
+// 方案二：黑白。浅色主色 gray 8，暗色主色 gray 2。支出两套都用 red。
 // =========================================================================
 
-// --- 方案二 浅色（Light）原色常量 ---
-val MonochromeLight_Background = Color(0xFFF0EEEA)       // 页面背景（暖灰纸色，避开冷白）
-val MonochromeLight_CardBackground = Color(0xFFF8F7F4)   // 卡片背景（柔和米白，非纯白）
-val MonochromeLight_Primary = Color(0xFF3E3E40)          // 主色（柔炭灰）：主按钮、核心焦点、正数金额
-val MonochromeLight_OnPrimary = Color(0xFFF7F6F3)        // 主色上的文字与图标（暖米白）
-val MonochromeLight_Secondary = Color(0xFFE6E4DE)        // 辅助暖灰：标签背景、次要区块
-val MonochromeLight_OnSecondary = Color(0xFF3A3A3C)      // 辅助色上的文字
-val MonochromeLight_Expense = Color(0xFFC45C58)          // 强调红：压低饱和，支出仍可辨
-val MonochromeLight_TextPrimary = Color(0xFF2C2C2E)      // 一级文字（墨灰，非纯黑）
-val MonochromeLight_TextSecondary = Color(0xFF6A6A6C)    // 二级文字（分类、日期）
-val MonochromeLight_TextTertiary = Color(0xFF989896)     // 三级弱化文字（备注、占位提示）
-val MonochromeLight_Divider = Color(0xFFDDDBD5)          // 细分割线
-val MonochromeLight_NavBar = Color(0xFFF6F5F2)           // 导航底栏底色
+val WarmCreamLight_Background = LightBackground
+val WarmCreamLight_CardBackground = LightCard
+val WarmCreamLight_Primary = OpenColor.Teal9
+val WarmCreamLight_OnPrimary = LightOnAccent
+val WarmCreamLight_Secondary = OpenColor.Teal0
+val WarmCreamLight_OnSecondary = OpenColor.Teal9
+val WarmCreamLight_Expense = OpenColor.Red9
+val WarmCreamLight_TextPrimary = LightTextPrimary
+val WarmCreamLight_TextSecondary = LightTextSecondary
+val WarmCreamLight_TextTertiary = LightTextTertiary
+val WarmCreamLight_Divider = LightDivider
+val WarmCreamLight_NavBar = LightCard
 
-// --- 方案二 暗色（Dark）适配原色常量 ---
-// 抬高的炭灰底，暖灰白文字，避免纯黑底上的纯白光晕
-val MonochromeDark_Background = Color(0xFF1A1A1C)        // 页面背景（抬高炭灰，避免纯黑）
-val MonochromeDark_CardBackground = Color(0xFF242426)    // 卡片背景（略抬高的炭灰容器）
-val MonochromeDark_Primary = Color(0xFFD8D6D1)           // 主色（暖灰白，非纯白高光）
-val MonochromeDark_OnPrimary = Color(0xFF1E1E20)         // 主色上的文字
-val MonochromeDark_Secondary = Color(0xFF323234)         // 辅助暗灰（次级色块与标签容器）
-val MonochromeDark_OnSecondary = Color(0xFFE4E2DD)       // 辅助块上的文字
-val MonochromeDark_Expense = Color(0xFFE08A84)           // 强调红（降低亮度，仍作警示）
-val MonochromeDark_TextPrimary = Color(0xFFE4E2DD)       // 一级文字（暖米灰，非近纯白）
-val MonochromeDark_TextSecondary = Color(0xFFA3A19C)     // 二级文字（中性灰）
-val MonochromeDark_TextTertiary = Color(0xFF6E6C68)      // 三级弱化文字
-val MonochromeDark_Divider = Color(0xFF333331)           // 细分割线
-val MonochromeDark_NavBar = Color(0xFF1E1E20)            // 导航底栏底色
+val WarmCreamDark_Background = DarkBackground
+val WarmCreamDark_CardBackground = DarkCard
+val WarmCreamDark_Primary = OpenColor.Teal4
+val WarmCreamDark_OnPrimary = DarkOnAccent
+val WarmCreamDark_Secondary = OpenColor.Teal9
+val WarmCreamDark_OnSecondary = OpenColor.Teal0
+val WarmCreamDark_Expense = OpenColor.Red4
+val WarmCreamDark_TextPrimary = DarkTextPrimary
+val WarmCreamDark_TextSecondary = DarkTextSecondary
+val WarmCreamDark_TextTertiary = DarkTextTertiary
+val WarmCreamDark_Divider = DarkDivider
+val WarmCreamDark_NavBar = DarkCard
+
+val MonochromeLight_Background = LightBackground
+val MonochromeLight_CardBackground = LightCard
+val MonochromeLight_Primary = OpenColor.Gray8
+val MonochromeLight_OnPrimary = LightOnAccent
+val MonochromeLight_Secondary = OpenColor.Gray2
+val MonochromeLight_OnSecondary = OpenColor.Gray9
+val MonochromeLight_Expense = OpenColor.Red9
+val MonochromeLight_TextPrimary = LightTextPrimary
+val MonochromeLight_TextSecondary = LightTextSecondary
+val MonochromeLight_TextTertiary = LightTextTertiary
+val MonochromeLight_Divider = LightDivider
+val MonochromeLight_NavBar = LightCard
+
+val MonochromeDark_Background = DarkBackground
+val MonochromeDark_CardBackground = DarkCard
+val MonochromeDark_Primary = OpenColor.Gray2
+val MonochromeDark_OnPrimary = DarkOnAccent
+val MonochromeDark_Secondary = OpenColor.Gray7
+val MonochromeDark_OnSecondary = OpenColor.Gray1
+val MonochromeDark_Expense = OpenColor.Red4
+val MonochromeDark_TextPrimary = DarkTextPrimary
+val MonochromeDark_TextSecondary = DarkTextSecondary
+val MonochromeDark_TextTertiary = DarkTextTertiary
+val MonochromeDark_Divider = DarkDivider
+val MonochromeDark_NavBar = DarkCard
 
 // =========================================================================
 // 语义化扩展色彩系统（AppColors）
@@ -102,7 +113,6 @@ data class AppColors(
     val isDark: Boolean,            // 是否为深色模式
 )
 
-// 方案一：暖奶油青绿 - 浅色 AppColors
 val WarmCreamLightAppColors = AppColors(
     primary = WarmCreamLight_Primary,
     onPrimary = WarmCreamLight_OnPrimary,
@@ -124,7 +134,6 @@ val WarmCreamLightAppColors = AppColors(
     isDark = false,
 )
 
-// 方案一：暖奶油青绿 - 暗色 AppColors
 val WarmCreamDarkAppColors = AppColors(
     primary = WarmCreamDark_Primary,
     onPrimary = WarmCreamDark_OnPrimary,
@@ -146,7 +155,6 @@ val WarmCreamDarkAppColors = AppColors(
     isDark = true,
 )
 
-// 方案二：黑白色 - 浅色 AppColors
 val MonochromeLightAppColors = AppColors(
     primary = MonochromeLight_Primary,
     onPrimary = MonochromeLight_OnPrimary,
@@ -168,7 +176,6 @@ val MonochromeLightAppColors = AppColors(
     isDark = false,
 )
 
-// 方案二：黑白色 - 暗色 AppColors
 val MonochromeDarkAppColors = AppColors(
     primary = MonochromeDark_Primary,
     onPrimary = MonochromeDark_OnPrimary,
@@ -193,19 +200,24 @@ val MonochromeDarkAppColors = AppColors(
 val LocalAppColors = staticCompositionLocalOf { WarmCreamLightAppColors }
 
 // =========================================================================
-// Material 3 ColorScheme 完整构建
+// Material 3 ColorScheme
+// secondary 用作键盘焦点圈，跟当前主色同一级，深浅色切换时一起换。
+// 标签底色走 secondaryContainer，不跟焦点圈混用。
 // =========================================================================
 
-// 方案一：暖奶油青绿 - 浅色 Material 3 ColorScheme
 val WarmCreamLightColorScheme: ColorScheme = lightColorScheme(
     primary = WarmCreamLight_Primary,
     onPrimary = WarmCreamLight_OnPrimary,
     primaryContainer = WarmCreamLight_Secondary,
-    onPrimaryContainer = Color(0xFF19382F),
-    secondary = WarmCreamLight_Secondary,
-    onSecondary = WarmCreamLight_OnSecondary,
-    secondaryContainer = Color(0xFFE9F2EE),
-    onSecondaryContainer = Color(0xFF1B3B31),
+    onPrimaryContainer = WarmCreamLight_OnSecondary,
+    secondary = WarmCreamLight_Primary,
+    onSecondary = WarmCreamLight_OnPrimary,
+    secondaryContainer = OpenColor.Teal1,
+    onSecondaryContainer = OpenColor.Teal9,
+    tertiary = WarmCreamLight_Primary,
+    onTertiary = WarmCreamLight_OnPrimary,
+    tertiaryContainer = WarmCreamLight_Secondary,
+    onTertiaryContainer = WarmCreamLight_OnSecondary,
     background = WarmCreamLight_Background,
     onBackground = WarmCreamLight_TextPrimary,
     surface = WarmCreamLight_CardBackground,
@@ -213,59 +225,65 @@ val WarmCreamLightColorScheme: ColorScheme = lightColorScheme(
     surfaceVariant = WarmCreamLight_Secondary,
     onSurfaceVariant = WarmCreamLight_TextSecondary,
     surfaceContainerLowest = WarmCreamLight_NavBar,
-    surfaceContainerLow = Color(0xFFF3F1EB),
+    surfaceContainerLow = LightCard,
     surfaceContainer = WarmCreamLight_CardBackground,
-    surfaceContainerHigh = Color(0xFFE6E3DB),
-    surfaceContainerHighest = Color(0xFFDFDCD3),
+    surfaceContainerHigh = OpenColor.Gray2,
+    surfaceContainerHighest = OpenColor.Gray3,
     surfaceTint = Color.Transparent,
     error = WarmCreamLight_Expense,
-    onError = Color.White,
-    errorContainer = Color(0xFFFDE8E8),
-    onErrorContainer = Color(0xFF5B1616),
+    onError = LightOnAccent,
+    errorContainer = OpenColor.Red0,
+    onErrorContainer = OpenColor.Red9,
     outline = WarmCreamLight_TextTertiary,
     outlineVariant = WarmCreamLight_Divider,
 )
 
-// 方案一：暖奶油青绿 - 暗色 Material 3 ColorScheme
 val WarmCreamDarkColorScheme: ColorScheme = darkColorScheme(
     primary = WarmCreamDark_Primary,
     onPrimary = WarmCreamDark_OnPrimary,
     primaryContainer = WarmCreamDark_Secondary,
-    onPrimaryContainer = Color(0xFFC8E6DC),
+    onPrimaryContainer = WarmCreamDark_OnSecondary,
     secondary = WarmCreamDark_Primary,
     onSecondary = WarmCreamDark_OnPrimary,
     secondaryContainer = WarmCreamDark_Secondary,
     onSecondaryContainer = WarmCreamDark_OnSecondary,
+    tertiary = WarmCreamDark_Primary,
+    onTertiary = WarmCreamDark_OnPrimary,
+    tertiaryContainer = WarmCreamDark_Secondary,
+    onTertiaryContainer = WarmCreamDark_OnSecondary,
     background = WarmCreamDark_Background,
     onBackground = WarmCreamDark_TextPrimary,
     surface = WarmCreamDark_CardBackground,
     onSurface = WarmCreamDark_TextPrimary,
     surfaceVariant = WarmCreamDark_Secondary,
     onSurfaceVariant = WarmCreamDark_TextSecondary,
-    surfaceContainerLowest = Color(0xFF131514),
-    surfaceContainerLow = Color(0xFF1B1D1C),
+    surfaceContainerLowest = WarmCreamDark_NavBar,
+    surfaceContainerLow = DarkCard,
     surfaceContainer = WarmCreamDark_CardBackground,
-    surfaceContainerHigh = Color(0xFF2C302E),
-    surfaceContainerHighest = Color(0xFF353937),
+    surfaceContainerHigh = OpenColor.Gray7,
+    surfaceContainerHighest = OpenColor.Gray7,
     surfaceTint = Color.Transparent,
     error = WarmCreamDark_Expense,
-    onError = Color(0xFF4A1010),
-    errorContainer = Color(0xFF602323),
-    onErrorContainer = Color(0xFFFCD4D4),
+    onError = DarkOnAccent,
+    errorContainer = OpenColor.Red9,
+    onErrorContainer = OpenColor.Red1,
     outline = WarmCreamDark_TextTertiary,
     outlineVariant = WarmCreamDark_Divider,
 )
 
-// 方案二：黑白色 - 浅色 Material 3 ColorScheme
 val MonochromeLightColorScheme: ColorScheme = lightColorScheme(
     primary = MonochromeLight_Primary,
     onPrimary = MonochromeLight_OnPrimary,
     primaryContainer = MonochromeLight_Secondary,
     onPrimaryContainer = MonochromeLight_OnSecondary,
-    secondary = MonochromeLight_Secondary,
-    onSecondary = MonochromeLight_OnSecondary,
-    secondaryContainer = Color(0xFFEAE8E2),
-    onSecondaryContainer = Color(0xFF2C2C2E),
+    secondary = MonochromeLight_Primary,
+    onSecondary = MonochromeLight_OnPrimary,
+    secondaryContainer = OpenColor.Gray2,
+    onSecondaryContainer = OpenColor.Gray9,
+    tertiary = MonochromeLight_Primary,
+    onTertiary = MonochromeLight_OnPrimary,
+    tertiaryContainer = MonochromeLight_Secondary,
+    onTertiaryContainer = MonochromeLight_OnSecondary,
     background = MonochromeLight_Background,
     onBackground = MonochromeLight_TextPrimary,
     surface = MonochromeLight_CardBackground,
@@ -273,20 +291,19 @@ val MonochromeLightColorScheme: ColorScheme = lightColorScheme(
     surfaceVariant = MonochromeLight_Secondary,
     onSurfaceVariant = MonochromeLight_TextSecondary,
     surfaceContainerLowest = MonochromeLight_NavBar,
-    surfaceContainerLow = Color(0xFFF4F3F0),
+    surfaceContainerLow = LightCard,
     surfaceContainer = MonochromeLight_CardBackground,
-    surfaceContainerHigh = Color(0xFFE8E6E0),
-    surfaceContainerHighest = Color(0xFFDEDBD4),
+    surfaceContainerHigh = OpenColor.Gray2,
+    surfaceContainerHighest = OpenColor.Gray3,
     surfaceTint = Color.Transparent,
     error = MonochromeLight_Expense,
-    onError = Color(0xFFF7F6F3),
-    errorContainer = Color(0xFFF6E6E4),
-    onErrorContainer = Color(0xFF5C2422),
+    onError = LightOnAccent,
+    errorContainer = OpenColor.Red0,
+    onErrorContainer = OpenColor.Red9,
     outline = MonochromeLight_TextTertiary,
     outlineVariant = MonochromeLight_Divider,
 )
 
-// 方案二：黑白色 - 暗色 Material 3 ColorScheme
 val MonochromeDarkColorScheme: ColorScheme = darkColorScheme(
     primary = MonochromeDark_Primary,
     onPrimary = MonochromeDark_OnPrimary,
@@ -296,22 +313,26 @@ val MonochromeDarkColorScheme: ColorScheme = darkColorScheme(
     onSecondary = MonochromeDark_OnPrimary,
     secondaryContainer = MonochromeDark_Secondary,
     onSecondaryContainer = MonochromeDark_OnSecondary,
+    tertiary = MonochromeDark_Primary,
+    onTertiary = MonochromeDark_OnPrimary,
+    tertiaryContainer = MonochromeDark_Secondary,
+    onTertiaryContainer = MonochromeDark_OnSecondary,
     background = MonochromeDark_Background,
     onBackground = MonochromeDark_TextPrimary,
     surface = MonochromeDark_CardBackground,
     onSurface = MonochromeDark_TextPrimary,
     surfaceVariant = MonochromeDark_Secondary,
     onSurfaceVariant = MonochromeDark_TextSecondary,
-    surfaceContainerLowest = Color(0xFF141416),
-    surfaceContainerLow = Color(0xFF1E1E20),
+    surfaceContainerLowest = MonochromeDark_NavBar,
+    surfaceContainerLow = DarkCard,
     surfaceContainer = MonochromeDark_CardBackground,
-    surfaceContainerHigh = Color(0xFF2E2E30),
-    surfaceContainerHighest = Color(0xFF38383A),
+    surfaceContainerHigh = OpenColor.Gray7,
+    surfaceContainerHighest = OpenColor.Gray7,
     surfaceTint = Color.Transparent,
     error = MonochromeDark_Expense,
-    onError = Color(0xFF3A1614),
-    errorContainer = Color(0xFF5A3030),
-    onErrorContainer = Color(0xFFF3D6D4),
+    onError = DarkOnAccent,
+    errorContainer = OpenColor.Red9,
+    onErrorContainer = OpenColor.Red1,
     outline = MonochromeDark_TextTertiary,
     outlineVariant = MonochromeDark_Divider,
 )

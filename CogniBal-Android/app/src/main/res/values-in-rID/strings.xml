@@ -5,6 +5,7 @@
     <string name="tab_settings">Setelan</string>
     <string name="add_expense">Tambah pengeluaran</string>
     <string name="navigate_back">Kembali</string>
+    <string name="loading_indicator_cd">Memuat</string>
     <string name="settings_appearance">Tampilan</string>
     <string name="settings_backup">Cadangan</string>
     <string name="settings_security">Keamanan dan privasi</string>

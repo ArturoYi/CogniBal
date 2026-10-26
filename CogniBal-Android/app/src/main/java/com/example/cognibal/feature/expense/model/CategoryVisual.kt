@@ -16,6 +16,7 @@ import androidx.compose.material.icons.rounded.ShoppingBag
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.example.cognibal.ui.theme.OpenColor
 import java.util.Locale
 
 /**
@@ -57,5 +58,5 @@ internal fun Color.toHexArgb(): String = String.format(Locale.US, "#%08X", toArg
 /** 浅色分类底上用深色图标，避免白字落在沙金这类浅色上。 */
 internal fun Color.onCategory(): Color {
     val luminance = 0.299f * red + 0.587f * green + 0.114f * blue
-    return if (luminance > 0.62f) Color(0xFF2C2A26) else Color.White
+    return if (luminance > 0.62f) OpenColor.Gray9 else Color.White
 }

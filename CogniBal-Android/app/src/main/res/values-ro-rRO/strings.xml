@@ -5,6 +5,7 @@
     <string name="tab_settings">Setări</string>
     <string name="add_expense">Adaugă o cheltuială</string>
     <string name="navigate_back">Înapoi</string>
+    <string name="loading_indicator_cd">Se încarcă</string>
     <string name="settings_appearance">Aspect</string>
     <string name="settings_backup">Copie de rezervă</string>
     <string name="settings_security">Securitate și confidențialitate</string>

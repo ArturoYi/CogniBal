@@ -22,6 +22,7 @@ import com.example.cognibal.data.repository.assetAccountOrder
 import com.example.cognibal.data.repository.sumMinorAmounts
 import com.example.cognibal.di.LedgerEntryPoint
 import dagger.hilt.android.EntryPointAccessors
+import java.time.LocalDate
 import java.time.YearMonth
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
@@ -44,7 +45,7 @@ import kotlinx.coroutines.launch
  * 记账首页。
  *
  * 当前账户记在 is_default。总资产是全部账户余额之和。
- * 本月收支和最近账单只看当前账户。预算不区分账户，只显示此刻落在周期里、并且启用的条目。
+ * 本月收支和最近 7 个自然日的账单只看当前账户。预算不区分账户，只显示此刻落在周期里、并且启用的条目。
  */
 internal class BillHomeViewModel(
     private val accounts: AccountRepository,
@@ -104,7 +105,12 @@ internal class BillHomeViewModel(
         val recent = if (currentId == null) {
             flowOf(emptyList())
         } else {
-            bills.observeRecent(currentId, RECENT_LIMIT)
+            val today = LocalDate.now()
+            bills.observeAccountBetween(
+                currentId,
+                today.minusDays(RECENT_SPAN_DAYS - 1).atStartOfDay(),
+                today.plusDays(1).atStartOfDay(),
+            )
         }
         return combine(
             period,
@@ -139,7 +145,9 @@ internal class BillHomeViewModel(
 
     companion object {
         private const val STOP_TIMEOUT_MILLIS = 5_000L
-        private const val RECENT_LIMIT = 20
+
+        /** 含今天在内的自然日天数。窗口在订阅时取一次，过午夜后等账户流再次发射才换。 */
+        private const val RECENT_SPAN_DAYS = 7L
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

@@ -91,7 +91,7 @@ internal fun categoryShares(
                 name = category?.name,
                 missing = category == null,
                 iconKey = category?.icon ?: "",
-                colorKey = category?.color ?: "#FF8A8A8A",
+                colorKey = category?.color ?: "#FF868E96",
                 amount = row.amount,
                 ratio = shareRatio(row.amount, total),
             )

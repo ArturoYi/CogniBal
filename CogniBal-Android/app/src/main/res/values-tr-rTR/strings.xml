@@ -5,6 +5,7 @@
     <string name="tab_settings">Ayarlar</string>
     <string name="add_expense">Gider ekle</string>
     <string name="navigate_back">Geri</string>
+    <string name="loading_indicator_cd">Yükleniyor</string>
     <string name="settings_appearance">Görünüm</string>
     <string name="settings_backup">Yedekleme</string>
     <string name="settings_security">Güvenlik ve gizlilik</string>

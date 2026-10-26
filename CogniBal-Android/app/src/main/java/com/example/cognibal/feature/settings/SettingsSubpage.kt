@@ -46,6 +46,8 @@ import com.example.cognibal.ui.theme.appColors
  *
  * 底色由共用页面底铺到屏幕边缘，这里不再另铺一层。安全区垫在内容上，返回键和条目不会被状态栏、导航栏挡住。
  * 列表和详情并排时不显示返回键，系统返回仍由导航宿主处理。
+ *
+ * [placeholder] 非空时居中放在标题下面，滚动内容先不组合。资产页用来等数据。
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -53,6 +55,7 @@ internal fun SettingsSubpage(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    placeholder: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val showBack = LocalListDetailSceneScope.current == null
@@ -86,15 +89,27 @@ internal fun SettingsSubpage(
         ) {
             SettingsSubpageHeader(title = title, onBack = onBack, showBack = showBack)
             Spacer(modifier = Modifier.height(if (layout.compactHeight) 8.dp else 12.dp))
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(scrollState)
-                    .padding(bottom = contentPadding.calculateBottomPadding())
-                    .padding(bottom = if (layout.compactHeight) 10.dp else 14.dp),
-                verticalArrangement = Arrangement.spacedBy(sectionSpacing),
-                content = content,
-            )
+            if (placeholder != null) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth()
+                        .padding(bottom = contentPadding.calculateBottomPadding()),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    placeholder()
+                }
+            } else {
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(scrollState)
+                        .padding(bottom = contentPadding.calculateBottomPadding())
+                        .padding(bottom = if (layout.compactHeight) 10.dp else 14.dp),
+                    verticalArrangement = Arrangement.spacedBy(sectionSpacing),
+                    content = content,
+                )
+            }
         }
     }
 }

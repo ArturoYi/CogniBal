@@ -863,10 +863,10 @@ private fun AddExpenseAmountPreview() {
 
 private fun previewState(categoryId: Long?, amountText: String): AddExpenseUiState {
     val categories = listOf(
-        CategoryChoice(1, "餐饮", "restaurant", "#FFD96C6C"),
-        CategoryChoice(2, "交通", "directions_bus", "#FF78A898"),
-        CategoryChoice(3, "购物", "shopping_bag", "#FFE0A15A"),
-        CategoryChoice(4, "居住", "home", "#FF7EA0C4"),
+        CategoryChoice(1, "餐饮", "restaurant", "#FFF03E3E"),
+        CategoryChoice(2, "交通", "directions_bus", "#FF0CA678"),
+        CategoryChoice(3, "购物", "shopping_bag", "#FFFD7E14"),
+        CategoryChoice(4, "居住", "home", "#FF228BE6"),
     )
     return AddExpenseUiState(
         ready = true,

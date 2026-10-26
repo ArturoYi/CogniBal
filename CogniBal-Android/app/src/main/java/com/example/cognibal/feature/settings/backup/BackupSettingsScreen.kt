@@ -67,6 +67,7 @@ import com.example.cognibal.screen.feature.settings.backup.state.BackupSettingsU
 import com.example.cognibal.screen.feature.settings.backup.state.BackupSettingsUiState
 import com.example.cognibal.screen.feature.settings.backup.state.BackupWorkUi
 import com.example.cognibal.ui.background.PageBackgroundHost
+import com.example.cognibal.ui.loading.CogniBalLoadingIndicator
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.theme.AppThemeStyle
 import com.example.cognibal.ui.theme.CogniBalTheme
@@ -259,7 +260,7 @@ private fun BackupWorkOverlay(
         ) {
             val progress = work.progress
             if (progress == null) {
-                CircularProgressIndicator(color = colors.primary, modifier = Modifier.size(42.dp))
+                CogniBalLoadingIndicator(contentDescription = null)
             } else {
                 CircularProgressIndicator(
                     progress = { progress },

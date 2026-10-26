@@ -211,6 +211,25 @@ interface BillDao {
     fun observeRecentByAccount(accountId: Long, limit: Int): Flow<List<Bill>>
 
     /**
+     * 一个账户在区间内的账单。含开始，不含结束。
+     * 首页用它取最近 7 个自然日，更早的账单不进这张列表。
+     */
+    @Query(
+        """
+        SELECT * FROM bill
+        WHERE accountId = :accountId
+          AND billTime >= :startInclusive
+          AND billTime < :endExclusive
+        ORDER BY billTime DESC, id DESC
+        """,
+    )
+    fun observeAccountBetween(
+        accountId: Long,
+        startInclusive: LocalDateTime,
+        endExclusive: LocalDateTime,
+    ): Flow<List<Bill>>
+
+    /**
      * 区间转账。库存里转出为负、转入为正，这里加总后都变成正数。
      */
     @Query(

@@ -46,6 +46,17 @@ class BillRepository @Inject constructor(
     fun observeRecent(accountId: Long, limit: Int): Flow<List<Bill>> =
         billDao.observeRecentByAccount(accountId, limit)
 
+    /** 一个账户在区间内的账单。含开始，不含结束。 */
+    fun observeAccountBetween(
+        accountId: Long,
+        startInclusive: LocalDateTime,
+        endExclusive: LocalDateTime,
+    ): Flow<List<Bill>> = billDao.observeAccountBetween(
+        accountId,
+        LedgerTime.normalize(startInclusive),
+        LedgerTime.normalize(endExclusive),
+    )
+
     fun observeById(id: Long): Flow<Bill?> = billDao.observeById(id)
 
     suspend fun insert(draft: EntryDraft): Long = onIo {

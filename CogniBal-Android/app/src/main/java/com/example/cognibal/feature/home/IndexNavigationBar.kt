@@ -428,7 +428,7 @@ private fun sideRailInsets(): WindowInsets =
         WindowInsetsSides.Start + WindowInsetsSides.Vertical,
     )
 
-@Preview(name = "底栏预览 - 亮色模式", showBackground = true, backgroundColor = 0xFFF8F7F2)
+@Preview(name = "底栏预览 - 亮色模式", showBackground = true, backgroundColor = 0xFFF1F3F5)
 @Composable
 private fun IndexNavigationBarLightPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
@@ -441,7 +441,7 @@ private fun IndexNavigationBarLightPreview() {
     }
 }
 
-@Preview(name = "底栏预览 - 暗色模式", showBackground = true, backgroundColor = 0xFF191B1A)
+@Preview(name = "底栏预览 - 暗色模式", showBackground = true, backgroundColor = 0xFF212529)
 @Composable
 private fun IndexNavigationBarDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = true) {

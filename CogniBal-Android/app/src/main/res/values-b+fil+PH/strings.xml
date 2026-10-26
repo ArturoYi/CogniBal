@@ -5,6 +5,7 @@
     <string name="tab_settings">Mga Setting</string>
     <string name="add_expense">Magdagdag ng gastos</string>
     <string name="navigate_back">Bumalik</string>
+    <string name="loading_indicator_cd">Naglo-load</string>
     <string name="settings_appearance">Hitsura</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_security">Seguridad at privacy</string>

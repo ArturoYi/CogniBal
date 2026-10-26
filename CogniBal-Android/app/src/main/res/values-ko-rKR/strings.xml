@@ -5,6 +5,7 @@
     <string name="tab_settings">설정</string>
     <string name="add_expense">지출 추가</string>
     <string name="navigate_back">뒤로</string>
+    <string name="loading_indicator_cd">불러오는 중</string>
     <string name="settings_appearance">모양</string>
     <string name="settings_backup">백업</string>
     <string name="settings_security">보안 및 개인정보</string>

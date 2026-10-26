@@ -17,9 +17,13 @@
     <string name="bill_budget_missing">未命名分類</string>
     <string name="bill_budget_expand_cd">展開預算</string>
     <string name="bill_budget_collapse_cd">收起預算</string>
-    <string name="bill_recent_title">最近賬單</string>
+    <string name="bill_recent_title">最近 7 天</string>
     <string name="bill_recent_all">查看所有賬單</string>
     <string name="bill_recent_empty">還沒有賬單</string>
+    <string name="bill_recent_week_empty">這 7 天還沒有賬單</string>
+    <string name="bill_recent_today">今天</string>
+    <string name="bill_budget_empty">這個週期還沒有預算</string>
+    <string name="bill_budget_manage">管理</string>
     <string name="bill_history_title">全部賬單</string>
     <string name="bill_transfer">轉賬</string>
     <string name="bill_category_missing">未分類</string>
@@ -29,6 +33,7 @@
     <string name="bill_fab_income">收入</string>
     <string name="bill_fab_transfer">轉賬</string>
     <string name="navigate_back">返回</string>
+    <string name="loading_indicator_cd">正在載入</string>
     <string name="settings_appearance">外觀設定</string>
     <string name="settings_backup">備份和遷移</string>
     <string name="settings_security">安全性與私隱</string>

@@ -5,6 +5,7 @@
     <string name="tab_settings">Impostazioni</string>
     <string name="add_expense">Aggiungi spesa</string>
     <string name="navigate_back">Indietro</string>
+    <string name="loading_indicator_cd">Caricamento</string>
     <string name="settings_appearance">Aspetto</string>
     <string name="settings_backup">Backup</string>
     <string name="settings_security">Sicurezza e privacy</string>

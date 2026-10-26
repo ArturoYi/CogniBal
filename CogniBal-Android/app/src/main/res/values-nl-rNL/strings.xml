@@ -5,6 +5,7 @@
     <string name="tab_settings">Instellingen</string>
     <string name="add_expense">Uitgave toevoegen</string>
     <string name="navigate_back">Terug</string>
+    <string name="loading_indicator_cd">Laden</string>
     <string name="settings_appearance">Weergave</string>
     <string name="settings_backup">Back-up</string>
     <string name="settings_security">Beveiliging en privacy</string>

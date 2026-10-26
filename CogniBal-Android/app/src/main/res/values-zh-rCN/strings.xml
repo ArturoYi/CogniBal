@@ -17,9 +17,13 @@
     <string name="bill_budget_missing">未命名分类</string>
     <string name="bill_budget_expand_cd">展开预算</string>
     <string name="bill_budget_collapse_cd">收起预算</string>
-    <string name="bill_recent_title">最近账单</string>
+    <string name="bill_recent_title">最近 7 天</string>
     <string name="bill_recent_all">查看所有账单</string>
     <string name="bill_recent_empty">还没有账单</string>
+    <string name="bill_recent_week_empty">这 7 天还没有账单</string>
+    <string name="bill_recent_today">今天</string>
+    <string name="bill_budget_empty">这个周期还没有预算</string>
+    <string name="bill_budget_manage">管理</string>
     <string name="bill_history_title">全部账单</string>
     <string name="bill_transfer">转账</string>
     <string name="bill_category_missing">未分类</string>
@@ -29,6 +33,7 @@
     <string name="bill_fab_income">收入</string>
     <string name="bill_fab_transfer">转账</string>
     <string name="navigate_back">返回</string>
+    <string name="loading_indicator_cd">正在加载</string>
     <string name="settings_appearance">外观设置</string>
     <string name="settings_backup">备份和迁移</string>
     <string name="settings_security">安全与隐私</string>

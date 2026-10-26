@@ -5,6 +5,7 @@
     <string name="tab_settings">Innstillinger</string>
     <string name="add_expense">Legg til utgift</string>
     <string name="navigate_back">Tilbake</string>
+    <string name="loading_indicator_cd">Laster inn</string>
     <string name="settings_appearance">Utseende</string>
     <string name="settings_backup">Sikkerhetskopi</string>
     <string name="settings_security">Sikkerhet og personvern</string>

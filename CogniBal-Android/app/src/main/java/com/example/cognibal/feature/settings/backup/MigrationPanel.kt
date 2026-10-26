@@ -28,6 +28,7 @@ import com.example.cognibal.R
 import com.example.cognibal.screen.feature.settings.backup.state.BackupSettingsUiEvent
 import com.example.cognibal.screen.feature.settings.backup.state.MigrationUi
 import com.example.cognibal.ui.interaction.interactiveClick
+import com.example.cognibal.ui.loading.CogniBalLoadingIndicator
 import com.example.cognibal.ui.theme.appColors
 import kotlin.math.roundToInt
 
@@ -221,7 +222,7 @@ internal fun MigrationPanel(
             is MigrationUi.Transfer -> {
                 val progress = migration.progress
                 if (progress == null) {
-                    CircularProgressIndicator(color = colors.primary, modifier = Modifier.size(42.dp))
+                    CogniBalLoadingIndicator(contentDescription = null)
                 } else {
                     CircularProgressIndicator(
                         progress = { progress },
@@ -311,7 +312,7 @@ private fun RoleRow(
 @Composable
 private fun Waiting(text: String) {
     val colors = MaterialTheme.appColors
-    CircularProgressIndicator(color = colors.primary, modifier = Modifier.size(42.dp))
+    CogniBalLoadingIndicator(contentDescription = null)
     Text(
         text = text,
         color = colors.textPrimary,

@@ -5,6 +5,7 @@
     <string name="tab_settings">Ρυθμίσεις</string>
     <string name="add_expense">Προσθήκη εξόδου</string>
     <string name="navigate_back">Πίσω</string>
+    <string name="loading_indicator_cd">Φόρτωση</string>
     <string name="settings_appearance">Εμφάνιση</string>
     <string name="settings_backup">Αντίγραφο ασφαλείας</string>
     <string name="settings_security">Ασφάλεια και απόρρητο</string>

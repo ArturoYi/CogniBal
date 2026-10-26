@@ -32,6 +32,8 @@ internal data class BillRowUi(
     val type: BillType,
     val time: LocalDateTime,
     val signedAmount: Long,
+    val categoryIconKey: String? = null,
+    val categoryColorKey: String? = null,
 )
 
 internal data class BudgetProgressUi(
@@ -67,9 +69,10 @@ internal sealed interface BillHomeUiEvent {
 
 internal fun billsToRows(bills: List<Bill>, categories: Map<Long, Category>): List<BillRowUi> {
     return bills.map { bill ->
+        val category = bill.categoryId?.let { categories[it] }
         BillRowUi(
             id = bill.id,
-            categoryName = bill.categoryId?.let { categories[it]?.name },
+            categoryName = category?.name,
             type = bill.type,
             time = bill.billTime,
             signedAmount = when (bill.type) {
@@ -77,6 +80,8 @@ internal fun billsToRows(bills: List<Bill>, categories: Map<Long, Category>): Li
                 BillType.Income -> bill.amount
                 BillType.Transfer -> bill.amount
             },
+            categoryIconKey = category?.icon,
+            categoryColorKey = category?.color,
         )
     }
 }

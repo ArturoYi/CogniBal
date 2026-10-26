@@ -5,6 +5,7 @@
     <string name="tab_settings">Beállítások</string>
     <string name="add_expense">Kiadás hozzáadása</string>
     <string name="navigate_back">Vissza</string>
+    <string name="loading_indicator_cd">Betöltés</string>
     <string name="settings_appearance">Megjelenés</string>
     <string name="settings_backup">Biztonsági mentés</string>
     <string name="settings_security">Biztonság és adatvédelem</string>

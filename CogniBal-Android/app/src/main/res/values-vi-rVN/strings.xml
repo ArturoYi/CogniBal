@@ -5,6 +5,7 @@
     <string name="tab_settings">Cài đặt</string>
     <string name="add_expense">Thêm chi tiêu</string>
     <string name="navigate_back">Quay lại</string>
+    <string name="loading_indicator_cd">Đang tải</string>
     <string name="settings_appearance">Giao diện</string>
     <string name="settings_backup">Sao lưu</string>
     <string name="settings_security">Bảo mật và quyền riêng tư</string>

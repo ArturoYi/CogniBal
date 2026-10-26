@@ -5,6 +5,7 @@
     <string name="tab_settings">การตั้งค่า</string>
     <string name="add_expense">เพิ่มรายจ่าย</string>
     <string name="navigate_back">กลับ</string>
+    <string name="loading_indicator_cd">กำลังโหลด</string>
     <string name="settings_appearance">ลักษณะที่ปรากฏ</string>
     <string name="settings_backup">การสำรองข้อมูล</string>
     <string name="settings_security">ความปลอดภัยและความเป็นส่วนตัว</string>

@@ -5,6 +5,7 @@
     <string name="tab_settings">Настройки</string>
     <string name="add_expense">Добавить расход</string>
     <string name="navigate_back">Назад</string>
+    <string name="loading_indicator_cd">Загрузка</string>
     <string name="settings_appearance">Оформление</string>
     <string name="settings_backup">Резервная копия</string>
     <string name="settings_security">Безопасность и конфиденциальность</string>

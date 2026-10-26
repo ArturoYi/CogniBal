@@ -54,9 +54,13 @@
     <string name="bill_budget_missing">Unnamed category</string>
     <string name="bill_budget_expand_cd">Show budgets</string>
     <string name="bill_budget_collapse_cd">Hide budgets</string>
-    <string name="bill_recent_title">Recent bills</string>
+    <string name="bill_recent_title">Last 7 days</string>
     <string name="bill_recent_all">All bills</string>
     <string name="bill_recent_empty">No bills yet</string>
+    <string name="bill_recent_week_empty">No bills in the last 7 days</string>
+    <string name="bill_recent_today">Today</string>
+    <string name="bill_budget_empty">No budget for this period</string>
+    <string name="bill_budget_manage">Manage</string>
     <string name="bill_history_title">All bills</string>
     <string name="bill_transfer">Transfer</string>
     <string name="bill_category_missing">Uncategorized</string>
@@ -66,6 +70,7 @@
     <string name="bill_fab_income">Income</string>
     <string name="bill_fab_transfer">Transfer</string>
     <string name="navigate_back">Back</string>
+    <string name="loading_indicator_cd">Loading</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_backup">Backup and migration</string>
     <string name="settings_security">Security and privacy</string>

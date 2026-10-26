@@ -317,8 +317,8 @@ private fun StatisticsAllPreview() {
         PageBackgroundHost {
             val expense = previewExpenseShares().take(3)
             val income = listOf(
-                CategoryShareUi(11, "Salary", false, "payments", "#FF78A898", 32_000L, 0.8f),
-                CategoryShareUi(12, "Refund", false, "replay", "#FFE0A15A", 8_000L, 0.2f),
+                CategoryShareUi(11, "Salary", false, "payments", "#FF0CA678", 32_000L, 0.8f),
+                CategoryShareUi(12, "Refund", false, "replay", "#FFFD7E14", 8_000L, 0.2f),
             )
             StatisticsScreen(
                 uiState = StatisticsUiState(
@@ -341,12 +341,12 @@ private fun StatisticsAllPreview() {
 
 /** 八个分类，用来看图上合并成七块之后，列表仍然逐条显示。 */
 private fun previewExpenseShares(): List<CategoryShareUi> = listOf(
-    CategoryShareUi(1, "Food", false, "restaurant", "#FFD96C6C", 12_800L, 0.30f),
-    CategoryShareUi(2, "Transit", false, "directions_bus", "#FF78A898", 8_450L, 0.20f),
-    CategoryShareUi(3, "Shopping", false, "shopping_bag", "#FFE0A15A", 6_400L, 0.15f),
-    CategoryShareUi(4, "Rent", false, "home", "#FF6C8CD9", 5_200L, 0.12f),
-    CategoryShareUi(5, "Fun", false, "movie", "#FFB07CC6", 3_100L, 0.07f),
-    CategoryShareUi(6, "Health", false, "medication", "#FF7DAB8A", 2_400L, 0.06f),
-    CategoryShareUi(7, "Pets", false, "pets", "#FFD4A05A", 1_800L, 0.05f),
-    CategoryShareUi(8, "Gifts", false, "redeem", "#FFC47B8A", 1_500L, 0.04f),
+    CategoryShareUi(1, "Food", false, "restaurant", "#FFF03E3E", 12_800L, 0.30f),
+    CategoryShareUi(2, "Transit", false, "directions_bus", "#FF0CA678", 8_450L, 0.20f),
+    CategoryShareUi(3, "Shopping", false, "shopping_bag", "#FFFD7E14", 6_400L, 0.15f),
+    CategoryShareUi(4, "Rent", false, "home", "#FF228BE6", 5_200L, 0.12f),
+    CategoryShareUi(5, "Fun", false, "movie", "#FFBE4BDB", 3_100L, 0.07f),
+    CategoryShareUi(6, "Health", false, "medication", "#FF37B24D", 2_400L, 0.06f),
+    CategoryShareUi(7, "Pets", false, "pets", "#FFF59F00", 1_800L, 0.05f),
+    CategoryShareUi(8, "Gifts", false, "redeem", "#FFE64980", 1_500L, 0.04f),
 )

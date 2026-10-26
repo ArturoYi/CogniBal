@@ -5,6 +5,7 @@
     <string name="tab_settings">सेटिंग</string>
     <string name="add_expense">खर्च जोड़ें</string>
     <string name="navigate_back">वापस</string>
+    <string name="loading_indicator_cd">लोड हो रहा है</string>
     <string name="settings_appearance">दिखावट</string>
     <string name="settings_backup">बैकअप</string>
     <string name="settings_security">सुरक्षा और गोपनीयता</string>

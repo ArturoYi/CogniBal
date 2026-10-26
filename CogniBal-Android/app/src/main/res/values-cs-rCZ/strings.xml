@@ -5,6 +5,7 @@
     <string name="tab_settings">Nastavení</string>
     <string name="add_expense">Přidat výdaj</string>
     <string name="navigate_back">Zpět</string>
+    <string name="loading_indicator_cd">Načítání</string>
     <string name="settings_appearance">Vzhled</string>
     <string name="settings_backup">Záloha</string>
     <string name="settings_security">Zabezpečení a soukromí</string>

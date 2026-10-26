@@ -16,13 +16,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import com.example.cognibal.ui.theme.WarmCreamLight_Background
 
 /**
  * 主题背景不可用时的不透明兜底。
  *
  * 窗口主题是启动页黑底。页面底若是 [Color.Unspecified] 或全透明，会透出这条黑。
  */
-private val DefaultPageBackgroundColor = Color(0xFFF8F7F2)
+private val DefaultPageBackgroundColor = WarmCreamLight_Background
 
 /**
  * 一整页的底色。

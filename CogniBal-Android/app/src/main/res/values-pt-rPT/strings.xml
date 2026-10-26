@@ -5,6 +5,7 @@
     <string name="tab_settings">Definições</string>
     <string name="add_expense">Adicionar despesa</string>
     <string name="navigate_back">Voltar</string>
+    <string name="loading_indicator_cd">A carregar</string>
     <string name="settings_appearance">Aparência</string>
     <string name="settings_backup">Cópia de segurança</string>
     <string name="settings_security">Segurança e privacidade</string>

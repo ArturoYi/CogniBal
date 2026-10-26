@@ -5,6 +5,7 @@
     <string name="tab_settings">הגדרות</string>
     <string name="add_expense">הוספת הוצאה</string>
     <string name="navigate_back">חזרה</string>
+    <string name="loading_indicator_cd">בטעינה</string>
     <string name="settings_appearance">מראה</string>
     <string name="settings_backup">גיבוי</string>
     <string name="settings_security">אבטחה ופרטיות</string>

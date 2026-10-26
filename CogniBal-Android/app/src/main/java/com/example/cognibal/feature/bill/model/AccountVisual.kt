@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.cognibal.R
 import com.example.cognibal.data.database.model.AccountType
+import com.example.cognibal.ui.theme.OpenColor
 
 /**
  * 账户类型的界面文案。库存里仍是 [AccountType.code]，不写翻译后的名字。
@@ -52,20 +53,20 @@ internal enum class AccountIcon(
 
 /**
  * 账户颜色。 [storageKey] 写入 color 列。
- * 色值跟现有分类色板同一套，不跟主题一起变，账户换主题后仍能认出来。
+ * 色值用 Open Color，按键取色，不跟主题一起变，账户换主题后仍能认出来。
  */
 internal enum class AccountColor(
     val storageKey: String,
     @param:StringRes val labelRes: Int,
     val color: Color,
 ) {
-    Teal("teal", R.string.account_color_teal, Color(0xFF78A898)),
-    Clay("clay", R.string.account_color_clay, Color(0xFFD96C6C)),
-    Sand("sand", R.string.account_color_sand, Color(0xFFE0A15A)),
-    Blue("blue", R.string.account_color_blue, Color(0xFF7EA0C4)),
-    Lilac("lilac", R.string.account_color_lilac, Color(0xFFB98BC4)),
-    Ink("ink", R.string.account_color_ink, Color(0xFF8C7E6A)),
-    Gray("gray", R.string.account_color_gray, Color(0xFF8A8A8A)),
+    Teal("teal", R.string.account_color_teal, OpenColor.Teal7),
+    Clay("clay", R.string.account_color_clay, OpenColor.Red7),
+    Sand("sand", R.string.account_color_sand, OpenColor.Orange6),
+    Blue("blue", R.string.account_color_blue, OpenColor.Blue6),
+    Lilac("lilac", R.string.account_color_lilac, OpenColor.Grape6),
+    Ink("ink", R.string.account_color_ink, OpenColor.Gray7),
+    Gray("gray", R.string.account_color_gray, OpenColor.Gray6),
     ;
 
     companion object {

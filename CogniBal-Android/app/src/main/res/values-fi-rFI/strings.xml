@@ -5,6 +5,7 @@
     <string name="tab_settings">Asetukset</string>
     <string name="add_expense">Lisää kulu</string>
     <string name="navigate_back">Takaisin</string>
+    <string name="loading_indicator_cd">Ladataan</string>
     <string name="settings_appearance">Ulkoasu</string>
     <string name="settings_backup">Varmuuskopio</string>
     <string name="settings_security">Turvallisuus ja tietosuoja</string>

@@ -5,6 +5,7 @@
     <string name="tab_settings">الإعدادات</string>
     <string name="add_expense">إضافة مصروف</string>
     <string name="navigate_back">رجوع</string>
+    <string name="loading_indicator_cd">جارٍ التحميل</string>
     <string name="settings_appearance">المظهر</string>
     <string name="settings_backup">النسخ الاحتياطي</string>
     <string name="settings_security">الأمان والخصوصية</string>

@@ -98,14 +98,12 @@ import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.AppThemeStyle
 import com.example.cognibal.ui.theme.LocalAppThemeStyle
 import com.example.cognibal.ui.theme.LocalThemeReveal
-import com.example.cognibal.ui.theme.revealOrRun
-import com.example.cognibal.ui.theme.MonochromeLight_Expense
-import com.example.cognibal.ui.theme.MonochromeLight_Primary
-import com.example.cognibal.ui.theme.MonochromeLight_Secondary
-import com.example.cognibal.ui.theme.WarmCreamLight_Expense
-import com.example.cognibal.ui.theme.WarmCreamLight_Primary
-import com.example.cognibal.ui.theme.WarmCreamLight_Secondary
+import com.example.cognibal.ui.theme.MonochromeDarkAppColors
+import com.example.cognibal.ui.theme.MonochromeLightAppColors
+import com.example.cognibal.ui.theme.WarmCreamDarkAppColors
+import com.example.cognibal.ui.theme.WarmCreamLightAppColors
 import com.example.cognibal.ui.theme.appColors
+import com.example.cognibal.ui.theme.revealOrRun
 
 /**
  * 分层一：用户陪伴统计文案。
@@ -894,18 +892,15 @@ private fun ThemeStyleCard(
 ) {
     val colors = MaterialTheme.appColors
     val themeReveal = LocalThemeReveal.current
-    val palette = when (style) {
-        AppThemeStyle.WarmCream -> ThemeCardPalette(
-            primary = WarmCreamLight_Primary,
-            secondary = WarmCreamLight_Secondary,
-            expense = WarmCreamLight_Expense,
-        )
-        AppThemeStyle.Monochrome -> ThemeCardPalette(
-            primary = MonochromeLight_Primary,
-            secondary = MonochromeLight_Secondary,
-            expense = MonochromeLight_Expense,
-        )
+    val swatches = when (style) {
+        AppThemeStyle.WarmCream -> if (colors.isDark) WarmCreamDarkAppColors else WarmCreamLightAppColors
+        AppThemeStyle.Monochrome -> if (colors.isDark) MonochromeDarkAppColors else MonochromeLightAppColors
     }
+    val palette = ThemeCardPalette(
+        primary = swatches.primary,
+        secondary = swatches.tagBackground,
+        expense = swatches.expense,
+    )
 
     val shape = RoundedCornerShape(14.dp)
     val containerColor = colors.tagBackground

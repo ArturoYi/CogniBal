@@ -38,6 +38,8 @@ import com.example.cognibal.screen.feature.settings.component.InsightCard
 import com.example.cognibal.screen.feature.settings.component.moneyText
 import com.example.cognibal.ui.background.PageBackgroundHost
 import com.example.cognibal.ui.interaction.interactiveClick
+import com.example.cognibal.ui.loading.CogniBalLoadingIndicator
+import com.example.cognibal.ui.loading.LoadingIndicatorAppearDelayMillis
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.theme.AppThemeStyle
 import com.example.cognibal.ui.theme.CogniBalTheme
@@ -71,8 +73,16 @@ internal fun AssetsScreen(
         title = stringResource(R.string.shortcut_assets),
         onBack = onBack,
         modifier = modifier,
+        placeholder = if (uiState.loading) {
+            {
+                CogniBalLoadingIndicator(
+                    showDelayMillis = LoadingIndicatorAppearDelayMillis,
+                )
+            }
+        } else {
+            null
+        },
     ) {
-        if (uiState.loading) return@SettingsSubpage
         InsightCard {
             AssetSummary(uiState)
         }

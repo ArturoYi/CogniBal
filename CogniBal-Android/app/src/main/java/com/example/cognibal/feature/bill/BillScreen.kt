@@ -1,85 +1,83 @@
 package com.example.cognibal.screen.feature.bill
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Edit
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.cognibal.screen.feature.expense.AddExpenseViewModel
 import com.example.cognibal.R
 import com.example.cognibal.data.database.model.AccountType
 import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.data.repository.BudgetLevel
-import com.example.cognibal.screen.feature.bill.model.accountColorValue
-import com.example.cognibal.screen.feature.bill.model.accountIconImage
-import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
+import com.example.cognibal.screen.feature.bill.model.labelRes
 import com.example.cognibal.screen.feature.bill.state.AccountBarState
 import com.example.cognibal.screen.feature.bill.state.AccountItemUi
 import com.example.cognibal.screen.feature.bill.state.BillHomeUiEvent
 import com.example.cognibal.screen.feature.bill.state.BillHomeUiState
 import com.example.cognibal.screen.feature.bill.state.BillRowUi
 import com.example.cognibal.screen.feature.bill.state.BudgetProgressUi
+import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
+import com.example.cognibal.screen.feature.expense.AddExpenseViewModel
+import com.example.cognibal.screen.feature.splash.LedgerStartup
 import com.example.cognibal.ui.background.PageBackgroundHost
 import com.example.cognibal.ui.background.RequestPageBackground
-import com.example.cognibal.ui.insets.screenContentWindowInsets
-import com.example.cognibal.screen.feature.splash.LedgerStartup
-import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.theme.CogniBalTheme
 import com.example.cognibal.ui.theme.appColors
-import java.time.LocalDateTime
+import java.time.LocalDate
 import kotlinx.coroutines.delay
-
-/** 账户芯片和“新建账户”都是这个高度。加载中也留出同样的空位，列表才不会被顶下去。 */
-private val AccountBarHeight = 48.dp
+import kotlinx.coroutines.launch
 
 /** 默认账户准备好之后，首页查询最多再等这么久。超时就揭开，避免开屏停住。 */
 private const val BILL_HOME_REVEAL_TIMEOUT_MILLIS = 2_000L
 
 /**
- * 账单页入口。账户只出现在顶栏左侧：点开可以切换，也可以新建或编辑。
+ * 账单页入口。当前账户在顶部卡片上，点右上角可以切换、新建或编辑。
  */
 @Composable
 internal fun BillRoute(
@@ -104,7 +102,7 @@ internal fun BillRoute(
         onCreateAccount = onCreateAccount,
         onEditAccount = onEditAccount,
         onViewAll = {
-            val accountId = uiState.currentId ?: return@BillScreen
+            val accountId = accountBar.currentId ?: uiState.currentId ?: return@BillScreen
             onViewAll(accountId)
         },
         onOpenBudget = onOpenBudget,
@@ -116,7 +114,7 @@ internal fun BillRoute(
  * 开屏还盖着的时候，把账单首页整份数据准备好。
  *
  * 先等默认账户写完再订阅，避免读到插入前的空库，揭开后又刷成真正的账户和金额。
- * 总资产、本月收支、预算和最近账单都进状态后才返回 true。查询一直不回来时到点也返回，
+ * 总资产、本月收支、预算和最近 7 天都进状态后才返回 true。查询一直不回来时到点也返回，
  * 开屏不能一直盖着。
  */
 @Composable
@@ -139,17 +137,14 @@ internal fun PreloadBillHome(): Boolean {
 }
 
 /**
- * 正文还没跟上时，顶栏用已经到的账户。
- *
- * 正文一旦有了当前账户，就和卡片共用那一份，避免切换账户时顶栏先跳、数字还是上一个。
- * 启动插入默认账户前，正文可能先得到一份空结果；这时仍显示账户条上的当前账户。
+ * 卡片上的账户跟账户条走，切换时名字立刻换。
+ * 本月金额仍用正文。两边账户还不一致时，卡片上先显示破折号。
  */
 private fun headerWhileHomeLoads(
     home: BillHomeUiState,
     bar: AccountBarState,
 ): BillHomeUiState {
     if (bar.loading) return home
-    if (!home.loading && (home.currentId != null || bar.currentId == null)) return home
     return home.copy(
         loading = false,
         currencySymbol = bar.currencySymbol,
@@ -159,7 +154,8 @@ private fun headerWhileHomeLoads(
 }
 
 /**
- * 记账首页。顶栏只有左侧账户，贴在状态栏下面。页面背景仍铺到屏幕边缘。
+ * 记账首页。账户卡片、预算、最近 7 天同一列往下排。
+ * 页面背景铺到屏幕边缘，列表自己躲开系统栏。
  */
 @Composable
 internal fun BillScreen(
@@ -173,293 +169,243 @@ internal fun BillScreen(
     headerState: BillHomeUiState = uiState,
 ) {
     RequestPageBackground()
-    Column(modifier = modifier.fillMaxSize()) {
-        AccountAppBar(
-            uiState = headerState,
-            onSelect = onSelect,
-            onCreateAccount = onCreateAccount,
-            onEditAccount = onEditAccount,
-            modifier = Modifier.windowInsetsPadding(
-                screenContentWindowInsets().only(
-                    WindowInsetsSides.Top + WindowInsetsSides.Horizontal,
-                ),
-            ),
-        )
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth(),
-            contentAlignment = Alignment.TopCenter,
-        ) {
-            BillHomeList(
-                uiState = uiState,
-                onViewAll = onViewAll,
-                onOpenBudget = onOpenBudget,
-            )
-        }
-    }
-}
-
-@Composable
-private fun AccountAppBar(
-    uiState: BillHomeUiState,
-    onSelect: (Long) -> Unit,
-    onCreateAccount: () -> Unit,
-    onEditAccount: (Long) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val current = uiState.accounts.firstOrNull { it.id == uiState.currentId }
-    var menuOpen by remember { mutableStateOf(false) }
+    var sheetOpen by rememberSaveable { mutableStateOf(false) }
     Box(
-        modifier = modifier
-            .padding(start = 12.dp, top = 8.dp, end = 12.dp, bottom = 4.dp)
-            .heightIn(min = AccountBarHeight),
-        contentAlignment = Alignment.CenterStart,
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter,
     ) {
-        if (current == null) {
-            if (uiState.loading) {
-                Spacer(Modifier.height(AccountBarHeight))
-            } else {
-                AccountMenuAction(
-                    label = stringResource(R.string.bill_account_create),
-                    onClick = onCreateAccount,
-                )
-            }
-        } else {
-            AccountSwitcher(
-                account = current,
-                expanded = menuOpen,
-                onExpand = { menuOpen = true },
-                onDismiss = { menuOpen = false },
-                accounts = uiState.accounts,
-                currencySymbol = uiState.currencySymbol,
-                onSelect = { accountId ->
-                    menuOpen = false
-                    onSelect(accountId)
-                },
-                onCreate = {
-                    menuOpen = false
-                    onCreateAccount()
-                },
-                onEdit = {
-                    menuOpen = false
-                    onEditAccount(current.id)
-                },
-            )
-        }
+        BillHomeList(
+            uiState = uiState,
+            headerState = headerState,
+            onOpenAccounts = { sheetOpen = true },
+            onCreateAccount = onCreateAccount,
+            onViewAll = onViewAll,
+            onOpenBudget = onOpenBudget,
+        )
+    }
+    val current = headerState.accounts.firstOrNull { it.id == headerState.currentId }
+    if (sheetOpen && current != null) {
+        AccountSheet(
+            accounts = headerState.accounts,
+            currencySymbol = headerState.currencySymbol,
+            onDismiss = { sheetOpen = false },
+            onSelect = onSelect,
+            onCreate = onCreateAccount,
+            onEdit = { onEditAccount(current.id) },
+        )
     }
 }
 
+/**
+ * 切换、新建、编辑放在同一层。点完先收起再跳，避免弹层盖住下一页。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AccountSwitcher(
-    account: AccountItemUi,
-    expanded: Boolean,
-    onExpand: () -> Unit,
-    onDismiss: () -> Unit,
+private fun AccountSheet(
     accounts: List<AccountItemUi>,
     currencySymbol: String,
+    onDismiss: () -> Unit,
     onSelect: (Long) -> Unit,
     onCreate: () -> Unit,
     onEdit: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    val tint = accountColorValue(account.colorKey)
-    val description = stringResource(R.string.account_switch_cd, account.name)
-    Box {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    fun close(after: () -> Unit = {}) {
+        scope.launch {
+            sheetState.hide()
+            onDismiss()
+            after()
+        }
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = colors.cardBackground,
+        contentColor = colors.textPrimary,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.bill_account_switch),
+                color = colors.textPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+            Text(
+                text = stringResource(R.string.bill_account_switch_hint),
+                color = colors.textSecondary,
+                fontSize = 13.sp,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
+            )
+            accounts.forEach { account ->
+                key(account.id) {
+                    AccountSheetRow(
+                        account = account,
+                        currencySymbol = currencySymbol,
+                        onClick = {
+                            close {
+                                if (!account.selected) onSelect(account.id)
+                            }
+                        },
+                    )
+                }
+            }
+            HorizontalDivider(
+                color = colors.divider,
+                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
+            )
+            SheetAction(
+                icon = Icons.Rounded.Add,
+                label = stringResource(R.string.bill_account_create),
+                onClick = { close(onCreate) },
+            )
+            SheetAction(
+                icon = Icons.Rounded.Edit,
+                label = stringResource(R.string.account_edit_current),
+                onClick = { close(onEdit) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun AccountSheetRow(
+    account: AccountItemUi,
+    currencySymbol: String,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val typeName = stringResource(account.type.labelRes())
+    val detail = if (account.enabled) {
+        typeName
+    } else {
+        stringResource(R.string.account_disabled_balance, typeName)
+    }
+    val amountColor = when {
+        !account.enabled -> colors.textTertiary
+        account.balance < 0L -> colors.expense
+        else -> colors.textPrimary
+    }
+    val selectedColor = if (account.selected) {
+        colors.primary.copy(alpha = if (colors.isDark) 0.18f else 0.08f)
+    } else {
+        Color.Transparent
+    }
+    PressFade(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .background(selectedColor)
+            .semantics { selected = account.selected },
+        contentAlignment = Alignment.CenterStart,
+    ) {
         Row(
             modifier = Modifier
-                .heightIn(min = AccountBarHeight)
-                .widthIn(max = 240.dp)
-                .background(colors.tagBackground, RoundedCornerShape(16.dp))
-                .semantics { contentDescription = description }
-                .interactiveClick(onClick = onExpand)
-                .padding(start = 8.dp, end = 8.dp),
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Box(
+            AccountMark(
+                iconKey = account.iconKey,
+                colorKey = account.colorKey,
+            )
+            Column(
                 modifier = Modifier
-                    .size(28.dp)
-                    .background(
-                        tint.copy(alpha = if (colors.isDark) 0.22f else 0.16f),
-                        RoundedCornerShape(8.dp),
-                    ),
-                contentAlignment = Alignment.Center,
+                    .weight(1f)
+                    .padding(horizontal = 12.dp),
             ) {
-                Icon(
-                    imageVector = accountIconImage(account.iconKey),
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(16.dp),
+                Text(
+                    text = account.name,
+                    color = if (account.enabled) colors.textPrimary else colors.textTertiary,
+                    fontSize = 15.sp,
+                    fontWeight = if (account.selected) FontWeight.SemiBold else FontWeight.Medium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = detail,
+                    color = colors.textTertiary,
+                    fontSize = 12.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(top = 2.dp),
                 )
             }
             Text(
-                text = account.name,
-                color = if (account.enabled) colors.textPrimary else colors.textTertiary,
-                fontSize = 15.sp,
+                text = currencySymbol + formatMinorAmount(account.balance),
+                color = amountColor,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .weight(1f, fill = false),
+                style = TextStyle(fontFeatureSettings = "tnum"),
             )
-            if (!account.enabled) {
-                Text(
-                    text = stringResource(R.string.account_status_disabled),
-                    color = colors.textTertiary,
-                    fontSize = 11.sp,
-                    modifier = Modifier.padding(start = 6.dp),
+            if (account.selected) {
+                Icon(
+                    imageVector = Icons.Rounded.Check,
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .size(20.dp),
                 )
             }
-            Icon(
-                imageVector = Icons.Rounded.KeyboardArrowDown,
-                contentDescription = null,
-                tint = colors.textSecondary,
-                modifier = Modifier
-                    .padding(start = 2.dp)
-                    .size(20.dp),
-            )
         }
-        AccountMenu(
-            expanded = expanded,
-            onDismiss = onDismiss,
-            accounts = accounts,
-            currencySymbol = currencySymbol,
-            onSelect = onSelect,
-            onCreate = onCreate,
-            onEdit = onEdit,
-        )
     }
 }
 
 @Composable
-private fun AccountMenu(
-    expanded: Boolean,
-    onDismiss: () -> Unit,
-    accounts: List<AccountItemUi>,
-    currencySymbol: String,
-    onSelect: (Long) -> Unit,
-    onCreate: () -> Unit,
-    onEdit: () -> Unit,
-) {
-    val colors = MaterialTheme.appColors
-    DropdownMenu(
-        expanded = expanded,
-        onDismissRequest = onDismiss,
-        shape = RoundedCornerShape(16.dp),
-        containerColor = colors.cardBackground,
-        tonalElevation = 2.dp,
-        shadowElevation = 2.dp,
-    ) {
-        accounts.forEach { account ->
-            val tint = accountColorValue(account.colorKey)
-            val amountColor = when {
-                account.balance < 0 -> colors.expense
-                else -> colors.textTertiary
-            }
-            DropdownMenuItem(
-                text = {
-                    Column {
-                        Text(
-                            text = account.name,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontWeight = if (account.selected) FontWeight.SemiBold else FontWeight.Normal,
-                        )
-                        Text(
-                            text = if (account.enabled) {
-                                currencySymbol + formatMinorAmount(account.balance)
-                            } else {
-                                stringResource(
-                                    R.string.account_disabled_balance,
-                                    currencySymbol + formatMinorAmount(account.balance),
-                                )
-                            },
-                            color = amountColor,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                        )
-                    }
-                },
-                leadingIcon = {
-                    Icon(
-                        imageVector = accountIconImage(account.iconKey),
-                        contentDescription = null,
-                        tint = tint,
-                    )
-                },
-                trailingIcon = if (account.selected) {
-                    {
-                        Icon(
-                            imageVector = Icons.Rounded.Check,
-                            contentDescription = null,
-                            tint = colors.primary,
-                        )
-                    }
-                } else {
-                    null
-                },
-                onClick = { onSelect(account.id) },
-                colors = MenuDefaults.itemColors(
-                    textColor = if (account.enabled) colors.textPrimary else colors.textTertiary,
-                    leadingIconColor = tint,
-                    trailingIconColor = colors.primary,
-                ),
-            )
-        }
-        HorizontalDivider(color = colors.divider)
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.bill_account_create)) },
-            leadingIcon = {
-                Icon(imageVector = Icons.Rounded.Add, contentDescription = null)
-            },
-            onClick = onCreate,
-            colors = MenuDefaults.itemColors(
-                textColor = colors.textPrimary,
-                leadingIconColor = colors.textPrimary,
-            ),
-        )
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.account_edit_current)) },
-            leadingIcon = {
-                Icon(imageVector = Icons.Rounded.Edit, contentDescription = null)
-            },
-            onClick = onEdit,
-            colors = MenuDefaults.itemColors(
-                textColor = colors.textPrimary,
-                leadingIconColor = colors.textPrimary,
-            ),
-        )
-    }
-}
-
-@Composable
-private fun AccountMenuAction(
+private fun SheetAction(
+    icon: ImageVector,
     label: String,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    Row(
+    PressFade(
+        onClick = onClick,
         modifier = Modifier
-            .heightIn(min = AccountBarHeight)
-            .background(colors.tagBackground, RoundedCornerShape(16.dp))
-            .interactiveClick(onClick = onClick)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
+            .fillMaxWidth()
+            .heightIn(min = 56.dp),
+        contentAlignment = Alignment.CenterStart,
     ) {
-        Icon(
-            imageVector = Icons.Rounded.Add,
-            contentDescription = null,
-            tint = colors.textPrimary,
-            modifier = Modifier.size(18.dp),
-        )
-        Text(
-            text = label,
-            color = colors.textPrimary,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(colors.tagBackground),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = colors.textPrimary,
+                    modifier = Modifier.size(18.dp),
+                )
+            }
+            Text(
+                text = label,
+                color = colors.textPrimary,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(start = 12.dp),
+            )
+        }
     }
 }
 
@@ -469,7 +415,7 @@ private fun BillScreenPreview() {
     CogniBalTheme {
         PageBackgroundHost {
             BillScreen(
-                uiState = previewAccounts,
+                uiState = previewHome,
                 onSelect = {},
                 onCreateAccount = {},
                 onEditAccount = {},
@@ -480,7 +426,41 @@ private fun BillScreenPreview() {
     }
 }
 
-private val previewAccounts = BillHomeUiState(
+@Preview(name = "Dark", showBackground = true, backgroundColor = 0xFF212529)
+@Composable
+private fun BillScreenDarkPreview() {
+    CogniBalTheme(darkTheme = true) {
+        PageBackgroundHost {
+            BillScreen(
+                uiState = previewHome,
+                onSelect = {},
+                onCreateAccount = {},
+                onEditAccount = {},
+                onViewAll = {},
+                onOpenBudget = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Empty", showBackground = true)
+@Composable
+private fun BillScreenEmptyPreview() {
+    CogniBalTheme {
+        PageBackgroundHost {
+            BillScreen(
+                uiState = BillHomeUiState(loading = false),
+                onSelect = {},
+                onCreateAccount = {},
+                onEditAccount = {},
+                onViewAll = {},
+                onOpenBudget = {},
+            )
+        }
+    }
+}
+
+private val previewHome = BillHomeUiState(
     loading = false,
     currencySymbol = "¥",
     currentId = 1L,
@@ -498,21 +478,43 @@ private val previewAccounts = BillHomeUiState(
             ratio = 0.49f,
             level = BudgetLevel.Normal,
         ),
+        BudgetProgressUi(
+            id = 2L,
+            categoryName = "餐饮",
+            missingCategory = false,
+            spent = 180_000L,
+            limit = 200_000L,
+            ratio = 0.9f,
+            level = BudgetLevel.Near,
+        ),
     ),
     recent = listOf(
         BillRowUi(
             id = 1L,
             categoryName = "餐饮",
             type = BillType.Expense,
-            time = LocalDateTime.of(2026, 10, 17, 12, 30),
+            time = LocalDate.now().atTime(12, 30),
             signedAmount = -3_500L,
+            categoryIconKey = "restaurant",
+            categoryColorKey = "#FFF03E3E",
         ),
         BillRowUi(
             id = 2L,
+            categoryName = "交通",
+            type = BillType.Expense,
+            time = LocalDate.now().atTime(8, 15),
+            signedAmount = -1_200L,
+            categoryIconKey = "directions_bus",
+            categoryColorKey = "#FF0CA678",
+        ),
+        BillRowUi(
+            id = 3L,
             categoryName = "工资",
             type = BillType.Income,
-            time = LocalDateTime.of(2026, 10, 15, 9, 0),
+            time = LocalDate.now().minusDays(1).atTime(9, 0),
             signedAmount = 860_000L,
+            categoryIconKey = "payments",
+            categoryColorKey = "#FF0CA678",
         ),
     ),
     accounts = listOf(
