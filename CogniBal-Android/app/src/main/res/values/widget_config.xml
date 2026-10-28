@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="ledger_widget_min_width">180dp</dimen>
+    <dimen name="ledger_widget_min_height">110dp</dimen>
+    <dimen name="ledger_widget_min_resize_width">110dp</dimen>
+    <dimen name="ledger_widget_min_resize_height">80dp</dimen>
+    <dimen name="ledger_widget_max_resize_width">624dp</dimen>
+    <dimen name="ledger_widget_max_resize_height">420dp</dimen>
+    <integer name="ledger_widget_target_cell_width">4</integer>
+    <integer name="ledger_widget_target_cell_height">2</integer>
+</resources>

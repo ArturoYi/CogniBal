@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import com.example.cognibal.data.database.entity.Account
+import com.example.cognibal.data.database.query.IdAmount
 import com.example.cognibal.data.database.model.AccountType
 import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
@@ -89,6 +90,17 @@ interface AccountDao {
     /** 只改余额和时间。调用方必须已经在同一个事务里算好新余额。 */
     @Query("UPDATE account SET balance = :balance, updateTime = :updateTime WHERE id = :id")
     suspend fun updateBalance(id: Long, balance: Long, updateTime: LocalDateTime)
+
+    /** 汇率换算按主键向后翻页。余额列映射成 [IdAmount.amount]。 */
+    @Query(
+        """
+        SELECT id, balance AS amount FROM account
+        WHERE id > :afterId
+        ORDER BY id ASC
+        LIMIT :limit
+        """,
+    )
+    suspend fun balancesAfter(afterId: Long, limit: Int): List<IdAmount>
 
     @Query("DELETE FROM account WHERE id = :id")
     suspend fun deleteById(id: Long)

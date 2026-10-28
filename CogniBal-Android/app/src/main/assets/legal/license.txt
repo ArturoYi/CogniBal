@@ -1,0 +1,176 @@
+知余非商业许可 1.0
+CogniBal Noncommercial License 1.0
+
+版权所有 © 2026 知余作者。保留一切权利。
+Copyright © 2026 the CogniBal authors. All rights reserved.
+
+生效日期：2026年10月28日。
+本许可同时提供中文和英文。两者不一致时，以中文为准。英文只供阅读。
+
+# 1. 这份许可管什么
+
+本许可适用于知余（CogniBal）的程序、源代码、界面文案和原创资源，以下称「本软件」。
+
+随本软件分发的第三方组件不适用本许可。它们继续适用各自原来的许可。名单和需要保留的声明见第 8 节。
+
+# 2. 可以不做商业授权的使用
+
+在遵守本许可的前提下，版权人授予你一项全球性、非独占、不可转让、可撤销的许可，允许你为下面的目的使用、运行、复制、修改本软件，并在第 4 节的条件下分发：
+
+在你自己的设备上运行已经安装的应用，包括记录个人收支和本人经营产生的账目。从版权人或其指定的应用商店安装后这样使用，属于本条，不是再分发。
+
+为学习、研究、评价、私人修改，以及不以收费为目的的分享。
+
+非营利组织、学校和政府机构在其非商业活动中使用。
+
+# 3. 未经书面授权不得商用
+
+版权人没有在本许可里授予任何商业权利。未经版权人事先书面授权，你不得：
+
+出售、出租、出借本软件或其修改版，或就它们收取费用。
+
+把本软件或其修改版作为收费服务、托管服务、广告变现产品或商业产品的一部分提供给他人。
+
+把安装包上传到应用商店、预装到设备，或放进以营利为目的的软件、网站或硬件里再分发。
+
+去掉本许可、版权声明或第三方声明，以便做上面的事。
+
+应用商店上架、口头答应、issue 里的回复，都不构成书面授权。书面授权要写明被许可人、用途和期限。商业授权请发邮件到 lzm.cyr@gmail.com，标题写「知余商业授权」。
+
+在自己的设备上用已安装的知余记账，不因账目与经营有关而变成上面的商业使用。
+
+# 4. 非商业分发要满足的条件
+
+如果你把本软件或你的修改版提供给别人，而且不属于第 3 节，必须同时：
+
+保留本许可全文和版权声明。
+
+保留第 8 节的第三方声明。
+
+说明你改了什么。只在自己设备上使用、没有分发出去的修改，不必公开。
+
+让接收方能读到本许可，并以本许可的同样条件获得你写的那部分修改。你不能给这部分修改另加一条允许商用的许可。
+
+不得表示版权人认可或赞助了你的分发。
+
+# 5. 没有授予的权利
+
+本许可只涉及版权人在本软件上的版权。不授予专利权、商标权，也不授予「知余」「CogniBal」或应用图标的使用权。为了如实说明来源，可以提及这些名称。
+
+# 6. 终止
+
+你违反本许可时，本许可授予的权利自动终止。你停止违约，并让已经分发的副本符合第 4 节之后，第 2 节的非商业许可恢复。第 3 节禁止的商业使用，不会因为事后停止就变成已经获准。
+
+版权人可以停止继续以本许可分发新版本。你已经按本许可合法取得的非商业权利，不因新版本换了许可而消失，除非你另行接受新版本。
+
+# 7. 无担保
+
+本软件按现状提供。在法律允许的最大范围内，版权人不提供适销性、特定用途适用性、标题或不侵权担保，也不对数据丢失、计算差异、利润损失或其他损害承担责任。法律不允许排除的责任仍然有效。
+
+账本存在使用者自己的设备上。版权人没有服务器，不能替你找回只存在于那台设备上的记录。
+
+# 8. 第三方组件
+
+下面这些组件随应用分发。它们的许可不因本许可而改变，也不受第 3 节限制。知余自己的代码、界面文案和原创资源才适用本许可。
+
+AndroidX（Core、AppCompat、SplashScreen、Activity、Lifecycle、DataStore、Room、Navigation 3、Compose、Material、Glance）、Kotlin、kotlinx-serialization、Dagger Hilt、zip4j：Apache License 2.0。全文见 https://www.apache.org/licenses/LICENSE-2.0
+
+Bouncy Castle（bcprov）使用下面这份许可。分发本软件时请保留这段原文。
+
+Copyright (c) 2000-2023 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# 9. 文本
+
+联系版权人：lzm.cyr@gmail.com。
+
+# English text
+
+This English text is for reading. If it differs from the Chinese text, the Chinese text controls.
+
+# 1. What this license covers
+
+This license covers the CogniBal (知余) program, source code, interface text, and original assets (“the software”).
+
+Third-party components shipped with the software are not under this license. They keep their own licenses. The list and the notice you must keep are in section 8.
+
+# 2. Use that does not need a commercial license
+
+If you follow this license, the copyright holder grants you a worldwide, non-exclusive, non-transferable, revocable license to use, run, copy, and modify the software, and to distribute it under section 4, for these purposes:
+
+Running an installed copy on your own device, including records of personal finances and of your own business. Installing from the copyright holder or a store they designate, then using it that way, is this kind of use. It is not redistribution.
+
+Study, research, review, private modification, and sharing that does not charge a fee.
+
+Use by a non-profit, a school, or a government body in its noncommercial activity.
+
+# 3. No commercial use without written permission
+
+This license grants no commercial rights. Without prior written permission from the copyright holder, you may not:
+
+Sell, rent, or lend the software or a modified version, or charge for them.
+
+Offer the software or a modified version as a paid service, a hosted service, an ad-supported product, or part of a commercial product.
+
+Upload the package to an app store, preinstall it on a device, or ship it inside a for-profit app, website, or piece of hardware.
+
+Remove this license, the copyright notice, or the third-party notices in order to do any of the above.
+
+A store listing, a spoken yes, or a reply in an issue is not written permission. Written permission must name the licensee, the use, and the term. For a commercial license, email lzm.cyr@gmail.com with the subject “CogniBal commercial license”.
+
+Bookkeeping on your own device with an installed copy does not become commercial use under this section merely because the entries concern a business.
+
+# 4. Conditions on noncommercial distribution
+
+If you give someone else the software or your changes, and section 3 does not forbid it, you must at the same time:
+
+Keep this entire license and the copyright notice.
+
+Keep the third-party notices in section 8.
+
+Say what you changed. Changes you only use on your own device, and do not distribute, do not have to be published.
+
+Give recipients this license, and license your own changes under these same terms. You may not add a separate license that allows commercial use of those changes.
+
+Not say or imply that the copyright holder endorses or sponsors your distribution.
+
+# 5. Rights not granted
+
+This license covers only the copyright holder’s copyright in the software. It does not grant patent rights, trademark rights, or any right to use 知余, CogniBal, or the app icon, except that you may use the names to truthfully identify the source.
+
+# 6. Termination
+
+If you breach this license, the rights it grants end automatically. After you stop the breach and bring copies you distributed into line with section 4, the noncommercial license in section 2 resumes. Commercial use forbidden by section 3 does not become licensed because you later stop.
+
+The copyright holder may stop offering new versions under this license. Noncommercial rights you already received lawfully do not disappear because a newer version uses a different license, unless you accept that newer version.
+
+# 7. No warranty
+
+The software is provided as it stands. To the fullest extent the law allows, the copyright holder disclaims warranties of merchantability, fitness for a particular purpose, title, and non-infringement, and is not liable for lost data, calculation differences, lost profits, or other damage. Liability the law does not allow to be excluded still applies.
+
+The ledger stays on the user’s device. The copyright holder has no server and cannot restore records that exist only there.
+
+# 8. Third-party components
+
+These components are shipped with the app. Their licenses do not change because of this license, and section 3 does not restrict them. This license applies to CogniBal’s own code, interface text, and original assets.
+
+AndroidX (Core, AppCompat, SplashScreen, Activity, Lifecycle, DataStore, Room, Navigation 3, Compose, Material, Glance), Kotlin, kotlinx-serialization, Dagger Hilt, and zip4j are under the Apache License 2.0. The text is at https://www.apache.org/licenses/LICENSE-2.0
+
+Bouncy Castle (bcprov) is under the notice below. Keep this text when you distribute the software.
+
+Copyright (c) 2000-2023 The Legion of the Bouncy Castle Inc. (https://www.bouncycastle.org)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# 9. Text
+
+Contact the copyright holder at lzm.cyr@gmail.com.

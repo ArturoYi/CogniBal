@@ -69,6 +69,7 @@
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.CogniBal.Splash"
+            android:launchMode="singleTop"
             android:configChanges="locale|layoutDirection"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
@@ -76,7 +77,26 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- 桌面长按图标时的「添加支出」「添加收入」。微件由系统选择器提供，不放进这里。 -->
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
+        <!--
+          系统微件选择器靠这个接收器列出「账本」。必须保持启用。
+          金额开关只影响卡片里显示什么，不从选择器里拿掉。
+        -->
+        <receiver
+            android:name=".widget.LedgerWidgetReceiver"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/ledger_widget_info" />
+        </receiver>
         <!-- 只对分享出去的加密压缩包授予临时读取，目录限制在 file_paths。 -->
         <provider
             android:name="androidx.core.content.FileProvider"

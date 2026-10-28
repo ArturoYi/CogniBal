@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="add_expense"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_expense"
+        android:shortcutShortLabel="@string/add_expense"
+        android:shortcutLongLabel="@string/add_expense">
+        <intent
+            android:action="com.example.cognibal.action.ADD_BILL"
+            android:targetPackage="com.example.cognibal"
+            android:targetClass="com.example.cognibal.MainActivity">
+            <extra
+                android:name="com.example.cognibal.extra.BILL_KIND"
+                android:value="expense" />
+        </intent>
+    </shortcut>
+    <shortcut
+        android:shortcutId="add_income"
+        android:enabled="true"
+        android:icon="@drawable/ic_shortcut_income"
+        android:shortcutShortLabel="@string/add_income"
+        android:shortcutLongLabel="@string/add_income">
+        <intent
+            android:action="com.example.cognibal.action.ADD_BILL"
+            android:targetPackage="com.example.cognibal"
+            android:targetClass="com.example.cognibal.MainActivity">
+            <extra
+                android:name="com.example.cognibal.extra.BILL_KIND"
+                android:value="income" />
+        </intent>
+    </shortcut>
+</shortcuts>

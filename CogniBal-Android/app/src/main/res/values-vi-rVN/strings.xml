@@ -28,11 +28,11 @@
     <string name="theme_dark">Tối</string>
     <string name="theme_dark_subtitle">Tương phản dịu hơn cho ban đêm</string>
     <string name="theme_color">Màu chủ đề</string>
-    <string name="theme_color_subtitle">Màu trầm, dễ chịu cho mắt</string>
-    <string name="theme_warm_cream">Kem ấm</string>
-    <string name="theme_warm_cream_desc">Dịu mắt · nền kem ấm</string>
-    <string name="theme_monochrome">Đơn sắc</string>
-    <string name="theme_monochrome_desc">Tối giản · xám mực nhẹ</string>
+    <string name="theme_color_subtitle">Một màu, phẳng và dịu</string>
+    <string name="theme_warm_cream">Xanh dịu</string>
+    <string name="theme_warm_cream_desc">Một màu xanh xuyên suốt ứng dụng</string>
+    <string name="theme_monochrome">Mực</string>
+    <string name="theme_monochrome_desc">Một màu mực, cùng kiểu thẻ mềm</string>
     <string name="selected">Đã chọn</string>
     <string name="user_stats">CogniBal đã đồng hành %1$s, với %2$s.</string>
     <string name="surplus_total">Số dư</string>
@@ -44,9 +44,7 @@
     <string name="shortcut_assets">Tài sản</string>
     <string name="shortcut_overview">Tổng quan</string>
     <string name="shortcut_coming_soon">%1$s sắp ra mắt</string>
-    <string name="more_features">Thêm</string>
     <string name="default_currency">Tiền tệ mặc định</string>
-    <string name="haptic_feedback">Rung khi chạm</string>
     <string name="clear_temp_cache">Xóa bộ nhớ đệm tạm</string>
     <string name="close">Đóng</string>
     <string name="cancel">Hủy</string>
@@ -63,7 +61,6 @@
     <string name="about_version">Phiên bản %1$s</string>
     <string name="about_description">CogniBal là ứng dụng ghi chép tài chính với giao diện điềm tĩnh, dễ đọc. Bố cục thích ứng với màn hình để việc theo dõi luôn rõ và thoải mái.</string>
     <string name="open_source">Giấy phép nguồn mở</string>
-    <string name="open_source_toast">CogniBal được cấp phép theo Apache 2.0</string>
     <string name="done">Xong</string>
     <string name="security_terms">Điều khoản dịch vụ</string>
     <string name="security_terms_subtitle">Đọc điều khoản</string>

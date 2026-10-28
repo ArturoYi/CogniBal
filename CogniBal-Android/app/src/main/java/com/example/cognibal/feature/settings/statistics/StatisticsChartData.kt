@@ -1,8 +1,12 @@
 package com.example.cognibal.screen.feature.settings.statistics
 
+import com.example.cognibal.data.database.entity.Account
+import com.example.cognibal.data.database.entity.Bill
 import com.example.cognibal.data.database.entity.Category
+import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.data.database.query.CategoryAmountSummary
 import com.example.cognibal.screen.feature.settings.statistics.state.CategoryShareUi
+import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsBillUi
 import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsKind
 import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsSectionUi
 import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsSliceRole
@@ -113,4 +117,34 @@ private fun CategoryShareUi.toSlice(): StatisticsSliceUi = StatisticsSliceUi(
 private fun shareRatio(amount: Long, total: Long): Float {
     if (total <= 0L) return 0f
     return (amount.toDouble() / total.toDouble()).toFloat().coerceIn(0f, 1f)
+}
+
+/** 这个月里能点开的支出和收入。转账没有分类，不进统计。新的在前。 */
+internal fun statisticsBills(
+    rows: List<Bill>,
+    accounts: List<Account>,
+    kind: StatisticsKind,
+): List<StatisticsBillUi> {
+    val names = accounts.associate { account -> account.id to account.name }
+    return rows.mapNotNull { bill ->
+        val billKind = when (bill.type) {
+            BillType.Expense -> StatisticsKind.Expense
+            BillType.Income -> StatisticsKind.Income
+            BillType.Transfer -> return@mapNotNull null
+        }
+        if (kind != StatisticsKind.All && billKind != kind) return@mapNotNull null
+        val categoryId = bill.categoryId ?: return@mapNotNull null
+        StatisticsBillUi(
+            id = bill.id,
+            categoryId = categoryId,
+            kind = billKind,
+            amount = bill.amount,
+            time = bill.billTime,
+            remark = bill.remark?.trim()?.takeIf { it.isNotEmpty() },
+            accountName = names[bill.accountId]?.trim()?.takeIf { it.isNotEmpty() },
+        )
+    }.sortedWith(
+        compareByDescending<StatisticsBillUi> { bill -> bill.time }
+            .thenByDescending { bill -> bill.id },
+    )
 }

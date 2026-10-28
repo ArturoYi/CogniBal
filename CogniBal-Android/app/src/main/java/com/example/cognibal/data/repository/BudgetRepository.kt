@@ -69,7 +69,7 @@ class BudgetRepository @Inject constructor(
                     .maxWithOrNull(compareBy<Budget> { it.periodEnd }.thenBy { it.id })
                     ?: continue
                 val day = when (previous.periodType) {
-                    BudgetPeriodType.Month -> previous.cycleDay ?: previous.periodStart.dayOfMonth
+                    BudgetPeriodType.Month -> BudgetPeriods.CALENDAR_MONTH_DAY
                     else -> null
                 }
                 val range = if (day != null && day in 1..31) {

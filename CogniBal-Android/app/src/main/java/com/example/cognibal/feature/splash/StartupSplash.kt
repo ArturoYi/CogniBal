@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
@@ -68,6 +69,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeoutOrNull
 
 private const val STARTUP_MOTION_MILLIS = 1100
+
+/** 扇形和标题在这之前结束，之后才淡出黑底。1100ms 线性时间轴上的 0.78。 */
+private const val STARTUP_REVEAL_FRACTION = 0.78f
+private const val STARTUP_BEFORE_REVEAL_MILLIS = 858
+private const val STARTUP_REVEAL_MILLIS = STARTUP_MOTION_MILLIS - STARTUP_BEFORE_REVEAL_MILLIS
 private const val CARD_VIEWPORT = 108f
 private const val CARD_PIVOT_X = 43f
 private const val CARD_PIVOT_Y = 48f
@@ -240,12 +246,13 @@ fun StartupSplash(
     LaunchedEffect(appBackground, previewProgress) {
         if (previewProgress != null) return@LaunchedEffect
         // Theme window background stays black for the gap frame. After this black overlay
-        // has been drawn, switch back so the later fade reveals the app color.
+        // has been drawn, switch back so any pixel the home does not cover is the app color.
         withFrameNanos { }
         val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
         window.setBackgroundDrawable(ColorDrawable(appBackground))
     }
 
+    val readyToRevealState = rememberUpdatedState(readyToReveal)
     LaunchedEffect(iconBounds, previewProgress) {
         if (previewProgress != null || iconBounds == null) return@LaunchedEffect
         withTimeoutOrNull(500) {
@@ -257,9 +264,19 @@ fun StartupSplash(
         onMatchedFrameDrawn()
         if (!reduceMotion) {
             progress.animateTo(
+                targetValue = STARTUP_REVEAL_FRACTION,
+                animationSpec = tween(
+                    durationMillis = STARTUP_BEFORE_REVEAL_MILLIS,
+                    easing = LinearEasing,
+                ),
+            )
+            // The fade shows whatever is underneath. Hold the opaque cover until the home
+            // page has been drawn, otherwise this segment reveals an empty window.
+            snapshotFlow { readyToRevealState.value }.first { it }
+            progress.animateTo(
                 targetValue = 1f,
                 animationSpec = tween(
-                    durationMillis = STARTUP_MOTION_MILLIS,
+                    durationMillis = STARTUP_REVEAL_MILLIS,
                     easing = LinearEasing,
                 ),
             )
@@ -283,7 +300,12 @@ fun StartupSplash(
     val backRotation = lerp(0f, -18f, fan)
     val frontRotation = lerp(0f, 16f, fan)
     val titleProgress = FastOutSlowInEasing.transform(span(progress.value, 0.48f, 0.72f))
-    val overlayAlpha = 1f - span(progress.value, 0.78f, 1f)
+    // Stay opaque until the home underneath has been drawn. Fading earlier shows the window.
+    val overlayAlpha = if (readyToReveal || previewProgress != null) {
+        1f - span(progress.value, STARTUP_REVEAL_FRACTION, 1f)
+    } else {
+        1f
+    }
 
     Box(
         modifier = modifier

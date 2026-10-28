@@ -1,7 +1,7 @@
 package com.example.cognibal.screen.feature.settings.appearance
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Language
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -60,7 +60,7 @@ internal fun AppearanceSettingsScreen(
     ) {
         SettingsSectionCard {
             SettingActionItem(
-                icon = Icons.Rounded.Language,
+                icon = Icons.Outlined.Language,
                 title = stringResource(R.string.language),
                 valueText = languageLabel(languageTag),
                 onClick = { onEvent(AppearanceSettingsUiEvent.LanguageClicked) },

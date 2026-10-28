@@ -5,13 +5,9 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,7 +15,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -28,12 +23,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.cognibal.screen.feature.bill.model.accountColorValue
 import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsSliceRole
 import com.example.cognibal.screen.feature.settings.statistics.state.StatisticsSliceUi
@@ -42,7 +32,7 @@ import com.example.cognibal.ui.theme.appColors
 import kotlin.math.min
 
 /**
- * 顶部一张甜甜圈。高度固定。
+ * 分类环和环旁的合计。合计由页面画在环外面，环就可以收小。
  *
  * 换月份时，同一块的占比和颜色按数值过渡到新值。新出现的块从 0 长出来，消失的块收到 0。
  * 每一帧各块占比加起来仍是一整圈，不做整图淡入淡出。
@@ -58,13 +48,13 @@ internal data class CategoryDonutChart(
 @Composable
 internal fun CategoryDonut(
     chart: CategoryDonutChart,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(CHART_DIAMETER),
 ) {
     val colors = MaterialTheme.appColors
     val rings = remember(
         chart.slices,
-        colors.expense,
-        colors.income,
+        colors.chartExpense,
+        colors.chartIncome,
         colors.textTertiary,
         colors.textSecondary,
         colors.isDark,
@@ -76,42 +66,12 @@ internal fun CategoryDonut(
     val frame = motion.frame().ifEmpty {
         listOf(RingSlice(EMPTY_KEY, 1f, emptyRingColor(colors)))
     }
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(CHART_HEIGHT)
-            .clearAndSetSemantics {
-                contentDescription = "${chart.centerLabel} ${chart.centerAmount}"
-            },
-        contentAlignment = Alignment.Center,
-    ) {
+    // 合计写在环旁边，图本身不再单独朗读。尺寸由调用方决定，默认是 [CHART_DIAMETER]。
+    Box(modifier = modifier.clearAndSetSemantics {}) {
         DonutArcs(
             rings = frame,
             modifier = Modifier.fillMaxSize(),
         )
-        Column(
-            modifier = Modifier.widthIn(max = CENTER_TEXT_WIDTH),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = chart.centerLabel,
-                color = colors.textSecondary,
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = chart.centerAmount,
-                color = chart.centerColor,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
     }
 }
 
@@ -184,8 +144,8 @@ private fun ringTargets(slices: List<StatisticsSliceUi>, colors: AppColors): Lis
 
 private fun sliceColor(slice: StatisticsSliceUi, colors: AppColors): Color = when (slice.role) {
     StatisticsSliceRole.Category -> accountColorValue(slice.colorKey)
-    StatisticsSliceRole.Expense -> colors.expense
-    StatisticsSliceRole.Income -> colors.income
+    StatisticsSliceRole.Expense -> colors.chartExpense
+    StatisticsSliceRole.Income -> colors.chartIncome
     StatisticsSliceRole.Other -> colors.textTertiary
 }
 
@@ -262,6 +222,5 @@ private const val FULL_RING = 0.999f
 private const val SEAM_OVERLAP = 0.6f
 private const val VALUE_MILLIS = 420
 
-private val CHART_HEIGHT = 220.dp
-private val INNER_DIAMETER = 116.dp
-private val CENTER_TEXT_WIDTH = 96.dp
+internal val CHART_DIAMETER = 132.dp
+private val INNER_DIAMETER = 76.dp

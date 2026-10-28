@@ -93,14 +93,66 @@ class CategoryRepository @Inject constructor(
     }
 
     /**
-     * 分类表是空的时候写入一套默认收支分类。已经有数据就什么都不做，
-     * 避免用户删掉默认项之后下次启动又被填回来。
-     * 当前没有在应用启动时调用，等界面准备好再接。
+     * 准备默认收支分类。
+     *
+     * 表是空的就写入整套。已经有数据时，只在还没见过这一版新增项时补上缺的，
+     * 并把旧的收入「理财」改名为「金融」。用户删掉的默认项不会再填回来。
+     * 自建分类留在同类型默认项前面，默认项之间按 [DefaultCategories] 的顺序排。
      */
     suspend fun seedDefaultsIfEmpty() = onIo {
         database.withTransaction {
-            if (categoryDao.count() > 0) return@withTransaction
-            categoryDao.insertAll(DefaultCategories.all)
+            if (categoryDao.count() == 0) {
+                categoryDao.insertAll(DefaultCategories.all)
+                return@withTransaction
+            }
+            var rows = categoryDao.getAll()
+            if (rows.none(DefaultCategories::isIntroduced)) {
+                rows = renameLegacyIncomeFinance(rows)
+                val missing = DefaultCategories.all.filter { template ->
+                    rows.none { it.type == template.type && it.name == template.name }
+                }
+                if (missing.isNotEmpty()) {
+                    categoryDao.insertAll(missing)
+                    rows = categoryDao.getAll()
+                }
+            }
+            alignCategoryOrder(rows)
+        }
+    }
+
+    private suspend fun renameLegacyIncomeFinance(rows: List<Category>): List<Category> {
+        val legacy = rows.find { category ->
+            category.type == CategoryType.Income && category.name == DefaultCategories.legacyIncomeFinance
+        } ?: return rows
+        if (rows.any { it.type == CategoryType.Income && it.name == "金融" }) return rows
+        val template = DefaultCategories.income.first { it.name == "金融" }
+        val renamed = legacy.copy(
+            name = template.name,
+            icon = template.icon,
+            color = template.color,
+        )
+        categoryDao.update(renamed)
+        return rows.map { category -> if (category.id == legacy.id) renamed else category }
+    }
+
+    /** 自建分类的 sort 为负，默认分类从 0 起按规范顺序排。顺序已经对上的行不写。 */
+    private suspend fun alignCategoryOrder(rows: List<Category>) {
+        CategoryType.entries.forEach { type ->
+            val ofType = rows.filter { it.type == type }
+            val defaults = if (type == CategoryType.Expense) DefaultCategories.expense else DefaultCategories.income
+            val matched = mutableSetOf<Long>()
+            val orderedDefaults = defaults.mapNotNull { template ->
+                ofType.find { it.name == template.name && it.id !in matched }?.also { matched.add(it.id) }
+            }
+            val custom = ofType
+                .filter { it.id !in matched }
+                .sortedWith(compareBy<Category> { it.sort }.thenBy { it.id })
+            (custom + orderedDefaults).forEachIndexed { index, category ->
+                val sort = index - custom.size
+                if (category.sort != sort) {
+                    categoryDao.update(category.copy(sort = sort))
+                }
+            }
         }
     }
 }

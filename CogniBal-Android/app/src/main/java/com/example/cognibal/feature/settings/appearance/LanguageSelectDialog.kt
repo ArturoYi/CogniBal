@@ -3,13 +3,8 @@ package com.example.cognibal.screen.feature.settings.appearance
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
-import android.graphics.drawable.ColorDrawable
 import android.os.Build
 import android.os.SystemClock
-import android.view.ViewGroup
-import android.view.WindowManager
-import androidx.activity.ComponentDialog
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
@@ -39,12 +34,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCompositionContext
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -56,11 +48,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -70,10 +60,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
-import androidx.core.view.WindowCompat
 import com.example.cognibal.R
 import com.example.cognibal.locale.AppLanguage
 import com.example.cognibal.ui.background.currentPageBackgroundColor
+import com.example.cognibal.ui.overlay.FullScreenDialog
 import com.example.cognibal.ui.theme.appColors
 import android.util.Xml
 import java.io.FileNotFoundException
@@ -283,7 +273,7 @@ internal fun LanguageSwitchCover(
         onFinished()
     }
 
-    OpaqueFullScreenDialog(lightSystemBars = !colors.isDark) {
+    FullScreenDialog(lightSystemBars = !colors.isDark) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -341,77 +331,6 @@ private fun LanguageSwitchIndicator(color: Color) {
             size = arcSize,
             style = stroke,
         )
-    }
-}
-
-/**
- * 透明全屏窗口。底色由内容自己画，才能跟着主题淡入淡出，而不是先闪一块黑。
- * 返回键在这里被吃掉，盖层还在时不能关掉。
- */
-@Composable
-private fun OpaqueFullScreenDialog(
-    lightSystemBars: Boolean,
-    content: @Composable () -> Unit,
-) {
-    val context = LocalContext.current
-    val composition = rememberCompositionContext()
-    val currentContent by rememberUpdatedState(content)
-    val dialog = remember(context) {
-        ComponentDialog(context, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen).apply {
-            val window = window ?: return@apply
-            window.setWindowAnimations(0)
-            window.setBackgroundDrawable(ColorDrawable(android.graphics.Color.TRANSPARENT))
-            window.setDimAmount(0f)
-            window.setLayout(
-                WindowManager.LayoutParams.MATCH_PARENT,
-                WindowManager.LayoutParams.MATCH_PARENT,
-            )
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            @Suppress("DEPRECATION")
-            window.statusBarColor = android.graphics.Color.TRANSPARENT
-            @Suppress("DEPRECATION")
-            window.navigationBarColor = android.graphics.Color.TRANSPARENT
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                window.isNavigationBarContrastEnforced = false
-            }
-            setCancelable(false)
-            setCanceledOnTouchOutside(false)
-        }
-    }
-    DisposableEffect(dialog) {
-        val composeView = ComposeView(dialog.context).apply {
-            setBackgroundColor(android.graphics.Color.TRANSPARENT)
-            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnDetachedFromWindow)
-            setParentCompositionContext(composition)
-            setContent {
-                SideEffect {
-                    dialog.window?.let { window ->
-                        WindowCompat.getInsetsController(window, this@apply).apply {
-                            isAppearanceLightStatusBars = lightSystemBars
-                            isAppearanceLightNavigationBars = lightSystemBars
-                        }
-                    }
-                }
-                currentContent()
-            }
-        }
-        dialog.setContentView(
-            composeView,
-            ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT,
-            ),
-        )
-        val backCallback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() = Unit
-        }
-        dialog.onBackPressedDispatcher.addCallback(backCallback)
-        dialog.show()
-        onDispose {
-            backCallback.remove()
-            dialog.dismiss()
-            composeView.disposeComposition()
-        }
     }
 }
 

@@ -2,6 +2,7 @@ package com.example.cognibal.navigation
 
 import androidx.navigation3.runtime.NavKey
 import com.example.cognibal.data.database.model.BillType
+import com.example.cognibal.screen.feature.legal.LegalDocumentKind
 import kotlinx.serialization.Serializable
 
 /**
@@ -53,6 +54,18 @@ internal data object BackupSettings : NavKey
 @Serializable
 internal data object SecuritySettings : NavKey
 
+/**
+ * 用户协议、隐私协议或软件许可。
+ *
+ * 不放进 [settingsDetailKeys]，宽屏时整页盖住列表和详情，返回再回到原来的二级页。
+ */
+@Serializable
+internal data class LegalPage(val kind: LegalDocumentKind) : NavKey
+
+/** 更多设置。默认货币和清理缓存。 */
+@Serializable
+internal data object MoreSettings : NavKey
+
 /** 统计。按分类看一个月的支出或收入。 */
 @Serializable
 internal data object Statistics : NavKey
@@ -102,6 +115,7 @@ internal val settingsDetailKeys: Set<NavKey> = setOf(
     AppearanceSettings,
     BackupSettings,
     SecuritySettings,
+    MoreSettings,
     Statistics,
     Overview,
     Reports,

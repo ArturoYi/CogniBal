@@ -12,8 +12,7 @@ import java.time.LocalDateTime
  * 一条预算。没有 usedAmount，已花费每次从账单表按区间求和。
  *
  * [periodStart] 含在区间里，[periodEnd] 不包含。
- * 月预算默认从 1 日 0 点到下月 1 日 0 点。[cycleDay] 改成其他日时，
- * 区间就是该日 0 点到下月同一日 0 点。该月没有这一天时用当月最后一天。
+ * 月预算按自然月：从 1 日 0 点到下月 1 日 0 点。[cycleDay] 写入 1。
  * 整点落在结束一侧，不会被漏掉或算进两个周期。
  *
  * [alertPercent] 是 50 到 100 的预警线，新写入默认 80。
@@ -46,7 +45,7 @@ data class Budget(
     val limitAmount: Long,
     val alertPercent: Int,
     val periodType: BudgetPeriodType,
-    /** 月预算的起始日，1 到 31。1 是自然月。周、季、年为空。旧数据为空时按区间开始那天。 */
+    /** 月预算写入 1，表示自然月。周、季、年为空。 */
     val cycleDay: Int? = null,
     val periodStart: LocalDateTime,
     val periodEnd: LocalDateTime,

@@ -2,7 +2,7 @@ package com.example.cognibal.screen.feature.expense.config
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.cognibal.R
 
@@ -14,5 +14,5 @@ import com.example.cognibal.R
 internal object AddExpenseConfig {
     @StringRes val titleRes: Int = R.string.add_expense
     @StringRes val backRes: Int = R.string.navigate_back
-    val icon: ImageVector = Icons.Rounded.Add
+    val icon: ImageVector = Icons.Outlined.Add
 }

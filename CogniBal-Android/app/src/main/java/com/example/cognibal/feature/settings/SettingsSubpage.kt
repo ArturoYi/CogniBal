@@ -20,7 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,6 +48,7 @@ import com.example.cognibal.ui.theme.appColors
  * 列表和详情并排时不显示返回键，系统返回仍由导航宿主处理。
  *
  * [placeholder] 非空时居中放在标题下面，滚动内容先不组合。资产页用来等数据。
+ * [scrollContent] 为 false 时，内容铺满标题以下的剩余高度，由调用方自己滚动。蓝牙迁移用来把按钮固定在底部。
  */
 @OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
@@ -56,6 +57,7 @@ internal fun SettingsSubpage(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     placeholder: (@Composable () -> Unit)? = null,
+    scrollContent: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val showBack = LocalListDetailSceneScope.current == null
@@ -71,6 +73,7 @@ internal fun SettingsSubpage(
         val layout = settingsLayoutSpec(maxWidth, maxHeight)
         val maxContentWidth = if (layout.isWide) 640.dp else layout.maxContentWidth
         val sectionSpacing = if (layout.compactHeight) 12.dp else 16.dp
+        val bottomExtra = if (layout.compactHeight) 10.dp else 14.dp
         Column(
             modifier = Modifier
                 .widthIn(max = maxContentWidth)
@@ -103,9 +106,16 @@ internal fun SettingsSubpage(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .verticalScroll(scrollState)
+                        .fillMaxWidth()
+                        .then(
+                            if (scrollContent) {
+                                Modifier.verticalScroll(scrollState)
+                            } else {
+                                Modifier
+                            },
+                        )
                         .padding(bottom = contentPadding.calculateBottomPadding())
-                        .padding(bottom = if (layout.compactHeight) 10.dp else 14.dp),
+                        .padding(bottom = bottomExtra),
                     verticalArrangement = Arrangement.spacedBy(sectionSpacing),
                     content = content,
                 )
@@ -165,7 +175,7 @@ private fun SettingsSubpageHeader(
                     contentAlignment = Alignment.Center,
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                         contentDescription = stringResource(R.string.navigate_back),
                         tint = colors.primary,
                         modifier = Modifier.size(20.dp),

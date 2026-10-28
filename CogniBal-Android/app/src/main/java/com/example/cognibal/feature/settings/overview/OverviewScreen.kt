@@ -3,41 +3,59 @@ package com.example.cognibal.screen.feature.settings.overview
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.FilterList
+import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -45,6 +63,7 @@ import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -65,6 +84,8 @@ import com.example.cognibal.screen.feature.settings.overview.state.OverviewDayAm
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewKind
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewUiEvent
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewUiState
+import com.example.cognibal.screen.feature.settings.overview.state.matches
+import com.example.cognibal.ui.loading.LoadingIndicatorAppearDelayMillis
 import com.example.cognibal.ui.background.PageBackgroundHost
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.theme.AppThemeStyle
@@ -76,6 +97,7 @@ import java.time.YearMonth
 import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.util.Locale
+import kotlinx.coroutines.delay
 import com.example.cognibal.screen.feature.settings.SettingsSubpage
 import com.example.cognibal.screen.feature.settings.component.InsightCard
 import com.example.cognibal.screen.feature.settings.component.InsightSegments
@@ -215,12 +237,14 @@ internal fun OverviewScreen(
         )
     }
     if (filtering) {
-        DayFilterDialog(
+        DayFilterSheet(
             kind = uiState.kind,
             categories = uiState.categories,
             selectedIds = uiState.selectedCategoryIds,
-            onKind = { kind -> onEvent(OverviewUiEvent.SetKind(kind)) },
-            onToggleCategory = { id -> onEvent(OverviewUiEvent.ToggleCategory(id)) },
+            loading = uiState.loading,
+            onApply = { nextKind, ids ->
+                onEvent(OverviewUiEvent.ApplyFilter(nextKind, ids))
+            },
             onClear = { onEvent(OverviewUiEvent.ClearFilter) },
             onDismiss = { filtering = false },
         )
@@ -242,7 +266,7 @@ private fun DayFilterButton(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = Icons.Rounded.FilterList,
+            imageVector = Icons.Outlined.FilterList,
             contentDescription = stringResource(R.string.overview_filter),
             tint = if (active) colors.primary else colors.textSecondary,
             modifier = Modifier.size(22.dp),
@@ -307,168 +331,251 @@ private fun YearMonthDialog(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * 筛选从底部弹出。改动先留在这里，点完成才交给外面。
+ * 划掉或点外面关掉时，草稿丢掉，已经生效的筛选不动。
+ * 清除会清掉生效的筛选再收起。当天流水还在整理时，被点的那个按钮转圈。
+ *
+ * 全部、支出、收入本身就是选项，不再加小标题。
+ * 分类固定两行横滑。支出在前，收入在后，中间留一道分隔。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DayFilterDialog(
+private fun DayFilterSheet(
     kind: OverviewKind,
     categories: List<OverviewCategoryOption>,
     selectedIds: Set<Long>,
-    onKind: (OverviewKind) -> Unit,
-    onToggleCategory: (Long) -> Unit,
+    loading: Boolean,
+    onApply: (OverviewKind, Set<Long>) -> Unit,
     onClear: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
     val expenseLabel = stringResource(R.string.bill_fab_expense)
     val incomeLabel = stringResource(R.string.bill_fab_income)
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(
-            modifier = Modifier.widthIn(max = 420.dp),
-            shape = RoundedCornerShape(28.dp),
-            color = colors.cardBackground,
+    var draftKind by remember { mutableStateOf(kind) }
+    var draftIds by remember { mutableStateOf(selectedIds) }
+    val pendingState = remember { mutableStateOf<FilterCommit?>(null) }
+    var pending by pendingState
+    val allowHide = remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { target ->
+            target != SheetValue.Hidden || allowHide.value || pendingState.value == null
+        },
+    )
+    val expenseCategories = categories.filter { category -> category.expense }
+    val incomeCategories = categories.filter { category -> !category.expense }
+    val showExpense = draftKind != OverviewKind.Income && expenseCategories.isNotEmpty()
+    val showIncome = draftKind != OverviewKind.Expense && incomeCategories.isNotEmpty()
+    val settled = when (val commit = pending) {
+        null -> false
+        FilterCommit.Clear -> kind == OverviewKind.All && selectedIds.isEmpty()
+        is FilterCommit.Apply -> kind == commit.kind &&
+            selectedIds == committedCategoryIds(categories, commit.kind, commit.ids)
+    }
+    val busy = pending != null
+    LaunchedEffect(settled) {
+        if (!settled) return@LaunchedEffect
+        allowHide.value = true
+        if (sheetState.isVisible) sheetState.hide()
+        onDismiss()
+    }
+    ModalBottomSheet(
+        onDismissRequest = {
+            if (pendingState.value == null || allowHide.value) onDismiss()
+        },
+        sheetState = sheetState,
+        containerColor = colors.cardBackground,
+        contentColor = colors.textPrimary,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
+        tonalElevation = 0.dp,
+        properties = ModalBottomSheetProperties(
+            shouldDismissOnBackPress = !busy,
+            shouldDismissOnClickOutside = !busy,
+        ),
+        contentWindowInsets = {
+            WindowInsets.navigationBars.exclude(WindowInsets.ime).only(WindowInsetsSides.Bottom)
+        },
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 8.dp),
         ) {
-            Column(modifier = Modifier.padding(top = 20.dp, bottom = 12.dp)) {
-                Text(
-                    text = stringResource(R.string.overview_filter),
-                    color = colors.textPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                )
-                Text(
-                    text = stringResource(R.string.overview_filter_type),
-                    color = colors.textSecondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(start = 24.dp, top = 16.dp, end = 24.dp),
-                )
-                InsightSegments(
-                    labels = listOf(
-                        stringResource(R.string.overview_filter_all),
-                        expenseLabel,
-                        incomeLabel,
-                    ),
-                    selectedIndex = when (kind) {
-                        OverviewKind.All -> 0
-                        OverviewKind.Expense -> 1
-                        OverviewKind.Income -> 2
-                    },
-                    onSelect = { index ->
-                        onKind(
-                            when (index) {
-                                1 -> OverviewKind.Expense
-                                2 -> OverviewKind.Income
-                                else -> OverviewKind.All
-                            },
-                        )
-                    },
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                )
-                Text(
-                    text = stringResource(R.string.bill_entry_category),
-                    color = colors.textSecondary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                )
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = 280.dp)
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    if (categories.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.bill_entry_no_category),
-                            color = colors.textTertiary,
-                            fontSize = 14.sp,
-                            modifier = Modifier.padding(horizontal = 4.dp),
-                        )
-                    } else if (kind == OverviewKind.All) {
-                        CategoryGroup(
-                            title = expenseLabel,
-                            categories = categories.filter { category -> category.expense },
-                            selectedIds = selectedIds,
-                            onToggle = onToggleCategory,
-                        )
-                        CategoryGroup(
-                            title = incomeLabel,
-                            categories = categories.filter { category -> !category.expense },
-                            selectedIds = selectedIds,
-                            onToggle = onToggleCategory,
-                        )
-                    } else {
-                        CategoryChips(
-                            categories = categories,
-                            selectedIds = selectedIds,
-                            onToggle = onToggleCategory,
-                        )
+            Text(
+                text = stringResource(R.string.overview_filter),
+                color = colors.textPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(horizontal = 20.dp),
+            )
+            InsightSegments(
+                labels = listOf(
+                    stringResource(R.string.overview_filter_all),
+                    expenseLabel,
+                    incomeLabel,
+                ),
+                selectedIndex = when (draftKind) {
+                    OverviewKind.All -> 0
+                    OverviewKind.Expense -> 1
+                    OverviewKind.Income -> 2
+                },
+                onSelect = { index ->
+                    if (!busy) {
+                        draftKind = when (index) {
+                            1 -> OverviewKind.Expense
+                            2 -> OverviewKind.Income
+                            else -> OverviewKind.All
+                        }
                     }
-                }
-                Row(
+                },
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            )
+            when {
+                loading && categories.isEmpty() -> Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.End,
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    TextButton(onClick = onClear) {
-                        Text(text = stringResource(R.string.overview_filter_clear), color = colors.textTertiary)
-                    }
-                    TextButton(onClick = onDismiss) {
-                        Text(
-                            text = stringResource(R.string.done),
-                            color = colors.primary,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = colors.primary,
+                    )
                 }
+                !showExpense && !showIncome -> Text(
+                    text = stringResource(R.string.bill_entry_no_category),
+                    color = colors.textTertiary,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(horizontal = 20.dp),
+                )
+                else -> key(draftKind) {
+                    CategoryStrip(
+                        expense = if (showExpense) expenseCategories else emptyList(),
+                        income = if (showIncome) incomeCategories else emptyList(),
+                        expenseDescription = expenseLabel,
+                        incomeDescription = incomeLabel,
+                        selectedIds = draftIds,
+                        enabled = !busy,
+                        onToggle = { id -> draftIds = draftIds.toggle(id) },
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, top = 8.dp, end = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                FilterSheetButton(
+                    label = stringResource(R.string.overview_filter_clear),
+                    emphasized = false,
+                    enabled = !busy,
+                    loading = pending is FilterCommit.Clear,
+                    onClick = {
+                        pending = FilterCommit.Clear
+                        onClear()
+                    },
+                )
+                FilterSheetButton(
+                    label = stringResource(R.string.done),
+                    emphasized = true,
+                    enabled = !busy,
+                    loading = pending is FilterCommit.Apply,
+                    onClick = {
+                        val ids = committedCategoryIds(categories, draftKind, draftIds)
+                        pending = FilterCommit.Apply(draftKind, ids)
+                        onApply(draftKind, ids)
+                    },
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * 支出、收入排在同一条横滑列表里。三个以上固定两行，一两个仍排成一行。
+ * 两类都在时，中间一道细线把它们分开，不再写小标题。
+ */
 @Composable
-private fun CategoryGroup(
-    title: String,
-    categories: List<OverviewCategoryOption>,
+private fun CategoryStrip(
+    expense: List<OverviewCategoryOption>,
+    income: List<OverviewCategoryOption>,
+    expenseDescription: String,
+    incomeDescription: String,
     selectedIds: Set<Long>,
+    enabled: Boolean,
     onToggle: (Long) -> Unit,
 ) {
-    if (categories.isEmpty()) return
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = title,
-            color = MaterialTheme.appColors.textTertiary,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(start = 4.dp),
-        )
-        CategoryChips(
-            categories = categories,
-            selectedIds = selectedIds,
-            onToggle = onToggle,
-        )
+    val colors = MaterialTheme.appColors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.Top,
+    ) {
+        if (expense.isNotEmpty()) {
+            CategoryBlock(
+                categories = expense,
+                description = expenseDescription,
+                selectedIds = selectedIds,
+                enabled = enabled,
+                onToggle = onToggle,
+            )
+        }
+        if (expense.isNotEmpty() && income.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp)
+                    .align(Alignment.CenterVertically)
+                    .width(1.dp)
+                    .height(28.dp)
+                    .background(colors.divider),
+            )
+        }
+        if (income.isNotEmpty()) {
+            CategoryBlock(
+                categories = income,
+                description = incomeDescription,
+                selectedIds = selectedIds,
+                enabled = enabled,
+                onToggle = onToggle,
+            )
+        }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun CategoryChips(
+private fun CategoryBlock(
     categories: List<OverviewCategoryOption>,
+    description: String,
     selectedIds: Set<Long>,
+    enabled: Boolean,
     onToggle: (Long) -> Unit,
 ) {
-    FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    val rows = remember(categories) { categoryRows(categories) }
+    Column(
+        modifier = Modifier.semantics { contentDescription = description },
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        categories.forEach { category ->
-            CategoryFilterChip(
-                name = category.name,
-                selected = category.id in selectedIds,
-                onClick = { onToggle(category.id) },
-            )
+        rows.forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { category ->
+                    CategoryFilterChip(
+                        name = category.name,
+                        selected = category.id in selectedIds,
+                        enabled = enabled,
+                        onClick = { onToggle(category.id) },
+                    )
+                }
+            }
         }
     }
 }
@@ -477,6 +584,7 @@ private fun CategoryChips(
 private fun CategoryFilterChip(
     name: String,
     selected: Boolean,
+    enabled: Boolean,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
@@ -491,10 +599,97 @@ private fun CategoryFilterChip(
             .clip(RoundedCornerShape(99.dp))
             .background(if (selected) colors.primary else colors.tagBackground)
             .semantics { this.selected = selected }
-            .interactiveClick(role = Role.Checkbox, onClick = onClick)
+            .interactiveClick(enabled = enabled, role = Role.Checkbox, onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 8.dp),
     )
 }
+
+@Composable
+private fun FilterSheetButton(
+    label: String,
+    emphasized: Boolean,
+    enabled: Boolean,
+    loading: Boolean,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val showSpinner = rememberDelayedLoading(loading)
+    val loadingDescription = stringResource(R.string.loading_indicator_cd)
+    val acceptClick = enabled && !loading
+    TextButton(
+        onClick = { if (acceptClick) onClick() },
+        enabled = acceptClick || showSpinner,
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = label,
+                modifier = Modifier
+                    .alpha(if (showSpinner) 0f else 1f)
+                    .then(if (showSpinner) Modifier.clearAndSetSemantics {} else Modifier),
+                color = if (emphasized) colors.primary else colors.textTertiary,
+                fontWeight = if (emphasized) FontWeight.Bold else FontWeight.Medium,
+            )
+            if (showSpinner) {
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(18.dp)
+                        .semantics { contentDescription = loadingDescription },
+                    strokeWidth = 2.dp,
+                    color = colors.primary,
+                )
+            }
+        }
+    }
+}
+
+/** 几十毫秒的整理不闪圈，拖久了再出现，跟全页等待同一档。 */
+@Composable
+private fun rememberDelayedLoading(active: Boolean): Boolean {
+    var visible by remember { mutableStateOf(false) }
+    LaunchedEffect(active) {
+        if (!active) {
+            visible = false
+            return@LaunchedEffect
+        }
+        delay(LoadingIndicatorAppearDelayMillis.toLong())
+        visible = true
+    }
+    return visible
+}
+
+private sealed interface FilterCommit {
+    data object Clear : FilterCommit
+    data class Apply(val kind: OverviewKind, val ids: Set<Long>) : FilterCommit
+}
+
+private fun committedCategoryIds(
+    categories: List<OverviewCategoryOption>,
+    kind: OverviewKind,
+    ids: Set<Long>,
+): Set<Long> {
+    if (ids.isEmpty()) return emptySet()
+    val visible = categories.asSequence().filter { it.matches(kind) }.map { it.id }.toSet()
+    return ids.intersect(visible)
+}
+
+private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
+
+/** 三个以上固定两行。一两个仍排成一行，避免叠成一列。 */
+private fun categoryRows(categories: List<OverviewCategoryOption>): List<List<OverviewCategoryOption>> {
+    if (categories.isEmpty()) return emptyList()
+    val rowCount = if (categories.size <= 2) 1 else FilterCategoryRows
+    val columns = (categories.size + rowCount - 1) / rowCount
+    return List(rowCount) { row ->
+        buildList {
+            for (column in 0 until columns) {
+                val index = row * columns + column
+                if (index < categories.size) add(categories[index])
+            }
+        }
+    }.filter { row -> row.isNotEmpty() }
+}
+
+private const val FilterCategoryRows = 2
 
 @Composable
 private fun MonthCalendar(
@@ -608,8 +803,8 @@ private fun DayCell(
             horizontalArrangement = Arrangement.spacedBy(3.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (income > 0L) Dot(colors.income)
-            if (expense > 0L) Dot(colors.expense)
+            if (income > 0L) Dot(colors.chartIncome)
+            if (expense > 0L) Dot(colors.chartExpense)
         }
     }
 }

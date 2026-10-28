@@ -60,11 +60,14 @@ internal data class BillHomeUiState(
     val monthBalance: Long = 0L,
     val monthOverflow: Boolean = false,
     val budgets: List<BudgetProgressUi> = emptyList(),
+    /** 关掉后首页不排预算。设置页可以再打开。 */
+    val showBudget: Boolean = true,
     val recent: List<BillRowUi> = emptyList(),
 )
 
 internal sealed interface BillHomeUiEvent {
     data class Select(val accountId: Long) : BillHomeUiEvent
+    data object HideBudget : BillHomeUiEvent
 }
 
 internal fun billsToRows(bills: List<Bill>, categories: Map<Long, Category>): List<BillRowUi> {

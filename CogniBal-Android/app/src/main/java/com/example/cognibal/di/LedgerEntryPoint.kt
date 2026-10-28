@@ -4,6 +4,7 @@ import com.example.cognibal.data.backup.LedgerBackup
 import com.example.cognibal.data.backup.bluetooth.BackupBluetooth
 import com.example.cognibal.data.repository.AccountRepository
 import com.example.cognibal.data.repository.BillRepository
+import com.example.cognibal.data.repository.CurrencyConversionRepository
 import com.example.cognibal.data.repository.BudgetRepository
 import com.example.cognibal.data.repository.CategoryRepository
 import com.example.cognibal.data.repository.StatsRepository
@@ -27,6 +28,8 @@ interface LedgerEntryPoint {
     fun budgetRepository(): BudgetRepository
 
     fun categoryRepository(): CategoryRepository
+
+    fun currencyConversionRepository(): CurrencyConversionRepository
 
     fun statsRepository(): StatsRepository
 

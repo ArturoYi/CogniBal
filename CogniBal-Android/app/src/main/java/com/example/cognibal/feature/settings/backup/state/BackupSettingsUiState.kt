@@ -39,12 +39,15 @@ internal sealed interface MigrationUi {
     data class Receive(
         val waiting: Boolean,
         val paused: Boolean,
+        val secondsLeft: Int = 0,
+        val timedOut: Boolean = false,
     ) : MigrationUi
 
     data class Scan(
         val devices: List<BluetoothPeerUi>,
         val scanning: Boolean,
         val paused: Boolean,
+        val secondsLeft: Int = 0,
     ) : MigrationUi
 
     data object Connecting : MigrationUi
@@ -149,7 +152,7 @@ internal sealed interface BackupSettingsUiEvent {
 }
 
 internal sealed interface BackupSettingsEffect {
-    data class Toast(@StringRes val messageRes: Int) : BackupSettingsEffect
+    data class Toast(@StringRes val messageRes: Int, val long: Boolean = false) : BackupSettingsEffect
 
     data class Share(val uri: Uri) : BackupSettingsEffect
 

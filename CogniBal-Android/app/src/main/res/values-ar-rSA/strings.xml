@@ -28,11 +28,11 @@
     <string name="theme_dark">داكن</string>
     <string name="theme_dark_subtitle">تباين ألطف لليل</string>
     <string name="theme_color">لون السمة</string>
-    <string name="theme_color_subtitle">ألوان هادئة مريحة للعين</string>
-    <string name="theme_warm_cream">كريمي دافئ</string>
-    <string name="theme_warm_cream_desc">مريح للعين · خلفية كريمية</string>
-    <string name="theme_monochrome">أحادي اللون</string>
-    <string name="theme_monochrome_desc">بسيط · رمادي حبري ناعم</string>
+    <string name="theme_color_subtitle">لون واحد، مسطح وناعم</string>
+    <string name="theme_warm_cream">أزرق ناعم</string>
+    <string name="theme_warm_cream_desc">أزرق واحد في التطبيق كله</string>
+    <string name="theme_monochrome">حبر</string>
+    <string name="theme_monochrome_desc">حبر واحد، البطاقات الناعمة نفسها</string>
     <string name="selected">محدَّد</string>
     <string name="user_stats">CogniBal معك منذ %1$s، وسجّلت %2$s.</string>
     <string name="surplus_total">الرصيد</string>
@@ -44,9 +44,7 @@
     <string name="shortcut_assets">الأصول</string>
     <string name="shortcut_overview">نظرة عامة</string>
     <string name="shortcut_coming_soon">%1$s قريبًا</string>
-    <string name="more_features">المزيد</string>
     <string name="default_currency">العملة الافتراضية</string>
-    <string name="haptic_feedback">اهتزاز عند اللمس</string>
     <string name="clear_temp_cache">مسح ذاكرة التخزين المؤقت</string>
     <string name="close">إغلاق</string>
     <string name="cancel">إلغاء</string>
@@ -63,7 +61,6 @@
     <string name="about_version">الإصدار %1$s</string>
     <string name="about_description">CogniBal تطبيق محاسبة بمظهر هادئ وسهل القراءة. يتكيف التخطيط مع الشاشة ليبقى تتبّع المال واضحًا ومريحًا.</string>
     <string name="open_source">تراخيص المصدر المفتوح</string>
-    <string name="open_source_toast">CogniBal مرخّص بموجب Apache 2.0</string>
     <string name="done">تم</string>
     <string name="security_terms">شروط الخدمة</string>
     <string name="security_terms_subtitle">قراءة الشروط</string>

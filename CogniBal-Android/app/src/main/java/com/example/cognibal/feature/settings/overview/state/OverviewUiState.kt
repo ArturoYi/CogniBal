@@ -25,6 +25,13 @@ internal data class OverviewCategoryOption(
     val expense: Boolean,
 )
 
+/** 这种筛选下，这一个分类要不要出现在列表里。 */
+internal fun OverviewCategoryOption.matches(kind: OverviewKind): Boolean = when (kind) {
+    OverviewKind.All -> true
+    OverviewKind.Expense -> expense
+    OverviewKind.Income -> !expense
+}
+
 internal data class OverviewUiState(
     val loading: Boolean = true,
     val month: YearMonth = YearMonth.now(),
@@ -50,7 +57,13 @@ internal sealed interface OverviewUiEvent {
     data object NextMonth : OverviewUiEvent
     data class SelectMonth(val month: YearMonth) : OverviewUiEvent
     data class SelectDay(val day: LocalDate) : OverviewUiEvent
-    data class SetKind(val kind: OverviewKind) : OverviewUiEvent
-    data class ToggleCategory(val categoryId: Long) : OverviewUiEvent
+
+    /** 把草稿写成当天的筛选。调用方等状态跟上再收起。 */
+    data class ApplyFilter(
+        val kind: OverviewKind,
+        val categoryIds: Set<Long>,
+    ) : OverviewUiEvent
+
+    /** 筛选取消，回到全部、不限分类。 */
     data object ClearFilter : OverviewUiEvent
 }

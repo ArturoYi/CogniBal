@@ -303,7 +303,7 @@ private fun amountColor(overflow: Boolean, negative: Boolean, debt: Boolean): Co
     val colors = MaterialTheme.appColors
     return when {
         overflow -> colors.textSecondary
-        debt || negative -> colors.expense
+        debt || negative -> colors.textPrimary
         else -> colors.textPrimary
     }
 }

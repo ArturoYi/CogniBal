@@ -2,7 +2,7 @@ package com.example.cognibal.screen.feature.bill.config
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.cognibal.R
 
@@ -13,5 +13,5 @@ import com.example.cognibal.R
  */
 internal object BillTabConfig {
     @StringRes val labelRes: Int = R.string.tab_bill
-    val icon: ImageVector = Icons.AutoMirrored.Rounded.List
+    val icon: ImageVector = Icons.AutoMirrored.Outlined.List
 }

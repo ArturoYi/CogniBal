@@ -1,0 +1,51 @@
+Effective date: October 28, 2026
+
+CogniBal (知余) is a bookkeeping app that runs on your own device. Please read these terms and the privacy policy. Tap Agree and continue only if you accept both, including the CogniBal Noncommercial License they describe.
+
+These terms are shown in Simplified Chinese, Traditional Chinese, or English, matching the app language. If the texts differ, the Simplified Chinese text controls.
+
+# 1. What CogniBal is
+
+CogniBal lets you keep accounts, categories, bills, budgets, and notes on this device. It also provides summaries, an encrypted backup, export, and Bluetooth migration.
+
+It does not offer an account, cloud sync, payments, investments, or tax services. Figures in the ledger are for your own records. They are not financial, tax, or legal advice.
+
+# 2. How you may use the app
+
+You may use an installed copy on your own device to record personal spending and income, including records of your own business. That use does not need a separate commercial license.
+
+You are responsible for keeping entries lawful and for checking amounts, categories, and dates.
+
+# 3. License for the software
+
+The app, its source code, interface text, and original assets are covered by the CogniBal Noncommercial License 1.0. Under that license you may copy, modify, and share them to study, research, review, or distribute them noncommercially.
+
+Without prior written permission from the copyright holder, you may not sell or rent the software, offer it as a paid or hosted service, include it in a commercial product, or ship it in a for-profit app, website, or preinstall.
+
+The full license is under Settings, About CogniBal, Licenses and notices. The same text is the LICENSE file in the project. Third-party components keep their own licenses.
+
+# 4. Your ledger
+
+The ledger stays on this device and under your control. Backup, sharing, and Bluetooth migration start only when you use them.
+
+Uninstalling, clearing app data, or importing the wrong backup can remove records. The exported archive is AES-256 encrypted, but the password is built into the app. It is not a secret only you know. Keep backup files to yourself, and do not send them to someone you do not trust. The developer cannot restore a ledger that exists only on your device.
+
+# 5. What not to do
+
+Do not use CogniBal for anything unlawful or to harm someone else. Do not break or bypass the app in order to do the commercial use that section 3 does not allow.
+
+# 6. Names and marks
+
+知余, CogniBal, and the app icon belong to the copyright holder. These terms do not give you those marks. You may use the names to truthfully say where the software came from.
+
+# 7. Limits of responsibility
+
+CogniBal is provided as the current version stands. Budget alerts use only the numbers you enter, and they may not appear if notifications are not allowed. To the extent the law allows, there is no liability for lost data, calculation differences, device failure, or indirect loss. Liability that the law does not let us exclude still applies.
+
+# 8. Changes
+
+If these terms, the privacy policy, or the software license change, the effective date changes. The next time you open the app, it asks you to accept the new version. If you do not agree, stop using the app.
+
+# 9. Contact
+
+Feedback in Settings opens the email app on your device, addressed to lzm.cyr@gmail.com. For a commercial license, use the same address and the subject “CogniBal commercial license”.

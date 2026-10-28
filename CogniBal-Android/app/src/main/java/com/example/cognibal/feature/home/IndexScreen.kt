@@ -48,14 +48,21 @@ import com.example.cognibal.ui.theme.CogniBalTheme
  */
 @Composable
 fun IndexScreen(
+    shortcutTypeCode: Int? = null,
+    onShortcutConsumed: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val windowAdaptiveInfo = currentWindowAdaptiveInfoV2()
     val navigationSuiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(windowAdaptiveInfo)
     val placement = navigationSuiteType.indexNavigationPlacement()
     val navigationVisibleState = rememberSaveable { mutableStateOf(true) }
-    val navigator = rememberAppNavigator()
+    val navigator = rememberAppNavigator(shortcutTypeCode)
     val sceneState = rememberAppSceneState(navigator)
+    LaunchedEffect(shortcutTypeCode) {
+        val typeCode = shortcutTypeCode ?: return@LaunchedEffect
+        navigator.openEntry(typeCode)
+        onShortcutConsumed()
+    }
     val navigationWanted = navigationVisibleState.value && sceneState.currentScene.showsHomeTab()
     val showBottomBar = placement != IndexNavigationPlacement.Side && navigationVisibleState.value
     // 侧栏会改内容区宽度。侧滑期间先保持原宽度，动画结束后再收起或放回，避免两页每帧重测。

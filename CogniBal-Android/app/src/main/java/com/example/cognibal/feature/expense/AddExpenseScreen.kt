@@ -4,6 +4,7 @@ import android.text.format.DateFormat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -32,8 +33,8 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -41,6 +42,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -54,6 +56,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
@@ -61,6 +64,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -90,6 +94,7 @@ import com.example.cognibal.ui.background.RequestPageBackground
 import com.example.cognibal.ui.insets.screenContentWindowInsets
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.preview.FormFactorPreviews
+import com.example.cognibal.ui.theme.CogniBalCardElevation
 import com.example.cognibal.ui.theme.CogniBalTheme
 import com.example.cognibal.ui.theme.appColors
 import java.time.LocalDateTime
@@ -101,9 +106,10 @@ import com.example.cognibal.screen.feature.expense.model.onCategory
 import com.example.cognibal.screen.feature.expense.model.messageRes
 
 /**
- * 记一笔。顶栏切换支出和收入，先点分类，再填金额和备注。
+ * 记一笔。顶栏切换支出、收入和转账。
+ * 支出和收入先点分类，再填金额和备注，记入首页当前选中的账户，页面上不再写账户名。
+ * 转账不选分类，改为选择转出和转入账户。
  * 金额和备注都用系统键盘，页面不自动抢焦点。返回直接离开这一页。
- * 账单记入当前展示的账本，账本本身不再做成一行选择。
  */
 @Composable
 internal fun AddExpenseRoute(
@@ -183,8 +189,17 @@ internal fun AddExpenseScreen(
 ) {
     val density = LocalDensity.current
     val imeVisible = WindowInsets.ime.getBottom(density) > 0
+    val transfer = uiState.type == BillType.Transfer
     val categorySelected = uiState.categoryId != null
-    val account = uiState.accounts.firstOrNull { it.id == uiState.accountId }
+    val showFields = transfer || categorySelected
+    var pickingFrom by rememberSaveable { mutableStateOf(false) }
+    var pickingTo by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(transfer) {
+        if (!transfer) {
+            pickingFrom = false
+            pickingTo = false
+        }
+    }
     val horizontalInsets = screenContentWindowInsets().only(WindowInsetsSides.Horizontal)
     RequestPageBackground()
     Column(modifier.fillMaxSize()) {
@@ -215,24 +230,25 @@ internal fun AddExpenseScreen(
                         .padding(top = 8.dp, bottom = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    if (account != null) {
-                        Text(
-                            text = stringResource(R.string.bill_entry_into_account, account.name),
-                            color = MaterialTheme.appColors.textTertiary,
-                            fontSize = 13.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(start = 4.dp),
+                    if (transfer) {
+                        TransferAccounts(
+                            accounts = uiState.accounts,
+                            fromId = uiState.accountId,
+                            toId = uiState.toAccountId,
+                            enabled = !uiState.saving,
+                            onPickFrom = { pickingFrom = true },
+                            onPickTo = { pickingTo = true },
+                        )
+                    } else {
+                        CategorySection(
+                            categories = uiState.categories,
+                            selectedId = uiState.categoryId,
+                            enabled = !uiState.saving,
+                            onSelect = { onEvent(AddExpenseUiEvent.CategorySelected(it)) },
+                            onCreate = onShowCreateCategory,
                         )
                     }
-                    CategorySection(
-                        categories = uiState.categories,
-                        selectedId = uiState.categoryId,
-                        enabled = !uiState.saving,
-                        onSelect = { onEvent(AddExpenseUiEvent.CategorySelected(it)) },
-                        onCreate = onShowCreateCategory,
-                    )
-                    if (categorySelected) {
+                    if (showFields) {
                         EntryFields(
                             uiState = uiState,
                             isEdit = isEdit,
@@ -245,7 +261,7 @@ internal fun AddExpenseScreen(
                         Spacer(Modifier.windowInsetsPadding(navigationBottomInset()))
                     }
                 }
-                if (categorySelected) {
+                if (showFields) {
                     SaveBar(
                         saving = uiState.saving,
                         includeBottomInset = !imeVisible,
@@ -275,15 +291,38 @@ internal fun AddExpenseScreen(
         )
     }
     if (showTime) {
-        BillTimeDialog(
+        BillTimeSheet(
             hour = uiState.billTime.hour,
             minute = uiState.billTime.minute,
-            second = uiState.billTime.second,
-            onConfirm = { hour, minute, second ->
-                onEvent(AddExpenseUiEvent.TimePicked(hour, minute, second))
+            onConfirm = { hour, minute ->
+                onEvent(AddExpenseUiEvent.TimePicked(hour, minute))
                 onDismissTime()
             },
             onDismiss = onDismissTime,
+        )
+    }
+    if (transfer && pickingFrom) {
+        AccountPickDialog(
+            title = stringResource(R.string.bill_entry_from),
+            accounts = uiState.accounts,
+            selectedId = uiState.accountId,
+            onSelect = { accountId ->
+                onEvent(AddExpenseUiEvent.AccountSelected(accountId))
+                pickingFrom = false
+            },
+            onDismiss = { pickingFrom = false },
+        )
+    }
+    if (transfer && pickingTo) {
+        AccountPickDialog(
+            title = stringResource(R.string.bill_entry_to),
+            accounts = uiState.accounts.filter { it.id != uiState.accountId },
+            selectedId = uiState.toAccountId,
+            onSelect = { accountId ->
+                onEvent(AddExpenseUiEvent.ToAccountSelected(accountId))
+                pickingTo = false
+            },
+            onDismiss = { pickingTo = false },
         )
     }
     val prompt = uiState.overBudgetPrompt
@@ -355,30 +394,36 @@ private fun TypeBar(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                 contentDescription = stringResource(R.string.navigate_back),
                 tint = colors.textPrimary,
             )
         }
-        Row(
+        FlowRow(
             modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             TypeChip(
                 label = stringResource(R.string.bill_fab_expense),
                 selected = type == BillType.Expense,
-                color = colors.expense,
+                color = colors.primary,
                 enabled = enabled,
                 onClick = { onType(BillType.Expense) },
             )
-            Spacer(Modifier.width(8.dp))
             TypeChip(
                 label = stringResource(R.string.bill_fab_income),
                 selected = type == BillType.Income,
-                color = colors.income,
+                color = colors.primary,
                 enabled = enabled,
                 onClick = { onType(BillType.Income) },
+            )
+            TypeChip(
+                label = stringResource(R.string.bill_fab_transfer),
+                selected = type == BillType.Transfer,
+                color = colors.primary,
+                enabled = enabled,
+                onClick = { onType(BillType.Transfer) },
             )
         }
         Spacer(Modifier.size(48.dp))
@@ -411,6 +456,33 @@ private fun TypeChip(
 }
 
 @Composable
+private fun TransferAccounts(
+    accounts: List<AccountChoice>,
+    fromId: Long?,
+    toId: Long?,
+    enabled: Boolean,
+    onPickFrom: () -> Unit,
+    onPickTo: () -> Unit,
+) {
+    val from = accounts.firstOrNull { it.id == fromId }
+    val to = accounts.firstOrNull { it.id == toId }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ClockRow(
+            label = stringResource(R.string.bill_entry_from),
+            value = from?.name ?: stringResource(R.string.bill_entry_no_account),
+            enabled = enabled && accounts.isNotEmpty(),
+            onClick = onPickFrom,
+        )
+        ClockRow(
+            label = stringResource(R.string.bill_entry_to),
+            value = to?.name ?: stringResource(R.string.bill_entry_error_second_account),
+            enabled = enabled && accounts.size > 1,
+            onClick = onPickTo,
+        )
+    }
+}
+
+@Composable
 private fun CategorySection(
     categories: List<CategoryChoice>,
     selectedId: Long?,
@@ -419,38 +491,87 @@ private fun CategorySection(
     onCreate: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = stringResource(R.string.bill_entry_category),
-            color = colors.textSecondary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.Medium,
-            modifier = Modifier.padding(start = 4.dp),
-        )
-        if (categories.isEmpty()) {
-            Text(
-                text = stringResource(R.string.bill_entry_no_category),
-                color = colors.textTertiary,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(start = 4.dp),
-            )
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(20.dp),
+        color = colors.cardBackground,
+        shadowElevation = CogniBalCardElevation,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            categories.forEach { category ->
-                CategoryTile(
-                    category = category,
-                    selected = category.id == selectedId,
-                    enabled = enabled,
-                    onClick = { onSelect(category.id) },
+            Text(
+                text = stringResource(R.string.bill_entry_category),
+                color = colors.textSecondary,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                modifier = Modifier.padding(start = 8.dp),
+            )
+            if (categories.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.bill_entry_no_category),
+                    color = colors.textTertiary,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(start = 8.dp),
                 )
             }
-            NewCategoryTile(enabled = enabled, onClick = onCreate)
+            CategoryGrid(
+                categories = categories,
+                selectedId = selectedId,
+                enabled = enabled,
+                onSelect = onSelect,
+                onCreate = onCreate,
+            )
         }
     }
 }
+
+/** 按一行能放下的列数均分宽度，避免固定格子宽度在右侧空出一整列。 */
+@Composable
+private fun CategoryGrid(
+    categories: List<CategoryChoice>,
+    selectedId: Long?,
+    enabled: Boolean,
+    onSelect: (Long) -> Unit,
+    onCreate: () -> Unit,
+) {
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val columns = (maxWidth / CategoryTileMinWidth).toInt().coerceAtLeast(1)
+        val count = categories.size + 1
+        val rows = (count + columns - 1) / columns
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            for (row in 0 until rows) {
+                Row(Modifier.fillMaxWidth()) {
+                    for (column in 0 until columns) {
+                        val index = row * columns + column
+                        when {
+                            index < categories.size -> {
+                                val category = categories[index]
+                                CategoryTile(
+                                    category = category,
+                                    selected = category.id == selectedId,
+                                    enabled = enabled,
+                                    onClick = { onSelect(category.id) },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            index == categories.size ->
+                                NewCategoryTile(
+                                    enabled = enabled,
+                                    onClick = onCreate,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            else -> Spacer(Modifier.weight(1f))
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private val CategoryTileMinWidth = 72.dp
 
 @Composable
 private fun CategoryTile(
@@ -458,13 +579,13 @@ private fun CategoryTile(
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
     val tint = accountColorValue(category.colorKey)
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(76.dp)
+        modifier = modifier
             .semantics(mergeDescendants = true) { this.selected = selected }
             .interactiveClick(enabled = enabled, role = Role.RadioButton, onClick = onClick)
             .padding(4.dp),
@@ -492,7 +613,7 @@ private fun CategoryTile(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(top = 4.dp)
-                .width(68.dp),
+                .fillMaxWidth(),
         )
     }
 }
@@ -501,12 +622,12 @@ private fun CategoryTile(
 private fun NewCategoryTile(
     enabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(76.dp)
+        modifier = modifier
             .interactiveClick(enabled = enabled, onClick = onClick)
             .padding(4.dp),
     ) {
@@ -517,7 +638,7 @@ private fun NewCategoryTile(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = Icons.Rounded.Add,
+                imageVector = Icons.Outlined.Add,
                 contentDescription = stringResource(R.string.bill_entry_new_category),
                 tint = colors.primary,
                 modifier = Modifier.size(22.dp),
@@ -532,7 +653,7 @@ private fun NewCategoryTile(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .padding(top = 4.dp)
-                .width(68.dp),
+                .fillMaxWidth(),
         )
     }
 }
@@ -547,11 +668,28 @@ private fun EntryFields(
     onPickTime: () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     val amountBringIntoView = remember { BringIntoViewRequester() }
-    LaunchedEffect(Unit) {
-        amountBringIntoView.bringIntoView()
-    }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        ClockRow(
+            label = stringResource(R.string.bill_entry_time),
+            value = localizedBillTime(uiState.billTime),
+            enabled = !uiState.saving,
+            onClick = {
+                focusManager.clearFocus(force = true)
+                keyboard?.hide()
+                onPickTime()
+            },
+        )
+        ClockRow(
+            label = stringResource(R.string.bill_entry_date),
+            value = localizedBillDate(uiState.billTime),
+            enabled = !uiState.saving,
+            onClick = {
+                focusManager.clearFocus()
+                onPickDate()
+            },
+        )
         AmountField(
             amountText = uiState.amountText,
             symbol = uiState.currencySymbol,
@@ -566,24 +704,6 @@ private fun EntryFields(
             enabled = !uiState.saving,
             onChange = { onEvent(AddExpenseUiEvent.RemarkChanged(it)) },
             onDone = { focusManager.clearFocus() },
-        )
-        ClockRow(
-            label = stringResource(R.string.bill_entry_date),
-            value = localizedBillDate(uiState.billTime),
-            enabled = !uiState.saving,
-            onClick = {
-                focusManager.clearFocus()
-                onPickDate()
-            },
-        )
-        ClockRow(
-            label = stringResource(R.string.bill_entry_time),
-            value = localizedBillTime(uiState.billTime),
-            enabled = !uiState.saving,
-            onClick = {
-                focusManager.clearFocus()
-                onPickTime()
-            },
         )
         val issue = uiState.issue
         if (issue != null) {
@@ -633,6 +753,7 @@ private fun AmountField(
         onValueChange = onChange,
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(CogniBalCardElevation, RoundedCornerShape(16.dp))
             .bringIntoViewRequester(bringIntoView)
             .onFocusChanged { state ->
                 focused = state.isFocused
@@ -684,6 +805,7 @@ private fun RemarkField(
         onValueChange = onChange,
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(CogniBalCardElevation, RoundedCornerShape(16.dp))
             .bringIntoViewRequester(bringIntoView)
             .onFocusChanged { state ->
                 focused = state.isFocused
@@ -711,6 +833,7 @@ private fun ClockRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(CogniBalCardElevation, RoundedCornerShape(16.dp))
             .background(colors.cardBackground, RoundedCornerShape(16.dp))
             .interactiveClick(enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
@@ -743,7 +866,7 @@ private fun localizedBillTime(time: LocalDateTime): String {
     val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
     val use24Hour = DateFormat.is24HourFormat(LocalContext.current)
     val pattern = remember(locale, use24Hour) {
-        DateFormat.getBestDateTimePattern(locale, if (use24Hour) "Hms" else "hms")
+        DateFormat.getBestDateTimePattern(locale, if (use24Hour) "Hm" else "hm")
     }
     val formatter = remember(pattern, locale) { DateTimeFormatter.ofPattern(pattern, locale) }
     return time.format(formatter)
@@ -761,8 +884,9 @@ private fun entryFieldColors(
     unfocusedContainerColor = MaterialTheme.appColors.cardBackground,
     disabledContainerColor = MaterialTheme.appColors.cardBackground,
     cursorColor = MaterialTheme.appColors.primary,
-    focusedBorderColor = MaterialTheme.appColors.primary,
-    unfocusedBorderColor = MaterialTheme.appColors.divider,
+    focusedBorderColor = MaterialTheme.appColors.primary.copy(alpha = 0.45f),
+    unfocusedBorderColor = Color.Transparent,
+    disabledBorderColor = Color.Transparent,
     focusedLabelColor = MaterialTheme.appColors.primary,
     unfocusedLabelColor = MaterialTheme.appColors.textSecondary,
     focusedPlaceholderColor = MaterialTheme.appColors.textTertiary,
@@ -825,8 +949,8 @@ private fun navigationBottomInset() = screenContentWindowInsets()
 private fun BillType.amountColor(): Color {
     val colors = MaterialTheme.appColors
     return when (this) {
-        BillType.Expense -> colors.expense
-        BillType.Income -> colors.income
+        BillType.Expense -> colors.textPrimary
+        BillType.Income -> colors.textPrimary
         BillType.Transfer -> colors.textPrimary
     }
 }
@@ -840,6 +964,28 @@ private fun AddExpenseTagsPreview() {
         PageBackgroundHost {
             AddExpenseScreen(
                 uiState = previewState(categoryId = null, amountText = ""),
+                onEvent = {},
+                onBack = {},
+            )
+        }
+    }
+}
+
+@FormFactorPreviews
+@Composable
+private fun AddExpenseTransferPreview() {
+    CogniBalTheme {
+        PageBackgroundHost {
+            AddExpenseScreen(
+                uiState = previewState(categoryId = null, amountText = "80").copy(
+                    type = BillType.Transfer,
+                    accounts = listOf(
+                        AccountChoice(1, "现金", "cash", "teal"),
+                        AccountChoice(2, "银行卡", "account_balance", "blue"),
+                    ),
+                    accountId = 1L,
+                    toAccountId = 2L,
+                ),
                 onEvent = {},
                 onBack = {},
             )

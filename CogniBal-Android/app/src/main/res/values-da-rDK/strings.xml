@@ -28,11 +28,11 @@
     <string name="theme_dark">Mørk</string>
     <string name="theme_dark_subtitle">Blødere kontrast om natten</string>
     <string name="theme_color">Temafarve</string>
-    <string name="theme_color_subtitle">Dæmpede farver, der er rare for øjnene</string>
-    <string name="theme_warm_cream">Varm creme</string>
-    <string name="theme_warm_cream_desc">Nemt for øjnene · varm creme</string>
-    <string name="theme_monochrome">Sort-hvid</string>
-    <string name="theme_monochrome_desc">Enkelt · blødt blækgrå</string>
+    <string name="theme_color_subtitle">Én farve, blød og flad</string>
+    <string name="theme_warm_cream">Blød blå</string>
+    <string name="theme_warm_cream_desc">Én blå gennem hele appen</string>
+    <string name="theme_monochrome">Blæk</string>
+    <string name="theme_monochrome_desc">Én blæk, de samme bløde kort</string>
     <string name="selected">Valgt</string>
     <string name="user_stats">CogniBal har været med dig i %1$s, med %2$s.</string>
     <string name="surplus_total">Saldo</string>
@@ -44,9 +44,7 @@
     <string name="shortcut_assets">Aktiver</string>
     <string name="shortcut_overview">Overblik</string>
     <string name="shortcut_coming_soon">%1$s kommer snart</string>
-    <string name="more_features">Mere</string>
     <string name="default_currency">Standardvaluta</string>
-    <string name="haptic_feedback">Vibration ved tryk</string>
     <string name="clear_temp_cache">Ryd midlertidig cache</string>
     <string name="close">Luk</string>
     <string name="cancel">Annuller</string>
@@ -63,7 +61,6 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_description">CogniBal er en bogføringsapp med et roligt, letlæst udtryk. Layoutet tilpasser sig skærmen, så overblikket forbliver klart og behageligt.</string>
     <string name="open_source">Open source-licenser</string>
-    <string name="open_source_toast">CogniBal er licenseret under Apache 2.0</string>
     <string name="done">Færdig</string>
     <string name="security_terms">Servicevilkår</string>
     <string name="security_terms_subtitle">Læs vilkårene</string>

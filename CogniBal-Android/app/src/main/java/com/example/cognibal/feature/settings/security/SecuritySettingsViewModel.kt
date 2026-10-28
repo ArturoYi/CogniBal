@@ -10,7 +10,9 @@ import com.example.cognibal.screen.feature.settings.security.state.SecuritySetti
 import com.example.cognibal.screen.feature.settings.security.state.SecuritySettingsUiState
 
 /**
- * 安全与隐私页的界面状态。条目先只展示，点击不打开协议或验证。
+ * 安全与隐私页的界面状态。
+ *
+ * 协议全文由路由打开。应用保护先只接住点击，不验证身份。
  */
 internal class SecuritySettingsViewModel : ViewModel() {
     val uiState: StateFlow<SecuritySettingsUiState> = MutableStateFlow(SecuritySettingsUiState())

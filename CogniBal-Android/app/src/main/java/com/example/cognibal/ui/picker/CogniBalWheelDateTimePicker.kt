@@ -275,7 +275,7 @@ private enum class WheelField(@get:StringRes @param:StringRes val labelRes: Int)
 
 private fun WheelDateTimeMode.fields(): List<WheelField> = when (this) {
     WheelDateTimeMode.Date -> listOf(WheelField.Year, WheelField.Month, WheelField.Day)
-    WheelDateTimeMode.Time -> listOf(WheelField.Hour, WheelField.Minute, WheelField.Second)
+    WheelDateTimeMode.Time -> listOf(WheelField.Hour, WheelField.Minute)
     WheelDateTimeMode.DateTime -> listOf(
         WheelField.Year,
         WheelField.Month,

@@ -9,7 +9,6 @@ import com.example.cognibal.data.database.LedgerTime
 import com.example.cognibal.data.database.entity.Category
 import com.example.cognibal.data.database.model.BudgetPeriodType
 import com.example.cognibal.data.database.model.BudgetType
-import com.example.cognibal.data.database.model.CategoryType
 import com.example.cognibal.data.preferences.AppPreferencesRepository
 import com.example.cognibal.data.repository.BudgetDraft
 import com.example.cognibal.data.repository.BudgetMath
@@ -23,7 +22,6 @@ import com.example.cognibal.di.LedgerEntryPoint
 import com.example.cognibal.screen.feature.bill.tool.minorToInput
 import com.example.cognibal.screen.feature.bill.tool.parseMajorAmount
 import com.example.cognibal.screen.feature.expense.tool.sanitizeAmountInput
-import com.example.cognibal.screen.feature.settings.budget.state.BudgetCategoryOption
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetEditorState
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetIssue
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetLineUi
@@ -44,8 +42,9 @@ import kotlinx.coroutines.launch
 /**
  * 预算页。
  *
- * 本月可以改上限和预警线。以往周期只展示，改本月不会把它们的上限一起改掉。
- * 已花费来自账单合计。进入页面时，如果上一个周期已经结束，按同样的额度补上今天所在的周期。
+ * 本月只有一条总预算，按自然月统计。没有时添加，有了只能编辑。
+ * 保存时默认启用。以往周期只展示，改本月不会把它们的上限一起改掉。
+ * 已花费来自账单合计。进入页面时，如果上一个周期已经结束，按同样的额度补上今天所在的自然月。
  */
 internal class BudgetViewModel(
     private val budgets: BudgetRepository,
@@ -93,12 +92,6 @@ internal class BudgetViewModel(
                 editor.value = null
                 issue.value = null
             }
-            is BudgetUiEvent.ScopeGlobal -> edit { current ->
-                if (event.global && !current.allowGlobal) current
-                else if (!event.global && !current.allowCategory) current
-                else current.copy(global = event.global)
-            }
-            is BudgetUiEvent.CategorySelected -> edit { it.copy(categoryId = event.id) }
             is BudgetUiEvent.AmountChanged -> edit {
                 it.copy(amountText = sanitizeAmountInput(event.value))
             }
@@ -108,14 +101,13 @@ internal class BudgetViewModel(
                     BudgetMath.MAX_ALERT_PERCENT,
                 ))
             }
-            is BudgetUiEvent.CycleDayChanged -> edit {
-                it.copy(cycleDay = event.day.coerceIn(1, 31))
-            }
-            is BudgetUiEvent.EnabledChanged -> edit { it.copy(enabled = event.enabled) }
             BudgetUiEvent.Save -> save()
             BudgetUiEvent.Delete -> delete()
             is BudgetUiEvent.NotifyChanged -> {
                 viewModelScope.launch { preferences.setBudgetNotify(event.enabled) }
+            }
+            is BudgetUiEvent.HomeVisibleChanged -> {
+                viewModelScope.launch { preferences.setBudgetHomeVisible(event.visible) }
             }
         }
     }
@@ -123,24 +115,16 @@ internal class BudgetViewModel(
     private fun openCreate() {
         if (editor.value?.saving == true) return
         val now = LedgerTime.now()
-        val covering = progress.value.filter { item ->
-            BudgetMath.contains(item.budget.periodStart, item.budget.periodEnd, now)
+        val existing = progress.value.firstOrNull { item ->
+            item.budget.budgetType == BudgetType.Global &&
+                BudgetMath.contains(item.budget.periodStart, item.budget.periodEnd, now)
         }
-        val globalTaken = covering.any { it.budget.budgetType == BudgetType.Global }
-        val takenCategories = covering.mapNotNull { it.budget.categoryId }.toSet()
-        val options = expenseOptions(latestCategories).filter { it.id !in takenCategories }
-        if (globalTaken && options.isEmpty()) {
-            issue.value = BudgetIssue.NoScope
-            editor.value = null
+        if (existing != null) {
+            openEdit(existing.budget.id)
             return
         }
         issue.value = null
-        editor.value = BudgetEditorState(
-            global = !globalTaken,
-            categoryId = options.firstOrNull()?.id,
-            allowGlobal = !globalTaken,
-            allowCategory = options.isNotEmpty(),
-        )
+        editor.value = BudgetEditorState()
     }
 
     private fun openEdit(id: Long) {
@@ -152,19 +136,13 @@ internal class BudgetViewModel(
         issue.value = null
         editor.value = BudgetEditorState(
             id = id,
-            global = item.budget.budgetType == BudgetType.Global,
-            categoryId = item.budget.categoryId,
             amountText = minorToInput(item.budget.limitAmount),
             alertPercent = if (BudgetMath.alertPercentAllowed(percent)) {
                 percent
             } else {
                 BudgetMath.DEFAULT_ALERT_PERCENT
             },
-            enabled = item.budget.isEnable,
-            allowGlobal = false,
-            allowCategory = false,
             periodType = item.budget.periodType,
-            cycleDay = item.budget.cycleDay ?: item.budget.periodStart.dayOfMonth.coerceIn(1, 31),
             periodStart = item.budget.periodStart,
             periodEnd = item.budget.periodEnd,
         )
@@ -178,22 +156,18 @@ internal class BudgetViewModel(
             issue.value = BudgetIssue.InvalidAmount
             return
         }
-        if (!current.global && current.categoryId == null) {
-            issue.value = BudgetIssue.NeedCategory
-            return
-        }
         val period = periodOf(current) ?: run {
             issue.value = BudgetIssue.Failed
             return
         }
         val month = current.id == null || current.periodType == BudgetPeriodType.Month
         val draft = BudgetDraft(
-            budgetType = if (current.global) BudgetType.Global else BudgetType.Category,
-            categoryId = if (current.global) null else current.categoryId,
+            budgetType = BudgetType.Global,
+            categoryId = null,
             limitAmount = amount,
             alertPercent = current.alertPercent,
             periodType = if (current.id == null) BudgetPeriodType.Month else current.periodType,
-            cycleDay = if (month) current.cycleDay else null,
+            cycleDay = if (month) BudgetPeriods.CALENDAR_MONTH_DAY else null,
             periodStart = period.startInclusive,
             periodEnd = period.endExclusive,
             remark = null,
@@ -204,9 +178,9 @@ internal class BudgetViewModel(
             try {
                 val id = current.id
                 if (id == null) {
-                    budgets.insert(draft, enabled = current.enabled)
+                    budgets.insert(draft, enabled = true)
                 } else {
-                    budgets.update(id, draft, enabled = current.enabled)
+                    budgets.update(id, draft, enabled = true)
                 }
                 editor.value = null
             } catch (cancellation: CancellationException) {
@@ -249,7 +223,10 @@ internal class BudgetViewModel(
     private fun periodOf(editor: BudgetEditorState): com.example.cognibal.data.repository.ClosedOpenRange? {
         val month = editor.id == null || editor.periodType == BudgetPeriodType.Month
         if (month) {
-            return BudgetPeriods.monthContaining(editor.cycleDay.coerceIn(1, 31), LedgerTime.now().toLocalDate())
+            return BudgetPeriods.monthContaining(
+                BudgetPeriods.CALENDAR_MONTH_DAY,
+                LedgerTime.now().toLocalDate(),
+            )
         }
         val start = editor.periodStart
         val end = editor.periodEnd
@@ -259,8 +236,6 @@ internal class BudgetViewModel(
         return null
     }
 
-    private var latestCategories: List<Category> = emptyList()
-
     private fun toState(
         rows: List<BudgetProgress>,
         categoryRows: List<Category>,
@@ -268,32 +243,20 @@ internal class BudgetViewModel(
         editing: BudgetEditorState?,
         currentIssue: BudgetIssue?,
     ): BudgetUiState {
-        latestCategories = categoryRows
         val names = categoryRows.associateBy { it.id }
         val now = LedgerTime.now()
         val lines = rows.map { item -> item.toLine(names, now) }
-        val options = expenseOptions(categoryRows)
-        val taken = lines.filter { it.editable }.mapNotNull { line ->
-            rows.firstOrNull { it.budget.id == line.id }?.budget?.categoryId
-        }.toSet()
-        val picker = if (editing?.id == null) options.filter { it.id !in taken } else options
+        val globals = lines.filter { it.global }
         return BudgetUiState(
             loading = false,
             currencySymbol = prefs.currency.symbol,
             notify = prefs.budgetNotify,
-            current = lines.filter { it.editable }.sortedWith(lineOrder),
-            history = lines.filter { !it.editable }.sortedWith(historyOrder),
-            categories = picker,
+            homeVisible = prefs.budgetHomeVisible,
+            current = globals.filter { it.editable }.sortedWith(lineOrder).take(1),
+            history = globals.filter { !it.editable }.sortedWith(historyOrder),
             editor = editing,
             issue = currentIssue,
         )
-    }
-
-    private fun expenseOptions(categoryRows: List<Category>): List<BudgetCategoryOption> {
-        return categoryRows
-            .filter { it.type == CategoryType.Expense && it.isEnable }
-            .sortedWith(compareBy<Category> { it.sort }.thenBy { it.id })
-            .map { BudgetCategoryOption(id = it.id, name = it.name) }
     }
 
     companion object {

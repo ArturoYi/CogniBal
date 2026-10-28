@@ -8,109 +8,136 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // =========================================================================
-// 中性色两套主题共用，来自 Open Color gray。
-// 浅色：页面 gray 1，卡片和底栏 gray 0。暗色：页面 gray 9，卡片和底栏 gray 8。
-// 切换深浅色时整组一起换，切换青绿 / 黑白时中性色不动。
+// 柔和扁平。页面是冷灰，卡片是纯白（暗色是抬起一层的冷灰蓝）。
+// 层次靠底色差和弱阴影，不靠分割线。
+// 主色只有一种蓝。黑白主题换成同一种墨色，卡片和字号不变。
+// 支出金额用正文色加负号；expense 只留给超支提示。
 // =========================================================================
 
-private val LightBackground = OpenColor.Gray1
-private val LightCard = OpenColor.Gray0
-private val LightTextPrimary = OpenColor.Gray9
-private val LightTextSecondary = OpenColor.Gray7
-private val LightTextTertiary = OpenColor.Gray6
-private val LightDivider = OpenColor.Gray3
-private val LightOnAccent = OpenColor.Gray0
+private val LightBackground = Color(0xFFF3F6FB)
+private val LightCard = Color(0xFFFFFFFF)
+private val LightTextPrimary = Color(0xFF1B2433)
+private val LightTextSecondary = Color(0xFF5C6A80)
+private val LightTextTertiary = Color(0xFF8B97AB)
+private val LightDivider = Color(0xFFE4EAF3)
+private val LightOnAccent = Color(0xFFFFFFFF)
+private val LightAlert = Color(0xFFD4534E)
 
-private val DarkBackground = OpenColor.Gray9
-private val DarkCard = OpenColor.Gray8
-private val DarkTextPrimary = OpenColor.Gray1
-private val DarkTextSecondary = OpenColor.Gray5
-private val DarkTextTertiary = OpenColor.Gray6
-private val DarkDivider = OpenColor.Gray7
-private val DarkOnAccent = OpenColor.Gray9
+private val DarkBackground = Color(0xFF10151C)
+private val DarkCard = Color(0xFF1A2230)
+private val DarkTextPrimary = Color(0xFFF3F6FB)
+private val DarkTextSecondary = Color(0xFFA8B3C7)
+private val DarkTextTertiary = Color(0xFF7D8BA3)
+private val DarkDivider = Color(0xFF2C3648)
+private val DarkOnAccent = Color(0xFF0E1626)
+private val DarkAlert = Color(0xFFFF8D88)
 
-// =========================================================================
-// 方案一：青绿。浅色按钮和收入用 teal 9，白字才过对比度；暗色改用 teal 4。
-// 方案二：黑白。浅色主色 gray 8，暗色主色 gray 2。支出两套都用 red。
-// =========================================================================
+private val SoftBlue = Color(0xFF2E6BDB)
+private val SoftBlueContainer = Color(0xFFE7F0FF)
+private val SoftBlueOnContainer = Color(0xFF1E4FAE)
+private val SoftBlueDark = Color(0xFF9EBEFF)
+private val SoftBlueDarkContainer = Color(0xFF1B3158)
+private val SoftBlueDarkOnContainer = Color(0xFFD6E6FF)
 
+private val Ink = Color(0xFF243040)
+private val InkContainer = Color(0xFFE7ECF3)
+private val InkOnContainer = Color(0xFF243040)
+private val InkDark = Color(0xFFE7EDF5)
+private val InkDarkContainer = Color(0xFF2A3342)
+private val InkDarkOnContainer = Color(0xFFE7EDF5)
+
+// 枚举名仍是 WarmCream，已写入偏好的用户不用迁移。
 val WarmCreamLight_Background = LightBackground
 val WarmCreamLight_CardBackground = LightCard
-val WarmCreamLight_Primary = OpenColor.Teal9
+val WarmCreamLight_Primary = SoftBlue
 val WarmCreamLight_OnPrimary = LightOnAccent
-val WarmCreamLight_Secondary = OpenColor.Teal0
-val WarmCreamLight_OnSecondary = OpenColor.Teal9
-val WarmCreamLight_Expense = OpenColor.Red9
+val WarmCreamLight_Secondary = SoftBlueContainer
+val WarmCreamLight_OnSecondary = SoftBlueOnContainer
+val WarmCreamLight_Expense = LightAlert
 val WarmCreamLight_TextPrimary = LightTextPrimary
 val WarmCreamLight_TextSecondary = LightTextSecondary
 val WarmCreamLight_TextTertiary = LightTextTertiary
 val WarmCreamLight_Divider = LightDivider
 val WarmCreamLight_NavBar = LightCard
+val WarmCreamLight_Hero = SoftBlue
+val WarmCreamLight_OnHero = LightOnAccent
 
 val WarmCreamDark_Background = DarkBackground
 val WarmCreamDark_CardBackground = DarkCard
-val WarmCreamDark_Primary = OpenColor.Teal4
+val WarmCreamDark_Primary = SoftBlueDark
 val WarmCreamDark_OnPrimary = DarkOnAccent
-val WarmCreamDark_Secondary = OpenColor.Teal9
-val WarmCreamDark_OnSecondary = OpenColor.Teal0
-val WarmCreamDark_Expense = OpenColor.Red4
+val WarmCreamDark_Secondary = SoftBlueDarkContainer
+val WarmCreamDark_OnSecondary = SoftBlueDarkOnContainer
+val WarmCreamDark_Expense = DarkAlert
 val WarmCreamDark_TextPrimary = DarkTextPrimary
 val WarmCreamDark_TextSecondary = DarkTextSecondary
 val WarmCreamDark_TextTertiary = DarkTextTertiary
 val WarmCreamDark_Divider = DarkDivider
 val WarmCreamDark_NavBar = DarkCard
+val WarmCreamDark_Hero = SoftBlue
+val WarmCreamDark_OnHero = LightOnAccent
 
 val MonochromeLight_Background = LightBackground
 val MonochromeLight_CardBackground = LightCard
-val MonochromeLight_Primary = OpenColor.Gray8
+val MonochromeLight_Primary = Ink
 val MonochromeLight_OnPrimary = LightOnAccent
-val MonochromeLight_Secondary = OpenColor.Gray2
-val MonochromeLight_OnSecondary = OpenColor.Gray9
-val MonochromeLight_Expense = OpenColor.Red9
+val MonochromeLight_Secondary = InkContainer
+val MonochromeLight_OnSecondary = InkOnContainer
+val MonochromeLight_Expense = LightAlert
 val MonochromeLight_TextPrimary = LightTextPrimary
 val MonochromeLight_TextSecondary = LightTextSecondary
 val MonochromeLight_TextTertiary = LightTextTertiary
 val MonochromeLight_Divider = LightDivider
 val MonochromeLight_NavBar = LightCard
+val MonochromeLight_Hero = Ink
+val MonochromeLight_OnHero = LightOnAccent
 
 val MonochromeDark_Background = DarkBackground
 val MonochromeDark_CardBackground = DarkCard
-val MonochromeDark_Primary = OpenColor.Gray2
+val MonochromeDark_Primary = InkDark
 val MonochromeDark_OnPrimary = DarkOnAccent
-val MonochromeDark_Secondary = OpenColor.Gray7
-val MonochromeDark_OnSecondary = OpenColor.Gray1
-val MonochromeDark_Expense = OpenColor.Red4
+val MonochromeDark_Secondary = InkDarkContainer
+val MonochromeDark_OnSecondary = InkDarkOnContainer
+val MonochromeDark_Expense = DarkAlert
 val MonochromeDark_TextPrimary = DarkTextPrimary
 val MonochromeDark_TextSecondary = DarkTextSecondary
 val MonochromeDark_TextTertiary = DarkTextTertiary
 val MonochromeDark_Divider = DarkDivider
 val MonochromeDark_NavBar = DarkCard
+val MonochromeDark_Hero = InkDark
+val MonochromeDark_OnHero = DarkOnAccent
 
 // =========================================================================
-// 语义化扩展色彩系统（AppColors）
-// 提供专用于记账业务的直观语义色彩映射，如收入、支出、卡片底色等
+// 语义色。income 跟主色同一支，图表和正数都走它。
+// hero 是结余卡：浅色就是主色，暗色仍用那支实心蓝，白字才压得住。
 // =========================================================================
 
 @Immutable
 data class AppColors(
-    val primary: Color,             // 主色（主按钮、选中态、图表高亮）
-    val onPrimary: Color,           // 主色上的前景色
-    val primaryContainer: Color,    // 主色容器色
-    val onPrimaryContainer: Color,  // 主色容器上的前景色
-    val background: Color,          // 页面底色
-    val onBackground: Color,        // 页面底色上的文字
-    val cardBackground: Color,      // 卡片底色 / 模块容器
-    val onCard: Color,              // 卡片上的正文字色
-    val tagBackground: Color,       // 辅助浅色 / 标签背景 / 进度条底色
-    val onTag: Color,               // 标签文字颜色
-    val income: Color,              // 结余正数 / 收入 / 盈利
-    val expense: Color,             // 强调红 / 超支 / 负数 / 负债 / 亏损
-    val textPrimary: Color,         // 一级文字 / 账单标题、主要数字
-    val textSecondary: Color,       // 二级文字 / 备注、分类、日期
-    val textTertiary: Color,        // 三级弱化文字 / 占位提示 / 禁用态
-    val divider: Color,             // 分割线
-    val navBarBackground: Color,    // 导航底栏背景
-    val isDark: Boolean,            // 是否为深色模式
+    val primary: Color,
+    val onPrimary: Color,
+    val primaryContainer: Color,
+    val onPrimaryContainer: Color,
+    val background: Color,
+    val onBackground: Color,
+    val cardBackground: Color,
+    val onCard: Color,
+    val tagBackground: Color,
+    val onTag: Color,
+    val income: Color,
+    val expense: Color,
+    val textPrimary: Color,
+    val textSecondary: Color,
+    val textTertiary: Color,
+    val divider: Color,
+    val navBarBackground: Color,
+    val hero: Color,
+    val onHero: Color,
+    /** 收入柱。和 [chartExpense] 是同一色相的两档明度。 */
+    val chartIncome: Color,
+    /** 支出柱。比收入更深的同一支颜色。 */
+    val chartExpense: Color,
+    val isDark: Boolean,
 )
 
 val WarmCreamLightAppColors = AppColors(
@@ -131,6 +158,10 @@ val WarmCreamLightAppColors = AppColors(
     textTertiary = WarmCreamLight_TextTertiary,
     divider = WarmCreamLight_Divider,
     navBarBackground = WarmCreamLight_NavBar,
+    hero = WarmCreamLight_Hero,
+    onHero = WarmCreamLight_OnHero,
+    chartIncome = Color(0xFFB9D0FF),
+    chartExpense = SoftBlue,
     isDark = false,
 )
 
@@ -152,6 +183,10 @@ val WarmCreamDarkAppColors = AppColors(
     textTertiary = WarmCreamDark_TextTertiary,
     divider = WarmCreamDark_Divider,
     navBarBackground = WarmCreamDark_NavBar,
+    hero = WarmCreamDark_Hero,
+    onHero = WarmCreamDark_OnHero,
+    chartIncome = Color(0xFF3E5680),
+    chartExpense = SoftBlueDark,
     isDark = true,
 )
 
@@ -173,6 +208,10 @@ val MonochromeLightAppColors = AppColors(
     textTertiary = MonochromeLight_TextTertiary,
     divider = MonochromeLight_Divider,
     navBarBackground = MonochromeLight_NavBar,
+    hero = MonochromeLight_Hero,
+    onHero = MonochromeLight_OnHero,
+    chartIncome = Color(0xFFC5CED8),
+    chartExpense = Ink,
     isDark = false,
 )
 
@@ -194,15 +233,18 @@ val MonochromeDarkAppColors = AppColors(
     textTertiary = MonochromeDark_TextTertiary,
     divider = MonochromeDark_Divider,
     navBarBackground = MonochromeDark_NavBar,
+    hero = MonochromeDark_Hero,
+    onHero = MonochromeDark_OnHero,
+    chartIncome = Color(0xFF5A6574),
+    chartExpense = InkDark,
     isDark = true,
 )
 
 val LocalAppColors = staticCompositionLocalOf { WarmCreamLightAppColors }
 
 // =========================================================================
-// Material 3 ColorScheme
-// secondary 用作键盘焦点圈，跟当前主色同一级，深浅色切换时一起换。
-// 标签底色走 secondaryContainer，不跟焦点圈混用。
+// Material 3。secondary 是键盘焦点圈，跟主色同一支。
+// 标签底走 secondaryContainer。
 // =========================================================================
 
 val WarmCreamLightColorScheme: ColorScheme = lightColorScheme(
@@ -212,8 +254,8 @@ val WarmCreamLightColorScheme: ColorScheme = lightColorScheme(
     onPrimaryContainer = WarmCreamLight_OnSecondary,
     secondary = WarmCreamLight_Primary,
     onSecondary = WarmCreamLight_OnPrimary,
-    secondaryContainer = OpenColor.Teal1,
-    onSecondaryContainer = OpenColor.Teal9,
+    secondaryContainer = SoftBlueContainer,
+    onSecondaryContainer = SoftBlueOnContainer,
     tertiary = WarmCreamLight_Primary,
     onTertiary = WarmCreamLight_OnPrimary,
     tertiaryContainer = WarmCreamLight_Secondary,
@@ -227,13 +269,13 @@ val WarmCreamLightColorScheme: ColorScheme = lightColorScheme(
     surfaceContainerLowest = WarmCreamLight_NavBar,
     surfaceContainerLow = LightCard,
     surfaceContainer = WarmCreamLight_CardBackground,
-    surfaceContainerHigh = OpenColor.Gray2,
-    surfaceContainerHighest = OpenColor.Gray3,
+    surfaceContainerHigh = Color(0xFFEEF2F8),
+    surfaceContainerHighest = LightDivider,
     surfaceTint = Color.Transparent,
     error = WarmCreamLight_Expense,
     onError = LightOnAccent,
-    errorContainer = OpenColor.Red0,
-    onErrorContainer = OpenColor.Red9,
+    errorContainer = Color(0xFFFDECEC),
+    onErrorContainer = Color(0xFF9C2F2B),
     outline = WarmCreamLight_TextTertiary,
     outlineVariant = WarmCreamLight_Divider,
 )
@@ -245,8 +287,8 @@ val WarmCreamDarkColorScheme: ColorScheme = darkColorScheme(
     onPrimaryContainer = WarmCreamDark_OnSecondary,
     secondary = WarmCreamDark_Primary,
     onSecondary = WarmCreamDark_OnPrimary,
-    secondaryContainer = WarmCreamDark_Secondary,
-    onSecondaryContainer = WarmCreamDark_OnSecondary,
+    secondaryContainer = SoftBlueDarkContainer,
+    onSecondaryContainer = SoftBlueDarkOnContainer,
     tertiary = WarmCreamDark_Primary,
     onTertiary = WarmCreamDark_OnPrimary,
     tertiaryContainer = WarmCreamDark_Secondary,
@@ -260,13 +302,13 @@ val WarmCreamDarkColorScheme: ColorScheme = darkColorScheme(
     surfaceContainerLowest = WarmCreamDark_NavBar,
     surfaceContainerLow = DarkCard,
     surfaceContainer = WarmCreamDark_CardBackground,
-    surfaceContainerHigh = OpenColor.Gray7,
-    surfaceContainerHighest = OpenColor.Gray7,
+    surfaceContainerHigh = Color(0xFF243044),
+    surfaceContainerHighest = DarkDivider,
     surfaceTint = Color.Transparent,
     error = WarmCreamDark_Expense,
     onError = DarkOnAccent,
-    errorContainer = OpenColor.Red9,
-    onErrorContainer = OpenColor.Red1,
+    errorContainer = Color(0xFF3A2224),
+    onErrorContainer = DarkAlert,
     outline = WarmCreamDark_TextTertiary,
     outlineVariant = WarmCreamDark_Divider,
 )
@@ -278,8 +320,8 @@ val MonochromeLightColorScheme: ColorScheme = lightColorScheme(
     onPrimaryContainer = MonochromeLight_OnSecondary,
     secondary = MonochromeLight_Primary,
     onSecondary = MonochromeLight_OnPrimary,
-    secondaryContainer = OpenColor.Gray2,
-    onSecondaryContainer = OpenColor.Gray9,
+    secondaryContainer = InkContainer,
+    onSecondaryContainer = InkOnContainer,
     tertiary = MonochromeLight_Primary,
     onTertiary = MonochromeLight_OnPrimary,
     tertiaryContainer = MonochromeLight_Secondary,
@@ -293,13 +335,13 @@ val MonochromeLightColorScheme: ColorScheme = lightColorScheme(
     surfaceContainerLowest = MonochromeLight_NavBar,
     surfaceContainerLow = LightCard,
     surfaceContainer = MonochromeLight_CardBackground,
-    surfaceContainerHigh = OpenColor.Gray2,
-    surfaceContainerHighest = OpenColor.Gray3,
+    surfaceContainerHigh = Color(0xFFEEF2F8),
+    surfaceContainerHighest = LightDivider,
     surfaceTint = Color.Transparent,
     error = MonochromeLight_Expense,
     onError = LightOnAccent,
-    errorContainer = OpenColor.Red0,
-    onErrorContainer = OpenColor.Red9,
+    errorContainer = Color(0xFFFDECEC),
+    onErrorContainer = Color(0xFF9C2F2B),
     outline = MonochromeLight_TextTertiary,
     outlineVariant = MonochromeLight_Divider,
 )
@@ -311,8 +353,8 @@ val MonochromeDarkColorScheme: ColorScheme = darkColorScheme(
     onPrimaryContainer = MonochromeDark_OnSecondary,
     secondary = MonochromeDark_Primary,
     onSecondary = MonochromeDark_OnPrimary,
-    secondaryContainer = MonochromeDark_Secondary,
-    onSecondaryContainer = MonochromeDark_OnSecondary,
+    secondaryContainer = InkDarkContainer,
+    onSecondaryContainer = InkDarkOnContainer,
     tertiary = MonochromeDark_Primary,
     onTertiary = MonochromeDark_OnPrimary,
     tertiaryContainer = MonochromeDark_Secondary,
@@ -326,13 +368,13 @@ val MonochromeDarkColorScheme: ColorScheme = darkColorScheme(
     surfaceContainerLowest = MonochromeDark_NavBar,
     surfaceContainerLow = DarkCard,
     surfaceContainer = MonochromeDark_CardBackground,
-    surfaceContainerHigh = OpenColor.Gray7,
-    surfaceContainerHighest = OpenColor.Gray7,
+    surfaceContainerHigh = Color(0xFF243044),
+    surfaceContainerHighest = DarkDivider,
     surfaceTint = Color.Transparent,
     error = MonochromeDark_Expense,
     onError = DarkOnAccent,
-    errorContainer = OpenColor.Red9,
-    onErrorContainer = OpenColor.Red1,
+    errorContainer = Color(0xFF3A2224),
+    onErrorContainer = DarkAlert,
     outline = MonochromeDark_TextTertiary,
     outlineVariant = MonochromeDark_Divider,
 )

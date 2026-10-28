@@ -45,7 +45,8 @@ import kotlinx.coroutines.launch
  * 记账首页。
  *
  * 当前账户记在 is_default。总资产是全部账户余额之和。
- * 本月收支和最近 7 个自然日的账单只看当前账户。预算不区分账户，只显示此刻落在周期里、并且启用的条目。
+ * 本月收支和最近 7 个自然日的账单只看当前账户。
+ * 首页预算只画当前周期里启用的总预算。关掉后整块不出现，设置页可以再打开。
  */
 internal class BillHomeViewModel(
     private val accounts: AccountRepository,
@@ -53,7 +54,7 @@ internal class BillHomeViewModel(
     private val budgets: BudgetRepository,
     private val categories: CategoryRepository,
     private val stats: StatsRepository,
-    preferences: AppPreferencesRepository,
+    private val preferences: AppPreferencesRepository,
 ) : ViewModel() {
     init {
         viewModelScope.launch {
@@ -113,11 +114,14 @@ internal class BillHomeViewModel(
             )
         }
         return combine(
-            period,
-            recent,
-            budgets.observeProgress(),
-            categories.observeAll(),
-        ) { monthSummary, latest, progress, categoryRows ->
+            combine(period, recent, ::Pair),
+            combine(
+                budgets.observeProgress(),
+                categories.observeAll(),
+                preferences.preferences,
+                ::Triple,
+            ),
+        ) { (monthSummary, latest), (progress, categoryRows, prefs) ->
             val names = categoryRows.associateBy { it.id }
             val (balance, monthOverflow) = monthBalance(monthSummary)
             BillHomeUiState(
@@ -132,6 +136,7 @@ internal class BillHomeViewModel(
                 monthBalance = balance,
                 monthOverflow = monthOverflow,
                 budgets = activeBudgets(progress, names),
+                showBudget = prefs.budgetHomeVisible,
                 recent = billsToRows(latest, names),
             )
         }
@@ -140,6 +145,7 @@ internal class BillHomeViewModel(
     fun onEvent(event: BillHomeUiEvent) {
         when (event) {
             is BillHomeUiEvent.Select -> viewModelScope.launch { accounts.setDisplayed(event.accountId) }
+            BillHomeUiEvent.HideBudget -> viewModelScope.launch { preferences.setBudgetHomeVisible(false) }
         }
     }
 

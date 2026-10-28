@@ -1,5 +1,6 @@
 package com.example.cognibal.screen.feature.bill
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -7,18 +8,21 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -105,27 +109,43 @@ internal fun BillRoute(
             val accountId = accountBar.currentId ?: uiState.currentId ?: return@BillScreen
             onViewAll(accountId)
         },
+        onHideBudget = { homeViewModel.onEvent(BillHomeUiEvent.HideBudget) },
         onOpenBudget = onOpenBudget,
         modifier = modifier,
     )
 }
 
 /**
+ * 开屏盖住期间，首页可以画到什么程度。
+ *
+ * [composeHome] 为真才把首页放进组合。默认账户还没写完就订阅，会先读到空库。
+ * [contentReady] 为真表示总资产、本月收支、预算和最近 7 天都已进状态，可以揭开。
+ */
+internal data class BillHomeWarmup(
+    val composeHome: Boolean,
+    val contentReady: Boolean,
+) {
+    companion object {
+        /** 不走开屏时直接显示首页，不再等预热。 */
+        val Shown = BillHomeWarmup(composeHome = true, contentReady = true)
+    }
+}
+
+/**
  * 开屏还盖着的时候，把账单首页整份数据准备好。
  *
  * 先等默认账户写完再订阅，避免读到插入前的空库，揭开后又刷成真正的账户和金额。
- * 总资产、本月收支、预算和最近 7 天都进状态后才返回 true。查询一直不回来时到点也返回，
- * 开屏不能一直盖着。
+ * 查询一直不回来时到点也把 [BillHomeWarmup.contentReady] 设为真，开屏不能一直盖着。
  */
 @Composable
-internal fun PreloadBillHome(): Boolean {
+internal fun rememberBillHomeWarmup(): BillHomeWarmup {
     val context = LocalContext.current
     var accountsReady by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         LedgerStartup.ensureDefaultAccount(context)
         accountsReady = true
     }
-    if (!accountsReady) return false
+    if (!accountsReady) return BillHomeWarmup(composeHome = false, contentReady = false)
     val homeViewModel: BillHomeViewModel = viewModel(factory = BillHomeViewModel.Factory)
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     var timedOut by remember { mutableStateOf(false) }
@@ -133,7 +153,10 @@ internal fun PreloadBillHome(): Boolean {
         delay(BILL_HOME_REVEAL_TIMEOUT_MILLIS)
         timedOut = true
     }
-    return !uiState.loading || timedOut
+    return BillHomeWarmup(
+        composeHome = true,
+        contentReady = !uiState.loading || timedOut,
+    )
 }
 
 /**
@@ -165,11 +188,13 @@ internal fun BillScreen(
     onEditAccount: (Long) -> Unit,
     onViewAll: () -> Unit,
     onOpenBudget: () -> Unit,
+    onHideBudget: () -> Unit = {},
     modifier: Modifier = Modifier,
     headerState: BillHomeUiState = uiState,
 ) {
     RequestPageBackground()
     var sheetOpen by rememberSaveable { mutableStateOf(false) }
+    var budgetSheetOpen by rememberSaveable { mutableStateOf(false) }
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
@@ -180,7 +205,7 @@ internal fun BillScreen(
             onOpenAccounts = { sheetOpen = true },
             onCreateAccount = onCreateAccount,
             onViewAll = onViewAll,
-            onOpenBudget = onOpenBudget,
+            onManageBudget = { budgetSheetOpen = true },
         )
     }
     val current = headerState.accounts.firstOrNull { it.id == headerState.currentId }
@@ -192,6 +217,13 @@ internal fun BillScreen(
             onSelect = onSelect,
             onCreate = onCreateAccount,
             onEdit = { onEditAccount(current.id) },
+        )
+    }
+    if (budgetSheetOpen) {
+        BudgetHomeSheet(
+            onDismiss = { budgetSheetOpen = false },
+            onHide = onHideBudget,
+            onOpenSettings = onOpenBudget,
         )
     }
 }
@@ -260,17 +292,14 @@ private fun AccountSheet(
                     )
                 }
             }
-            HorizontalDivider(
-                color = colors.divider,
-                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp),
-            )
+            Spacer(Modifier.height(8.dp))
             SheetAction(
-                icon = Icons.Rounded.Add,
+                icon = Icons.Outlined.Add,
                 label = stringResource(R.string.bill_account_create),
                 onClick = { close(onCreate) },
             )
             SheetAction(
-                icon = Icons.Rounded.Edit,
+                icon = Icons.Outlined.Edit,
                 label = stringResource(R.string.account_edit_current),
                 onClick = { close(onEdit) },
             )
@@ -293,7 +322,7 @@ private fun AccountSheetRow(
     }
     val amountColor = when {
         !account.enabled -> colors.textTertiary
-        account.balance < 0L -> colors.expense
+        account.balance < 0L -> colors.textPrimary
         else -> colors.textPrimary
     }
     val selectedColor = if (account.selected) {
@@ -352,7 +381,7 @@ private fun AccountSheetRow(
             )
             if (account.selected) {
                 Icon(
-                    imageVector = Icons.Rounded.Check,
+                    imageVector = Icons.Outlined.Check,
                     contentDescription = null,
                     tint = colors.primary,
                     modifier = Modifier
@@ -404,6 +433,69 @@ private fun SheetAction(
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 modifier = Modifier.padding(start = 12.dp),
+            )
+        }
+    }
+}
+
+/**
+ * 首页预算的入口。先调整预算，再选隐藏。不直接打开预算页。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BudgetHomeSheet(
+    onDismiss: () -> Unit,
+    onHide: () -> Unit,
+    onOpenSettings: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val context = LocalContext.current
+    val hiddenMessage = stringResource(R.string.budget_home_hidden)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    fun close(after: () -> Unit) {
+        scope.launch {
+            sheetState.hide()
+            onDismiss()
+            after()
+        }
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = colors.cardBackground,
+        contentColor = colors.textPrimary,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 12.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.bill_budget_title),
+                color = colors.textPrimary,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+            )
+            SheetAction(
+                icon = Icons.Outlined.Settings,
+                label = stringResource(R.string.budget_home_settings),
+                onClick = { close(onOpenSettings) },
+            )
+            SheetAction(
+                icon = Icons.Outlined.VisibilityOff,
+                label = stringResource(R.string.budget_home_hide),
+                onClick = {
+                    close {
+                        onHide()
+                        Toast.makeText(context, hiddenMessage, Toast.LENGTH_SHORT).show()
+                    }
+                },
             )
         }
     }

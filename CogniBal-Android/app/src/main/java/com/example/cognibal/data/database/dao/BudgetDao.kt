@@ -5,7 +5,9 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.example.cognibal.data.database.entity.Budget
+import com.example.cognibal.data.database.query.IdAmount
 import com.example.cognibal.data.database.query.BudgetSpendRow
+import java.time.LocalDateTime
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -52,6 +54,20 @@ interface BudgetDao {
 
     @Query("DELETE FROM budget")
     suspend fun deleteAll()
+
+    /** 汇率换算按主键向后翻页。上限列映射成 [IdAmount.amount]。 */
+    @Query(
+        """
+        SELECT id, limitAmount AS amount FROM budget
+        WHERE id > :afterId
+        ORDER BY id ASC
+        LIMIT :limit
+        """,
+    )
+    suspend fun limitsAfter(afterId: Long, limit: Int): List<IdAmount>
+
+    @Query("UPDATE budget SET limitAmount = :limitAmount, updateTime = :updateTime WHERE id = :id")
+    suspend fun updateLimit(id: Long, limitAmount: Long, updateTime: LocalDateTime)
 
     @Query(
         """

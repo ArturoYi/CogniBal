@@ -24,6 +24,7 @@ import dagger.hilt.android.EntryPointAccessors
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeParseException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -32,17 +33,21 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
+import com.example.cognibal.screen.feature.settings.model.AppPreferences
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewCategoryOption
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewDayAmount
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewKind
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewUiEvent
 import com.example.cognibal.screen.feature.settings.overview.state.OverviewUiState
+import com.example.cognibal.screen.feature.settings.overview.state.matches
 
 /**
  * 总览页。一个月的日历，点某一天看当天账单。
  *
  * 格子怎么排跟语言有关，留给界面。这里只给有账单的日期和选中那天的流水。
  * 筛选只作用在当天流水上，月汇总和日历圆点保持整月。
+ * 点完成或清除才改筛选。当天流水多时，整理结果放到默认调度器，避免把界面卡住。
  */
 internal class OverviewViewModel(
     private val stats: StatsRepository,
@@ -54,10 +59,16 @@ internal class OverviewViewModel(
     )
     private val dayFilter = MutableStateFlow(DayFilter())
 
-    val uiState: StateFlow<OverviewUiState> = combine(selection, dayFilter) { current, filter ->
-        current to filter
-    }.flatMapLatest { (current, filter) ->
-        observe(current, filter)
+    val uiState: StateFlow<OverviewUiState> = combine(
+        selection.flatMapLatest(::observeFacts),
+        categories.observeAll(),
+        preferences.preferences,
+        dayFilter,
+    ) { fact, categoryRows, prefs, filter ->
+        // 一天的流水可能很多。放到默认调度器上整理，主线程继续转按钮上的等待。
+        withContext(Dispatchers.Default) {
+            overviewState(fact, categoryRows, prefs, filter)
+        }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
@@ -74,15 +85,10 @@ internal class OverviewViewModel(
             is OverviewUiEvent.SelectDay -> selection.update { current ->
                 if (YearMonth.from(event.day) != current.month) current else current.copy(day = event.day)
             }
-            is OverviewUiEvent.SetKind -> dayFilter.update { it.copy(kind = event.kind) }
-            is OverviewUiEvent.ToggleCategory -> dayFilter.update { current ->
-                val ids = if (event.categoryId in current.categoryIds) {
-                    current.categoryIds - event.categoryId
-                } else {
-                    current.categoryIds + event.categoryId
-                }
-                current.copy(categoryIds = ids)
-            }
+            is OverviewUiEvent.ApplyFilter -> dayFilter.value = DayFilter(
+                kind = event.kind,
+                categoryIds = event.categoryIds,
+            )
             OverviewUiEvent.ClearFilter -> dayFilter.value = DayFilter()
         }
     }
@@ -93,53 +99,20 @@ internal class OverviewViewModel(
         }
     }
 
-    private fun observe(selection: OverviewSelection, filter: DayFilter): Flow<OverviewUiState> {
+    private fun observeFacts(selection: OverviewSelection): Flow<OverviewFacts> {
         val month = selection.month
         val day = selection.day
-        val facts = combine(
+        return combine(
             stats.observeDaily(month),
             stats.observePeriod(month.startInclusive(), month.endExclusive()),
             stats.observeDay(day),
         ) { daily, period, dayBills ->
-            OverviewFacts(daily, period, dayBills)
-        }
-        return combine(
-            facts,
-            categories.observeAll(),
-            preferences.preferences,
-        ) { fact, categoryRows, prefs ->
-            val (balance, overflow) = balanceOf(fact.period.incomeAmount, fact.period.expenseAmount)
-            val visibleCategories = categoryRows
-                .filter { category -> category.matches(filter.kind) }
-                .sortedWith(compareBy<Category>({ it.type.code }, { it.sort }, { it.id }))
-                .map { category ->
-                    OverviewCategoryOption(
-                        id = category.id,
-                        name = category.name,
-                        expense = category.type == CategoryType.Expense,
-                    )
-                }
-            val selectedIds = filter.categoryIds.intersect(visibleCategories.map { it.id }.toSet())
-            val filteredBills = fact.dayBills.filter { bill ->
-                bill.matches(filter.kind) && (selectedIds.isEmpty() || bill.categoryId in selectedIds)
-            }
-            OverviewUiState(
-                loading = false,
+            OverviewFacts(
                 month = month,
-                selectedDay = day,
-                canGoNext = month < YearMonth.now(),
-                currencySymbol = prefs.currency.symbol,
-                income = fact.period.incomeAmount,
-                expense = fact.period.expenseAmount,
-                balance = balance,
-                balanceOverflow = overflow,
-                days = fact.daily.mapNotNull { summary -> summary.toDayAmount() },
-                bills = billsToRows(filteredBills, categoryRows.associateBy { it.id }),
-                dayHasBills = fact.dayBills.isNotEmpty(),
-                kind = filter.kind,
-                categories = visibleCategories,
-                selectedCategoryIds = selectedIds,
-                filterActive = filter.kind != OverviewKind.All || selectedIds.isNotEmpty(),
+                day = day,
+                daily = daily,
+                period = period,
+                dayBills = dayBills,
             )
         }
     }
@@ -176,10 +149,48 @@ private data class DayFilter(
     val categoryIds: Set<Long> = emptySet(),
 )
 
-private fun Category.matches(kind: OverviewKind): Boolean = when (kind) {
-    OverviewKind.All -> true
-    OverviewKind.Expense -> type == CategoryType.Expense
-    OverviewKind.Income -> type == CategoryType.Income
+private fun overviewState(
+    fact: OverviewFacts,
+    categoryRows: List<Category>,
+    prefs: AppPreferences,
+    filter: DayFilter,
+): OverviewUiState {
+    val (balance, overflow) = balanceOf(fact.period.incomeAmount, fact.period.expenseAmount)
+    val categoryOptions = categoryRows
+        .sortedWith(compareBy<Category>({ it.type.code }, { it.sort }, { it.id }))
+        .map { category ->
+            OverviewCategoryOption(
+                id = category.id,
+                name = category.name,
+                expense = category.type == CategoryType.Expense,
+            )
+        }
+    val visibleIds = categoryOptions
+        .filter { option -> option.matches(filter.kind) }
+        .map { option -> option.id }
+        .toSet()
+    val selectedIds = filter.categoryIds.intersect(visibleIds)
+    val filteredBills = fact.dayBills.filter { bill ->
+        bill.matches(filter.kind) && (selectedIds.isEmpty() || bill.categoryId in selectedIds)
+    }
+    return OverviewUiState(
+        loading = false,
+        month = fact.month,
+        selectedDay = fact.day,
+        canGoNext = fact.month < YearMonth.now(),
+        currencySymbol = prefs.currency.symbol,
+        income = fact.period.incomeAmount,
+        expense = fact.period.expenseAmount,
+        balance = balance,
+        balanceOverflow = overflow,
+        days = fact.daily.mapNotNull { summary -> summary.toDayAmount() },
+        bills = billsToRows(filteredBills, categoryRows.associateBy { it.id }),
+        dayHasBills = fact.dayBills.isNotEmpty(),
+        kind = filter.kind,
+        categories = categoryOptions,
+        selectedCategoryIds = selectedIds,
+        filterActive = filter.kind != OverviewKind.All || selectedIds.isNotEmpty(),
+    )
 }
 
 private fun Bill.matches(kind: OverviewKind): Boolean = when (kind) {
@@ -194,6 +205,8 @@ private data class OverviewSelection(
 )
 
 private data class OverviewFacts(
+    val month: YearMonth,
+    val day: LocalDate,
     val daily: List<DayAmountSummary>,
     val period: PeriodAmountSummary,
     val dayBills: List<Bill>,

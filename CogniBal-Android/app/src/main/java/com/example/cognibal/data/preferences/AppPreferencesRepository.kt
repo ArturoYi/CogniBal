@@ -44,16 +44,27 @@ internal class AppPreferencesRepository(
         update { it[Keys.darkMode] = mode.id }
     }
 
-    suspend fun setHapticFeedback(enabled: Boolean) {
-        update { it[Keys.hapticFeedback] = enabled }
-    }
-
     suspend fun setCurrency(currency: CurrencyPreference) {
         update { it[Keys.currency] = currency.name }
     }
 
+    /** 换币种用。写入失败时抛出，不把磁盘错误吞掉。 */
+    suspend fun setCurrencyOrThrow(currency: CurrencyPreference) {
+        withContext(Dispatchers.IO) {
+            dataStore.edit { it[Keys.currency] = currency.name }
+        }
+    }
+
     suspend fun setBudgetNotify(enabled: Boolean) {
         update { it[Keys.budgetNotify] = enabled }
+    }
+
+    suspend fun setBudgetHomeVisible(visible: Boolean) {
+        update { it[Keys.budgetHomeVisible] = visible }
+    }
+
+    suspend fun setAcceptedLegalVersion(version: String) {
+        update { it[Keys.acceptedLegalVersion] = version }
     }
 
     private suspend fun update(transform: (MutablePreferences) -> Unit) {
@@ -77,9 +88,10 @@ private fun Preferences.toAppPreferences(): AppPreferences {
     return AppPreferences(
         themeStyle = enumValueOrDefault(this[Keys.themeStyle], AppThemeStyle.WarmCream),
         darkMode = DarkModePreference.fromId(this[Keys.darkMode]),
-        hapticFeedback = this[Keys.hapticFeedback] ?: true,
         currency = enumValueOrDefault(this[Keys.currency], CurrencyPreference.CNY),
         budgetNotify = this[Keys.budgetNotify] ?: false,
+        budgetHomeVisible = this[Keys.budgetHomeVisible] ?: true,
+        acceptedLegalVersion = this[Keys.acceptedLegalVersion].orEmpty(),
     )
 }
 

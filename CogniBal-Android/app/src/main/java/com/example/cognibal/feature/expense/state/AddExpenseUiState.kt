@@ -49,7 +49,7 @@ internal sealed interface AddExpenseUiEvent {
     data class AccountSelected(val accountId: Long) : AddExpenseUiEvent
     data class ToAccountSelected(val accountId: Long) : AddExpenseUiEvent
     data class DatePicked(val date: LocalDate) : AddExpenseUiEvent
-    data class TimePicked(val hour: Int, val minute: Int, val second: Int) : AddExpenseUiEvent
+    data class TimePicked(val hour: Int, val minute: Int) : AddExpenseUiEvent
     data class RemarkChanged(val value: String) : AddExpenseUiEvent
     data object Save : AddExpenseUiEvent
     data object ConfirmOverBudget : AddExpenseUiEvent

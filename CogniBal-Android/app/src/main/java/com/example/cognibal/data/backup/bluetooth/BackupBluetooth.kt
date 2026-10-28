@@ -102,6 +102,7 @@ class BackupBluetooth @Inject constructor(
             .build()
         val callback = object : ScanCallback() {
             override fun onScanResult(callbackType: Int, result: ScanResult) {
+                if (scanCallback !== this) return
                 val device = result.device ?: return
                 val address = try {
                     device.address
@@ -115,11 +116,13 @@ class BackupBluetooth @Inject constructor(
                         null
                     }
                     ?: address
+                if (scanCallback !== this) return
                 discovered[address] = BluetoothPeer(address, label)
                 publish(scanning = true)
             }
 
             override fun onScanFailed(errorCode: Int) {
+                if (scanCallback !== this) return
                 publish(scanning = false)
             }
         }

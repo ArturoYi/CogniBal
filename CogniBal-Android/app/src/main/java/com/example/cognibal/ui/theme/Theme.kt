@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -34,10 +32,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 /**
- * 主题风格枚举
+ * 主题风格。两套都是柔和扁平，只换贯穿全应用的那一种颜色。
  *
- * - [WarmCream] 方案一：青绿。浅色用 Open Color teal 9，暗色用 teal 4
- * - [Monochrome] 方案二：黑白。中性色用 gray，支出仍用 red。浅色 gray 8，暗色 gray 2
+ * - [WarmCream] 柔和蓝。枚举名沿用旧偏好键，避免已保存的选择被重置
+ * - [Monochrome] 墨色。卡片、字号和圆角与柔和蓝相同
  */
 enum class AppThemeStyle(
     @StringRes val nameRes: Int,
@@ -65,7 +63,7 @@ val MaterialTheme.appColors: AppColors
  *
  * 两套主题均完整适配浅色模式（Light）与暗色模式（Dark）
  *
- * @param themeStyle 主题风格，默认方案一 [AppThemeStyle.WarmCream]
+ * @param themeStyle 主题风格，默认柔和蓝 [AppThemeStyle.WarmCream]
  * @param darkTheme 是否使用暗色模式，默认跟随系统 [isSystemInDarkTheme]
  * @param content 内容槽
  */
@@ -103,6 +101,8 @@ fun CogniBalTheme(
     ) {
         MaterialTheme(
             colorScheme = colorScheme,
+            typography = CogniBalTypography,
+            shapes = CogniBalShapes,
         ) {
             // 水波纹按点击节点的矩形铺开，圆角和圆形控件上会画出形状外面。
             // 这里直接关掉，不再为裁剪它多加一层离屏绘制。
@@ -146,10 +146,10 @@ private fun ThemeShowcaseCard(
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
                 )
-                Surface(
-                    color = colors.tagBackground,
-                    shape = RoundedCornerShape(4.dp),
-                ) {
+            Surface(
+                color = colors.tagBackground,
+                shape = MaterialTheme.shapes.extraSmall,
+            ) {
                     Text(
                         text = if (colors.isDark) "暗色模式" else "浅色模式",
                         color = colors.onTag,
@@ -161,56 +161,59 @@ private fun ThemeShowcaseCard(
 
             // 业务卡片展示（卡片背景、正文、次要文字、弱化文字、金额展示）
             Surface(
-                color = colors.cardBackground,
-                shape = RoundedCornerShape(12.dp),
+                color = colors.hero,
+                shape = MaterialTheme.shapes.extraLarge,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Column(modifier = Modifier.padding(14.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Text(
-                        text = "本月财务概览",
-                        color = colors.textPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        text = "本月结余",
+                        color = colors.onHero.copy(alpha = 0.78f),
+                        style = MaterialTheme.typography.labelMedium,
                     )
-                    Spacer(Modifier.height(4.dp))
                     Text(
-                        text = "统计周期：2026年10月01日 - 10月10日",
-                        color = colors.textSecondary,
-                        fontSize = 12.sp,
+                        text = "¥12,580.00",
+                        color = colors.onHero,
+                        style = MaterialTheme.typography.displaySmall,
                     )
-                    Spacer(Modifier.height(10.dp))
-                    HorizontalDivider(color = colors.divider, thickness = 1.dp)
-                    Spacer(Modifier.height(10.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Column {
-                            Text("结余正数 (收入)", color = colors.textSecondary, fontSize = 12.sp)
-                            Text(
-                                text = "+ ¥12,580.00",
-                                color = colors.income,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("支出超标 (超支)", color = colors.textSecondary, fontSize = 12.sp)
-                            Text(
-                                text = "- ¥3,420.50",
-                                color = colors.expense,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
+                    Spacer(Modifier.height(12.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                        Text(
+                            text = "收入 ¥18,900.00",
+                            color = colors.onHero.copy(alpha = 0.78f),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
+                        Text(
+                            text = "支出 ¥6,340.00",
+                            color = colors.onHero.copy(alpha = 0.78f),
+                            style = MaterialTheme.typography.titleSmall,
+                        )
                     }
+                }
+            }
 
+            Surface(
+                color = colors.cardBackground,
+                shape = MaterialTheme.shapes.extraLarge,
+                shadowElevation = CogniBalCardElevation,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
+                        text = "最近交易",
+                        color = colors.textPrimary,
+                        style = MaterialTheme.typography.titleMedium,
+                    )
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = "注：预算剩余 24%，请合理安排支出",
+                        text = "午餐 · 星巴克",
+                        color = colors.textSecondary,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    Text(
+                        text = "预算还剩 24%",
                         color = colors.textTertiary,
-                        fontSize = 11.sp,
+                        style = MaterialTheme.typography.labelMedium,
                     )
                 }
             }
@@ -222,7 +225,7 @@ private fun ThemeShowcaseCard(
                     containerColor = colors.primary,
                     contentColor = colors.onPrimary,
                 ),
-                shape = RoundedCornerShape(8.dp),
+                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(text = "记一笔 (主按钮操作)", fontWeight = FontWeight.Medium)
@@ -231,34 +234,34 @@ private fun ThemeShowcaseCard(
     }
 }
 
-@Preview(name = "方案一：暖奶油青绿 (浅色模式)", showBackground = true)
+@Preview(name = "柔和蓝 (浅色)", showBackground = true)
 @Composable
 private fun WarmCreamLightPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
-        ThemeShowcaseCard(themeName = "方案一：暖奶油青绿", modeName = "浅色")
+        ThemeShowcaseCard(themeName = "柔和蓝", modeName = "浅色")
     }
 }
 
-@Preview(name = "方案一：暖奶油青绿 (暗色模式)", showBackground = true, backgroundColor = 0xFF212529)
+@Preview(name = "柔和蓝 (暗色)", showBackground = true, backgroundColor = 0xFF10151C)
 @Composable
 private fun WarmCreamDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = true) {
-        ThemeShowcaseCard(themeName = "方案一：暖奶油青绿", modeName = "暗色")
+        ThemeShowcaseCard(themeName = "柔和蓝", modeName = "暗色")
     }
 }
 
-@Preview(name = "方案二：黑白色 (浅色模式)", showBackground = true)
+@Preview(name = "墨色 (浅色)", showBackground = true)
 @Composable
 private fun MonochromeLightPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = false) {
-        ThemeShowcaseCard(themeName = "方案二：黑白色", modeName = "浅色")
+        ThemeShowcaseCard(themeName = "墨色", modeName = "浅色")
     }
 }
 
-@Preview(name = "方案二：黑白色 (暗色模式)", showBackground = true, backgroundColor = 0xFF212529)
+@Preview(name = "墨色 (暗色)", showBackground = true, backgroundColor = 0xFF10151C)
 @Composable
 private fun MonochromeDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = true) {
-        ThemeShowcaseCard(themeName = "方案二：黑白色", modeName = "暗色")
+        ThemeShowcaseCard(themeName = "墨色", modeName = "暗色")
     }
 }

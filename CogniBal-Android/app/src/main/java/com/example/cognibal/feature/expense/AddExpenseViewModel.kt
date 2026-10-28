@@ -57,7 +57,8 @@ import kotlinx.coroutines.launch
  * 转账写成 [TransferDraft]：金额为正，两个账户不同，仓库再拆成一负一正两条，分类为空。
  * 创建时间和更新时间由仓库填写。账单时间是交易发生时间，可以改。
  *
- * 分类表是空的时候补一套默认分类。已经有分类就不动，避免把用户删掉的再填回来。
+ * 分类表是空的时候补一套默认分类。旧库只补这一版新增的默认项，用户删掉的不会再填回来。
+ * 支出和收入记入首页当前选中的账户。转账才使用单独选的转出账户。
  */
 internal class AddExpenseViewModel(
     private val initialType: BillType,
@@ -68,7 +69,7 @@ internal class AddExpenseViewModel(
     private val notifier: BudgetNotifier,
     accounts: AccountRepository,
 ) : ViewModel() {
-    private val openedAt = LedgerTime.now()
+    private val openedAt = LedgerTime.now().withSecond(0).withNano(0)
     private val form = MutableStateFlow(EntryForm(type = initialType, billTime = openedAt))
 
     init {
@@ -92,7 +93,11 @@ internal class AddExpenseViewModel(
         val orderedAccounts = accountRows.sortedWith(
             compareByDescending<Account> { it.isDefault }.thenBy { it.id },
         )
-        val accountId = resolveAccountId(draft.accountId, orderedAccounts)
+        val accountId = if (draft.type == BillType.Transfer) {
+            resolveAccountId(draft.accountId, orderedAccounts)
+        } else {
+            resolveAccountId(null, orderedAccounts)
+        }
         val categoryType = draft.type.categoryType()
         val matching = if (categoryType == null) {
             emptyList()
@@ -176,7 +181,7 @@ internal class AddExpenseViewModel(
     fun onEvent(event: AddExpenseUiEvent) {
         when (event) {
             is AddExpenseUiEvent.TypeSelected -> edit { current ->
-                if (event.type == current.type || event.type == BillType.Transfer) {
+                if (event.type == current.type) {
                     current
                 } else {
                     current.copy(type = event.type, categoryId = null)
@@ -189,7 +194,7 @@ internal class AddExpenseViewModel(
             is AddExpenseUiEvent.AccountSelected -> edit { it.copy(accountId = event.accountId) }
             is AddExpenseUiEvent.ToAccountSelected -> edit { it.copy(toAccountId = event.accountId) }
             is AddExpenseUiEvent.DatePicked -> edit { state ->
-                val time = state.billTime.toLocalTime().withNano(0)
+                val time = state.billTime.toLocalTime().withSecond(0).withNano(0)
                 state.copy(billTime = LocalDateTime.of(event.date, time))
             }
             is AddExpenseUiEvent.TimePicked -> edit { state ->
@@ -197,7 +202,7 @@ internal class AddExpenseViewModel(
                     billTime = state.billTime
                         .withHour(event.hour)
                         .withMinute(event.minute)
-                        .withSecond(event.second)
+                        .withSecond(0)
                         .withNano(0),
                 )
             }
@@ -384,7 +389,10 @@ internal class AddExpenseViewModel(
         form.update { it.copy(saving = false, issue = issue) }
     }
 
-    private fun freshForm(): EntryForm = EntryForm(type = initialType, billTime = LedgerTime.now())
+    private fun freshForm(): EntryForm = EntryForm(
+        type = initialType,
+        billTime = LedgerTime.now().withSecond(0).withNano(0),
+    )
 
     companion object {
         fun key(typeCode: Int): String = "add-expense-$typeCode"
@@ -397,8 +405,7 @@ internal class AddExpenseViewModel(
                     application,
                     LedgerEntryPoint::class.java,
                 )
-                val raw = BillType.entries.firstOrNull { it.code == typeCode } ?: BillType.Expense
-                val type = if (raw == BillType.Transfer) BillType.Expense else raw
+                val type = BillType.entries.firstOrNull { it.code == typeCode } ?: BillType.Expense
                 AddExpenseViewModel(
                     initialType = type,
                     bills = entry.billRepository(),

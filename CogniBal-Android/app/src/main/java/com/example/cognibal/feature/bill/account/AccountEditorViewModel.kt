@@ -1,5 +1,6 @@
 package com.example.cognibal.screen.feature.bill.account
 
+import android.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,7 +15,7 @@ import com.example.cognibal.data.repository.LedgerReject
 import com.example.cognibal.data.repository.NewAccount
 import com.example.cognibal.di.LedgerEntryPoint
 import com.example.cognibal.screen.feature.bill.model.AccountColor
-import com.example.cognibal.screen.feature.bill.model.AccountIcon
+import com.example.cognibal.screen.feature.bill.model.pairedIcon
 import com.example.cognibal.screen.feature.bill.tool.parseMajorAmount
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -27,6 +28,8 @@ import com.example.cognibal.screen.feature.bill.account.state.AccountEditorUiEve
 import com.example.cognibal.screen.feature.bill.account.state.AccountEditorUiState
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.update
+import java.util.Locale
+import kotlin.random.Random
 
 /**
  * 新建或编辑一个账户。
@@ -44,6 +47,7 @@ internal class AccountEditorViewModel(
         AccountEditorUiState(
             ready = accountId == null,
             isEdit = accountId != null,
+            colorKeyOverride = if (accountId == null) vividColorHex() else null,
         ),
     )
     val uiState: StateFlow<AccountEditorUiState> = _uiState
@@ -82,7 +86,6 @@ internal class AccountEditorViewModel(
                         if (state.ready && !state.missing) {
                             loaded
                         } else {
-                            val icon = AccountIcon.fromKey(account.icon)
                             val color = AccountColor.fromKey(account.color)
                             loaded.copy(
                                 ready = true,
@@ -90,8 +93,8 @@ internal class AccountEditorViewModel(
                                 missing = false,
                                 name = account.name,
                                 type = account.type,
-                                icon = icon ?: AccountIcon.Wallet,
-                                iconKeyOverride = if (icon == null) account.icon else null,
+                                icon = account.type.pairedIcon(),
+                                iconKeyOverride = null,
                                 color = color ?: AccountColor.Teal,
                                 colorKeyOverride = if (color == null) account.color else null,
                                 remark = account.remark.orEmpty(),
@@ -117,12 +120,14 @@ internal class AccountEditorViewModel(
                         char == '，' || char == '。' || char == ' '
                 }.take(AMOUNT_INPUT_LIMIT))
             }
-            is AccountEditorUiEvent.TypeSelected -> edit { it.copy(type = event.type) }
-            is AccountEditorUiEvent.IconSelected -> edit {
-                it.copy(icon = event.icon, iconKeyOverride = null)
+            is AccountEditorUiEvent.TypeSelected -> edit {
+                it.copy(type = event.type, icon = event.type.pairedIcon(), iconKeyOverride = null)
             }
             is AccountEditorUiEvent.ColorSelected -> edit {
                 it.copy(color = event.color, colorKeyOverride = null)
+            }
+            is AccountEditorUiEvent.CustomColorSelected -> edit {
+                it.copy(colorKeyOverride = event.hex)
             }
             AccountEditorUiEvent.Save -> save()
             is AccountEditorUiEvent.SetEnabled -> setEnabled(event.enabled)
@@ -154,7 +159,7 @@ internal class AccountEditorViewModel(
             try {
                 val draft = AccountDraft(
                     name = snapshot.name,
-                    icon = snapshot.iconKeyOverride ?: snapshot.icon.storageKey,
+                    icon = snapshot.type.pairedIcon().storageKey,
                     color = snapshot.colorKeyOverride ?: snapshot.color.storageKey,
                     type = snapshot.type,
                     remark = snapshot.remark,
@@ -203,6 +208,17 @@ internal class AccountEditorViewModel(
 
     companion object {
         private const val AMOUNT_INPUT_LIMIT = 16
+
+        /** 新建时随机一支饱和色。避开灰、白和过暗，卡片上还能认出来。 */
+        private fun vividColorHex(): String {
+            val random = Random.Default
+            val hsv = floatArrayOf(
+                random.nextFloat() * 360f,
+                0.62f + random.nextFloat() * 0.28f,
+                0.78f + random.nextFloat() * 0.14f,
+            )
+            return String.format(Locale.US, "#%08X", Color.HSVToColor(hsv))
+        }
 
         fun factory(accountId: Long?): ViewModelProvider.Factory = viewModelFactory {
             initializer {

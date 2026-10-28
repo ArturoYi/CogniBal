@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -88,7 +88,7 @@ internal fun BillHistoryScreen(
         ) {
             if (showBack) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                     contentDescription = stringResource(R.string.navigate_back),
                     tint = MaterialTheme.appColors.textPrimary,
                     modifier = Modifier

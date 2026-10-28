@@ -7,6 +7,7 @@ import androidx.room.Update
 import com.example.cognibal.data.database.entity.Bill
 import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.data.database.query.CategoryAmountSummary
+import com.example.cognibal.data.database.query.IdAmount
 import com.example.cognibal.data.database.query.DayAmountSummary
 import com.example.cognibal.data.database.query.MonthTrendSummary
 import com.example.cognibal.data.database.query.PeriodAmountSummary
@@ -277,4 +278,18 @@ interface BillDao {
         startInclusive: LocalDateTime,
         endExclusive: LocalDateTime,
     ): Long
+
+    /** 汇率换算按主键向后翻页，一次只取一批金额。 */
+    @Query(
+        """
+        SELECT id, amount FROM bill
+        WHERE id > :afterId
+        ORDER BY id ASC
+        LIMIT :limit
+        """,
+    )
+    suspend fun amountsAfter(afterId: Long, limit: Int): List<IdAmount>
+
+    @Query("UPDATE bill SET amount = :amount, updateTime = :updateTime WHERE id = :id")
+    suspend fun updateAmount(id: Long, amount: Long, updateTime: LocalDateTime)
 }

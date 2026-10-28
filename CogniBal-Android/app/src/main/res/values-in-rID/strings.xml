@@ -28,11 +28,11 @@
     <string name="theme_dark">Gelap</string>
     <string name="theme_dark_subtitle">Kontras yang lebih lembut untuk malam</string>
     <string name="theme_color">Warna tema</string>
-    <string name="theme_color_subtitle">Warna lembut yang nyaman di mata</string>
-    <string name="theme_warm_cream">Krim hangat</string>
-    <string name="theme_warm_cream_desc">Nyaman di mata · dasar krim hangat</string>
-    <string name="theme_monochrome">Monokrom</string>
-    <string name="theme_monochrome_desc">Sederhana · abu tinta lembut</string>
+    <string name="theme_color_subtitle">Satu warna, lembut dan rata</string>
+    <string name="theme_warm_cream">Biru lembut</string>
+    <string name="theme_warm_cream_desc">Satu biru di seluruh aplikasi</string>
+    <string name="theme_monochrome">Tinta</string>
+    <string name="theme_monochrome_desc">Satu tinta, kartu lembut yang sama</string>
     <string name="selected">Dipilih</string>
     <string name="user_stats">CogniBal menemani Anda selama %1$s, dengan %2$s.</string>
     <string name="surplus_total">Saldo</string>
@@ -44,9 +44,7 @@
     <string name="shortcut_assets">Aset</string>
     <string name="shortcut_overview">Ringkasan</string>
     <string name="shortcut_coming_soon">%1$s segera hadir</string>
-    <string name="more_features">Lainnya</string>
     <string name="default_currency">Mata uang default</string>
-    <string name="haptic_feedback">Getar saat disentuh</string>
     <string name="clear_temp_cache">Hapus cache sementara</string>
     <string name="close">Tutup</string>
     <string name="cancel">Batal</string>
@@ -63,7 +61,6 @@
     <string name="about_version">Versi %1$s</string>
     <string name="about_description">CogniBal adalah aplikasi pembukuan dengan tampilan tenang dan mudah dibaca. Tata letak menyesuaikan layar agar pencatatan tetap jelas dan nyaman.</string>
     <string name="open_source">Lisensi sumber terbuka</string>
-    <string name="open_source_toast">CogniBal dilisensikan di bawah Apache 2.0</string>
     <string name="done">Selesai</string>
     <string name="security_terms">Ketentuan layanan</string>
     <string name="security_terms_subtitle">Baca ketentuannya</string>

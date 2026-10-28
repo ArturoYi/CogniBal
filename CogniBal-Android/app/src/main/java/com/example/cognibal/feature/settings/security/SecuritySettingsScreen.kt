@@ -1,17 +1,19 @@
 package com.example.cognibal.screen.feature.settings.security
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.Article
-import androidx.compose.material.icons.rounded.Lock
-import androidx.compose.material.icons.rounded.PrivacyTip
+import androidx.compose.material.icons.automirrored.outlined.Article
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.cognibal.R
+import com.example.cognibal.screen.feature.legal.LegalDocumentKind
 import com.example.cognibal.screen.feature.settings.security.state.SecuritySettingsAction
 import com.example.cognibal.screen.feature.settings.security.state.SecuritySettingsUiEvent
 import com.example.cognibal.screen.feature.settings.security.state.SecuritySettingsUiState
@@ -23,17 +25,28 @@ import com.example.cognibal.screen.feature.settings.SettingsAction
 import com.example.cognibal.screen.feature.settings.SettingsActionGroup
 import com.example.cognibal.screen.feature.settings.SettingsSubpage
 
-/** 安全与隐私入口。条目来自 ViewModel，点击先不打开协议或验证。 */
+/** 安全与隐私入口。用户协议和隐私协议打开全文。应用保护先不验证。 */
 @Composable
 internal fun SecuritySettingsRoute(
     onBack: () -> Unit,
+    onOpenDocument: (LegalDocumentKind) -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SecuritySettingsViewModel = viewModel(factory = SecuritySettingsViewModel.Factory),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val openTerms = dropUnlessResumed { onOpenDocument(LegalDocumentKind.Terms) }
+    val openPrivacy = dropUnlessResumed { onOpenDocument(LegalDocumentKind.Privacy) }
     SecuritySettingsScreen(
         uiState = uiState,
-        onEvent = viewModel::onEvent,
+        onEvent = { event ->
+            if (event is SecuritySettingsUiEvent.RowClicked) {
+                when (event.action) {
+                    SecuritySettingsAction.Terms -> openTerms()
+                    SecuritySettingsAction.Privacy -> openPrivacy()
+                    SecuritySettingsAction.AppLock -> viewModel.onEvent(event)
+                }
+            }
+        },
         onBack = onBack,
         modifier = modifier,
     )
@@ -68,9 +81,9 @@ internal fun SecuritySettingsScreen(
 
 private val SecuritySettingsAction.icon: ImageVector
     get() = when (this) {
-        SecuritySettingsAction.Terms -> Icons.AutoMirrored.Rounded.Article
-        SecuritySettingsAction.Privacy -> Icons.Rounded.PrivacyTip
-        SecuritySettingsAction.AppLock -> Icons.Rounded.Lock
+        SecuritySettingsAction.Terms -> Icons.AutoMirrored.Outlined.Article
+        SecuritySettingsAction.Privacy -> Icons.Outlined.PrivacyTip
+        SecuritySettingsAction.AppLock -> Icons.Outlined.Lock
     }
 
 @FormFactorPreviews

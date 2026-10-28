@@ -63,7 +63,7 @@ dependencies {
     implementation(libs.androidx.activity.compose)
 
     implementation(libs.androidx.compose.material3)
-    // 界面图标统一用 Material Icons Extended，风格为 Rounded。
+    // 界面图标统一用 Material Icons Extended，风格为线性 Outlined。
     implementation(libs.androidx.compose.material.icons.extended)
     // 按窗口宽度在底栏和侧栏之间切换。
     implementation(libs.androidx.adaptive)
@@ -106,4 +106,8 @@ dependencies {
     implementation(libs.androidx.navigation3.ui)
     // 宽屏把设置列表和二级页并排。窄屏仍一次只显示一页。
     implementation(libs.androidx.adaptive.navigation3)
+
+    // 桌面小组件。界面在 widget 包，开关在设置页。
+    implementation(libs.androidx.glance.appwidget)
+    implementation(libs.androidx.glance.material3)
 }

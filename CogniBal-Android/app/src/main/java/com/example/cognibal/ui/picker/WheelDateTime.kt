@@ -45,7 +45,7 @@ data class WheelDateTime(
 
 /**
  * 日期、时间，或日期加时间。隐藏的字段仍留在 [WheelDateTime] 里，切换模式时不会丢。
- * [Time] 是时、分、秒三列。[Date] 是年、月、日。[DateTime] 是年、月、日、时、分。
+ * [Time] 是时、分两列。[Date] 是年、月、日。[DateTime] 是年、月、日、时、分。
  * [YearMonth] 只有年、月两列。
  */
 enum class WheelDateTimeMode {

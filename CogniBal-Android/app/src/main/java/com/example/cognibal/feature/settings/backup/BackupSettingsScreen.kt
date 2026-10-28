@@ -28,10 +28,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Backup
-import androidx.compose.material.icons.rounded.CloudDownload
-import androidx.compose.material.icons.rounded.CloudUpload
-import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.CloudUpload
+import androidx.compose.material.icons.outlined.Bluetooth
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -76,7 +76,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
-import kotlin.system.exitProcess
+import com.example.cognibal.ui.process.reopenApp
 
 /** 备份和迁移。文件分享、蓝牙系统框留在这里，账本读写留给 ViewModel。 */
 @Suppress("DEPRECATION")
@@ -128,7 +128,11 @@ internal fun BackupSettingsRoute(
         viewModel.effects.collect { effect ->
             when (effect) {
                 is BackupSettingsEffect.Toast ->
-                    Toast.makeText(context, effect.messageRes, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        effect.messageRes,
+                        if (effect.long) Toast.LENGTH_LONG else Toast.LENGTH_SHORT,
+                    ).show()
                 is BackupSettingsEffect.Share -> {
                     if (!context.shareBackup(effect.uri)) {
                         Toast.makeText(context, R.string.backup_error_share, Toast.LENGTH_SHORT).show()
@@ -195,6 +199,7 @@ internal fun BackupSettingsScreen(
                     else -> onBack()
                 }
             },
+            scrollContent = migration == null,
         ) {
             if (migration != null) {
                 MigrationPanel(migration = migration, onEvent = onEvent)
@@ -303,10 +308,10 @@ private fun BackupWorkOverlay(
 
 private val BackupSettingsAction.icon: ImageVector
     get() = when (this) {
-        BackupSettingsAction.Backup -> Icons.Rounded.Backup
-        BackupSettingsAction.Export -> Icons.Rounded.CloudUpload
-        BackupSettingsAction.Import -> Icons.Rounded.CloudDownload
-        BackupSettingsAction.NearbyShare -> Icons.Rounded.Bluetooth
+        BackupSettingsAction.Backup -> Icons.Outlined.Backup
+        BackupSettingsAction.Export -> Icons.Outlined.CloudUpload
+        BackupSettingsAction.Import -> Icons.Outlined.CloudDownload
+        BackupSettingsAction.NearbyShare -> Icons.Outlined.Bluetooth
     }
 
 private fun formatBackupTime(millis: Long): String {
@@ -335,13 +340,6 @@ private fun Context.shareBackup(uri: Uri): Boolean {
     } catch (_: AndroidRuntimeException) {
         false
     }
-}
-
-private fun Context.reopenApp() {
-    val launch = packageManager.getLaunchIntentForPackage(packageName) ?: return
-    launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
-    startActivity(launch)
-    exitProcess(0)
 }
 
 private fun Context.openAppSettings() {

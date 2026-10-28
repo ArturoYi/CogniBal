@@ -28,11 +28,11 @@
     <string name="theme_dark">Σκούρο</string>
     <string name="theme_dark_subtitle">Απαλότερη αντίθεση για τη νύχτα</string>
     <string name="theme_color">Χρώμα θέματος</string>
-    <string name="theme_color_subtitle">Συγκρατημένα χρώματα, ξεκούραστα για τα μάτια</string>
-    <string name="theme_warm_cream">Ζεστή κρεμ</string>
-    <string name="theme_warm_cream_desc">Απαλό · ζεστό κρεμ φόντο</string>
-    <string name="theme_monochrome">Μονόχρωμο</string>
-    <string name="theme_monochrome_desc">Λιτό · απαλό γκρι μελάνης</string>
+    <string name="theme_color_subtitle">Ένα χρώμα, απαλό και επίπεδο</string>
+    <string name="theme_warm_cream">Απαλό μπλε</string>
+    <string name="theme_warm_cream_desc">Ένα μπλε σε όλη την εφαρμογή</string>
+    <string name="theme_monochrome">Μελάνι</string>
+    <string name="theme_monochrome_desc">Ένα μελάνι, οι ίδιες απαλές κάρτες</string>
     <string name="selected">Επιλεγμένο</string>
     <string name="user_stats">Το CogniBal είναι μαζί σας εδώ και %1$s, με %2$s.</string>
     <string name="surplus_total">Υπόλοιπο</string>
@@ -44,9 +44,7 @@
     <string name="shortcut_assets">Περιουσία</string>
     <string name="shortcut_overview">Επισκόπηση</string>
     <string name="shortcut_coming_soon">Το %1$s έρχεται σύντομα</string>
-    <string name="more_features">Περισσότερα</string>
     <string name="default_currency">Προεπιλεγμένο νόμισμα</string>
-    <string name="haptic_feedback">Δόνηση στο άγγιγμα</string>
     <string name="clear_temp_cache">Εκκαθάριση προσωρινής cache</string>
     <string name="close">Κλείσιμο</string>
     <string name="cancel">Ακύρωση</string>
@@ -63,7 +61,6 @@
     <string name="about_version">Έκδοση %1$s</string>
     <string name="about_description">Το CogniBal είναι μια εφαρμογή λογιστικής με ήρεμη, ευανάγνωστη εμφάνιση. Η διάταξη προσαρμόζεται στην οθόνη, ώστε η παρακολούθηση να μένει σαφής και άνετη.</string>
     <string name="open_source">Άδειες ανοιχτού κώδικα</string>
-    <string name="open_source_toast">Το CogniBal διατίθεται με την άδεια Apache 2.0</string>
     <string name="done">Τέλος</string>
     <string name="security_terms">Όροι υπηρεσίας</string>
     <string name="security_terms_subtitle">Διαβάστε τους όρους</string>

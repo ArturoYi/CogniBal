@@ -1,0 +1,81 @@
+Effective date: October 28, 2026
+
+This policy describes how CogniBal (知余) actually handles information. The current version has no network permission, no developer server, and no advertising or analytics component. Processing happens on your device.
+
+This policy is shown in Simplified Chinese, Traditional Chinese, or English, matching the app language. If the texts differ, the Simplified Chinese text controls.
+
+# 1. Who to contact
+
+The CogniBal developer. Feedback in Settings opens your own email app, addressed to lzm.cyr@gmail.com. You decide whether to send it. Tapping Feedback does not upload the ledger.
+
+# 2. What stays on this device
+
+Only what you enter or choose, such as:
+
+Account name, icon, color, type, balance, note, and whether the account is enabled.
+
+Category name, icon, color, and type.
+
+Bill amount, income, expense, or transfer, category, account, time, and note.
+
+Budget amount, period, alert level, category, and note.
+
+Preferences: theme, light or dark appearance, language, default currency, the budget-alert switch, whether budgets show on the home page, and which version of these documents you accepted.
+
+CogniBal uses this to keep the ledger, show summaries and budgets, send a budget alert you turned on, draw the home-screen widget, and finish a backup or migration you start.
+
+When you change currency, the rate you type is used only to convert amounts already stored. The app does not look up rates online, and it does not keep the rate as its own record.
+
+# 3. What this version does not do
+
+It does not register an account. It does not collect your name, phone number, contacts, an advertising identifier, or usage analytics. It does not upload the ledger to a developer server, because there is no such server. Bluetooth scanning is not used for location.
+
+# 4. System permissions
+
+Notifications: only if you turn on budget alerts and the system allows notifications. The alert is created on the device. It is not a remote push. The switch is off by default.
+
+Bluetooth: only while you use Bluetooth migration, to send an encrypted backup between two devices that both have CogniBal. Scanning is filtered by this app’s service identifier.
+
+Location: on Android 11 and earlier, the system requires location permission before an app can scan for Bluetooth devices. CogniBal does not use it to record location, and it does not use it outside migration.
+
+Email: when you tap Feedback, the system looks for an app that can write mail.
+
+# 5. Backup, migration, and the home-screen widget
+
+You can save the ledger as an encrypted archive on this device, or share that archive through the system share sheet. The archive uses AES-256. The password is built into the app so the file is not opened by a normal unzip. It is not a secret only you know. Anyone who has the file and CogniBal can import it.
+
+Bluetooth migration uses a separate one-time key. That key stays in memory for the transfer and is not written into the archive above.
+
+If you turn on Android or manufacturer device backup, the system may save app data under its own rules. That is controlled by system settings. It is not an upload to CogniBal.
+
+After you add the home-screen widget, it shows the current account’s income, expense, and balance for this month. Anyone who can see the home screen can see those numbers.
+
+# 6. How long it stays
+
+Records remain until you delete them, clear the app’s data, or uninstall. Clearing the temporary cache does not delete the ledger. Importing a backup replaces current accounts, categories, bills, and budgets. If the file cannot be read, the current ledger is left as it is.
+
+After you uninstall, the local copy is removed. A system backup, or a file you already shared, is outside the app’s control.
+
+# 7. No sale of information
+
+The developer does not sell personal information and does not give the ledger to advertisers or data brokers. Data leaves the app’s private storage only when you use the system share sheet, Bluetooth migration, or system backup. Who receives it depends on you or on your system settings.
+
+# 8. Security
+
+Set a device lock. The exported archive is not a substitute. App lock in Settings cannot yet ask you to verify before the app opens, so it is not an active lock.
+
+# 9. Children
+
+CogniBal is not directed at children under 14. Do not let a child enter personal information without a guardian’s consent.
+
+# 10. What you can do
+
+You can view, change, and delete bills, accounts, categories, and budgets in the app. There is no account and no server, so there is no cloud copy for the developer to delete remotely.
+
+# 11. Changes
+
+If this policy changes, the effective date changes. The next time you open the app, it asks you to accept the new version. If you do not agree, stop using the app.
+
+# 12. Contact
+
+lzm.cyr@gmail.com, or Feedback in Settings.

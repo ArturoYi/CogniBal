@@ -14,6 +14,7 @@ import com.example.cognibal.data.backup.bluetooth.BackupBluetooth
 import com.example.cognibal.data.backup.bluetooth.BluetoothReadiness
 import com.example.cognibal.data.backup.bluetooth.MigrationCallbacks
 import com.example.cognibal.data.backup.bluetooth.MigrationException
+import com.example.cognibal.data.backup.bluetooth.MigrationProtocol
 import com.example.cognibal.data.database.AppDatabase
 import com.example.cognibal.di.LedgerEntryPoint
 import com.example.cognibal.screen.feature.settings.backup.state.BackupSettingsAction
@@ -26,10 +27,12 @@ import com.example.cognibal.screen.feature.settings.backup.state.MigrationRole
 import com.example.cognibal.screen.feature.settings.backup.state.MigrationUi
 import dagger.hilt.android.EntryPointAccessors
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,6 +66,8 @@ internal class BackupSettingsViewModel(
     private var engaged = false
     private var failureShown = false
     private var stopSearchOnly = false
+    private var toldFound = false
+    private val searchGeneration = AtomicInteger(0)
     private var codeDeferred: CompletableDeferred<Boolean>? = null
     private var replaceDeferred: CompletableDeferred<Boolean>? = null
 
@@ -87,14 +92,27 @@ internal class BackupSettingsViewModel(
             BackupSettingsUiEvent.StartReceive -> startReceive()
             BackupSettingsUiEvent.Rescan -> rescan()
             is BackupSettingsUiEvent.SelectPeer -> selectPeer(event.address)
-            BackupSettingsUiEvent.CodeMatches -> codeDeferred?.complete(true).also {
+            BackupSettingsUiEvent.CodeMatches -> {
+                if (codeDeferred?.complete(true) != true) return
                 state.update { current ->
                     val code = current.migration as? MigrationUi.Code ?: return@update current
                     current.copy(migration = code.copy(waitingForPeer = true))
                 }
+                toast(R.string.backup_migrate_code_wait, long = true)
             }
             BackupSettingsUiEvent.CodeDiffers -> codeDeferred?.complete(false)
-            BackupSettingsUiEvent.ConfirmReplace -> replaceDeferred?.complete(true)
+            BackupSettingsUiEvent.ConfirmReplace -> {
+                if (replaceDeferred?.complete(true) != true) return
+                state.update {
+                    it.copy(
+                        migration = MigrationUi.Transfer(
+                            labelRes = R.string.backup_migrate_replace_accepted,
+                            progress = null,
+                        ),
+                    )
+                }
+                toast(R.string.backup_migrate_replace_accepted, long = true)
+            }
             BackupSettingsUiEvent.DeclineReplace -> replaceDeferred?.complete(false)
             BackupSettingsUiEvent.RetryMigration -> retry()
             BackupSettingsUiEvent.CopyDiagnostic -> copyDiagnostic()
@@ -250,8 +268,17 @@ internal class BackupSettingsViewModel(
     }
 
     private fun openScan() {
+        searchGeneration.incrementAndGet()
+        toldFound = false
         state.update {
-            it.copy(migration = MigrationUi.Scan(devices = emptyList(), scanning = true, paused = false))
+            it.copy(
+                migration = MigrationUi.Scan(
+                    devices = emptyList(),
+                    scanning = true,
+                    paused = false,
+                    secondsLeft = searchSeconds,
+                ),
+            )
         }
         observeScan()
         try {
@@ -263,37 +290,65 @@ internal class BackupSettingsViewModel(
             return
         }
         armScanTimer()
+        toast(R.string.backup_migrate_scan_started, long = true)
     }
 
     private fun beginAdvertise() {
         if (!running.compareAndSet(false, true)) return
+        searchGeneration.incrementAndGet()
         failureShown = false
         stopSearchOnly = false
         engaged = false
-        state.update { it.copy(migration = MigrationUi.Receive(waiting = true, paused = false)) }
+        state.update {
+            it.copy(
+                migration = MigrationUi.Receive(
+                    waiting = true,
+                    paused = false,
+                    secondsLeft = searchSeconds,
+                    timedOut = false,
+                ),
+            )
+        }
         sessionJob = viewModelScope.launch {
+            val job = currentCoroutineContext()[Job]
             try {
                 bluetooth.receive(callbacks(MigrationRole.Receive))
+                if (sessionJob !== job) return@launch
                 toast(R.string.backup_migrate_received)
                 state.update { it.copy(migration = null) }
                 emit(BackupSettingsEffect.RestartApp)
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
-                Log.w(TAG, "蓝牙接收没有完成", exception)
-                if (!failureShown) showFailure(exception, MigrationRole.Receive)
+                if (!failureShown && !stopSearchOnly && sessionJob === job) {
+                    Log.w(TAG, "蓝牙接收没有完成", exception)
+                    showFailure(exception, MigrationRole.Receive)
+                }
             } finally {
-                running.set(false)
-                engaged = false
+                if (sessionJob === job) {
+                    running.set(false)
+                    engaged = false
+                }
             }
         }
+        armReceiveTimer()
+        toast(R.string.backup_migrate_receive_started, long = true)
     }
 
     private fun rescan() {
         if (running.get() || state.value.migration !is MigrationUi.Scan) return
+        searchGeneration.incrementAndGet()
+        toldFound = false
         state.update { current ->
             val scan = current.migration as? MigrationUi.Scan ?: return@update current
-            current.copy(migration = scan.copy(scanning = true, paused = false))
+            current.copy(
+                migration = scan.copy(
+                    devices = emptyList(),
+                    scanning = true,
+                    paused = false,
+                    secondsLeft = searchSeconds,
+                ),
+            )
         }
         try {
             bluetooth.startDiscovery()
@@ -304,10 +359,12 @@ internal class BackupSettingsViewModel(
             return
         }
         armScanTimer()
+        toast(R.string.backup_migrate_scan_started, long = true)
     }
 
     private fun selectPeer(address: String) {
         if (!running.compareAndSet(false, true)) return
+        searchGeneration.incrementAndGet()
         scanTimer?.cancel()
         bluetooth.stopScan()
         failureShown = false
@@ -316,18 +373,24 @@ internal class BackupSettingsViewModel(
         role = MigrationRole.Send
         state.update { it.copy(migration = MigrationUi.Connecting) }
         sessionJob = viewModelScope.launch {
+            val job = currentCoroutineContext()[Job]
             try {
                 bluetooth.send(address, callbacks(MigrationRole.Send))
+                if (sessionJob !== job) return@launch
                 toast(R.string.backup_migrate_sent)
                 state.update { it.copy(migration = null) }
             } catch (exception: CancellationException) {
                 throw exception
             } catch (exception: Exception) {
-                Log.w(TAG, "蓝牙发送没有完成", exception)
-                if (!failureShown) showFailure(exception, MigrationRole.Send)
+                if (!failureShown && !stopSearchOnly && sessionJob === job) {
+                    Log.w(TAG, "蓝牙发送没有完成", exception)
+                    showFailure(exception, MigrationRole.Send)
+                }
             } finally {
-                running.set(false)
-                engaged = false
+                if (sessionJob === job) {
+                    running.set(false)
+                    engaged = false
+                }
             }
         }
     }
@@ -348,12 +411,19 @@ internal class BackupSettingsViewModel(
             MigrationUi.Role,
             is MigrationUi.Failed,
             -> state.update { it.copy(migration = null) }
-            is MigrationUi.Scan,
-            is MigrationUi.Receive,
-            -> {
+            is MigrationUi.Scan -> {
+                val scanning = current.scanning
                 stopSearchOnly = true
                 pauseSearch()
                 state.update { it.copy(migration = MigrationUi.Role) }
+                if (scanning) toast(R.string.backup_migrate_stopped)
+            }
+            is MigrationUi.Receive -> {
+                val waiting = current.waiting
+                stopSearchOnly = true
+                pauseSearch()
+                state.update { it.copy(migration = MigrationUi.Role) }
+                if (waiting) toast(R.string.backup_migrate_stopped)
             }
             else -> abortConnected()
         }
@@ -363,14 +433,18 @@ internal class BackupSettingsViewModel(
         if (expectingSystemUi) return
         when (val current = state.value.migration) {
             is MigrationUi.Scan -> {
+                if (!current.scanning) return
+                searchGeneration.incrementAndGet()
                 bluetooth.stopScan()
                 scanTimer?.cancel()
                 state.update { it.copy(migration = current.copy(scanning = false, paused = true)) }
+                toast(R.string.backup_migrate_paused, long = true)
             }
             is MigrationUi.Receive -> if (current.waiting) {
                 stopSearchOnly = true
                 pauseSearch()
                 state.update { it.copy(migration = current.copy(waiting = false, paused = true)) }
+                toast(R.string.backup_migrate_paused, long = true)
             }
             MigrationUi.Connecting,
             is MigrationUi.Code,
@@ -388,19 +462,27 @@ internal class BackupSettingsViewModel(
             MigrationUi.Role,
             is MigrationUi.Failed,
             -> state.update { it.copy(migration = null) }
-            is MigrationUi.Scan,
-            is MigrationUi.Receive,
-            -> {
+            is MigrationUi.Scan -> {
+                val scanning = current.scanning
                 stopSearchOnly = true
                 pauseSearch()
                 state.update { it.copy(migration = null) }
+                if (scanning) toast(R.string.backup_migrate_stopped)
+            }
+            is MigrationUi.Receive -> {
+                val waiting = current.waiting
+                stopSearchOnly = true
+                pauseSearch()
+                state.update { it.copy(migration = null) }
+                if (waiting) toast(R.string.backup_migrate_stopped)
             }
             else -> abortConnected()
         }
     }
 
-    private fun pauseSearch() {
-        scanTimer?.cancel()
+    private fun pauseSearch(cancelTimer: Boolean = true) {
+        searchGeneration.incrementAndGet()
+        if (cancelTimer) scanTimer?.cancel()
         bluetooth.stopDiscovery()
         if (sessionJob?.isActive == true) {
             bluetooth.cancel()
@@ -412,6 +494,7 @@ internal class BackupSettingsViewModel(
         failureShown = true
         engaged = false
         ticker?.cancel()
+        scanTimer?.cancel()
         codeDeferred?.cancel()
         replaceDeferred?.cancel()
         val currentRole = role ?: MigrationRole.Send
@@ -427,6 +510,7 @@ internal class BackupSettingsViewModel(
                 ),
             )
         }
+        toast(R.string.backup_migrate_aborted)
         bluetooth.cancel()
         sessionJob?.cancel()
     }
@@ -435,13 +519,21 @@ internal class BackupSettingsViewModel(
         return object : MigrationCallbacks {
             override fun onConnected() {
                 engaged = true
+                searchGeneration.incrementAndGet()
+                scanTimer?.cancel()
                 state.update { it.copy(migration = MigrationUi.Connecting) }
             }
 
             override fun onCode(digits: String) {
                 codeDeferred = CompletableDeferred()
                 state.update {
-                    it.copy(migration = MigrationUi.Code(digits = digits, secondsLeft = 60, waitingForPeer = false))
+                    it.copy(
+                        migration = MigrationUi.Code(
+                            digits = digits,
+                            secondsLeft = confirmSeconds,
+                            waitingForPeer = false,
+                        ),
+                    )
                 }
                 startTicker()
             }
@@ -455,6 +547,7 @@ internal class BackupSettingsViewModel(
                     state.update { it.copy(migration = MigrationUi.Replace) }
                 } else {
                     state.update { it.copy(migration = MigrationUi.WaitReplace) }
+                    toast(R.string.backup_migrate_replace_prompt, long = true)
                 }
             }
 
@@ -467,6 +560,7 @@ internal class BackupSettingsViewModel(
                     R.string.backup_migrate_sending
                 }
                 state.update { it.copy(migration = MigrationUi.Transfer(label, progress = null)) }
+                toast(R.string.backup_migrate_transfer_started, long = true)
             }
 
             override fun onProgress(sent: Long, total: Long) {
@@ -482,7 +576,7 @@ internal class BackupSettingsViewModel(
     private fun startTicker() {
         ticker?.cancel()
         ticker = viewModelScope.launch {
-            for (left in 60 downTo 0) {
+            for (left in confirmSeconds downTo 0) {
                 state.update { current ->
                     val code = current.migration as? MigrationUi.Code ?: return@update current
                     current.copy(migration = code.copy(secondsLeft = left))
@@ -497,30 +591,111 @@ internal class BackupSettingsViewModel(
         scanObserve?.cancel()
         scanObserve = viewModelScope.launch {
             bluetooth.scan.collect { scan ->
+                val devices = scan.devices.map { peer -> BluetoothPeerUi(peer.address, peer.name) }
                 state.update { current ->
                     val ui = current.migration as? MigrationUi.Scan ?: return@update current
+                    // 倒计时结束后迟到的扫描结果不再把界面拉回“正在扫描”。
+                    val scanning = scan.scanning && !ui.paused && (ui.scanning || ui.secondsLeft > 0)
                     current.copy(
                         migration = ui.copy(
-                            devices = scan.devices.map { peer -> BluetoothPeerUi(peer.address, peer.name) },
-                            scanning = scan.scanning,
+                            devices = devices,
+                            scanning = scanning,
                         ),
                     )
+                }
+                if (!toldFound && devices.isNotEmpty() && state.value.migration is MigrationUi.Scan) {
+                    toldFound = true
+                    toast(R.string.backup_migrate_found, long = true)
                 }
             }
         }
     }
 
     private fun armScanTimer() {
+        val generation = searchGeneration.get()
         scanTimer?.cancel()
         scanTimer = viewModelScope.launch {
-            delay(60_000)
+            var left = searchSeconds
+            while (left > 0) {
+                if (generation != searchGeneration.get()) return@launch
+                val scan = state.value.migration as? MigrationUi.Scan
+                if (scan == null || scan.paused || !scan.scanning) return@launch
+                state.update { current ->
+                    val latest = current.migration as? MigrationUi.Scan ?: return@update current
+                    if (!latest.scanning || latest.paused) return@update current
+                    current.copy(migration = latest.copy(secondsLeft = left))
+                }
+                delay(1_000)
+                left -= 1
+            }
+            if (generation != searchGeneration.get()) return@launch
+            val scan = state.value.migration as? MigrationUi.Scan ?: return@launch
+            if (scan.paused || !scan.scanning) return@launch
             bluetooth.stopScan()
+            state.update { current ->
+                if (generation != searchGeneration.get()) return@update current
+                val latest = current.migration as? MigrationUi.Scan ?: return@update current
+                if (latest.paused) return@update current
+                current.copy(migration = latest.copy(scanning = false, secondsLeft = 0))
+            }
+            if (
+                generation == searchGeneration.get() &&
+                (state.value.migration as? MigrationUi.Scan)?.secondsLeft == 0
+            ) {
+                toast(R.string.backup_migrate_scan_done, long = true)
+            }
+        }
+    }
+
+    /** 接收端和扫描一样只等一轮。到时停下广播，页面上可以再点一次。 */
+    private fun armReceiveTimer() {
+        val generation = searchGeneration.get()
+        scanTimer?.cancel()
+        scanTimer = viewModelScope.launch {
+            var left = searchSeconds
+            while (left > 0) {
+                if (generation != searchGeneration.get() || engaged) return@launch
+                val receive = state.value.migration as? MigrationUi.Receive
+                if (receive == null || !receive.waiting || receive.paused) return@launch
+                state.update { current ->
+                    val latest = current.migration as? MigrationUi.Receive ?: return@update current
+                    if (!latest.waiting || latest.paused || engaged) return@update current
+                    current.copy(migration = latest.copy(secondsLeft = left))
+                }
+                delay(1_000)
+                left -= 1
+            }
+            if (generation != searchGeneration.get() || engaged) return@launch
+            state.update { current ->
+                if (generation != searchGeneration.get() || engaged) return@update current
+                val latest = current.migration as? MigrationUi.Receive ?: return@update current
+                if (!latest.waiting || latest.paused) return@update current
+                current.copy(
+                    migration = latest.copy(
+                        waiting = false,
+                        paused = false,
+                        secondsLeft = 0,
+                        timedOut = true,
+                    ),
+                )
+            }
+            val expired = (state.value.migration as? MigrationUi.Receive)?.timedOut == true
+            if (!expired || generation != searchGeneration.get() || engaged) return@launch
+            stopSearchOnly = true
+            val job = sessionJob
+            bluetooth.cancel()
+            job?.cancel()
+            if ((state.value.migration as? MigrationUi.Receive)?.timedOut == true) {
+                toast(R.string.backup_migrate_wait_timeout, long = true)
+            }
         }
     }
 
     private fun showFailure(error: Throwable, owner: MigrationRole) {
         failureShown = true
+        searchGeneration.incrementAndGet()
         ticker?.cancel()
+        scanTimer?.cancel()
         state.update {
             it.copy(
                 migration = MigrationUi.Failed(
@@ -530,6 +705,7 @@ internal class BackupSettingsViewModel(
                 ),
             )
         }
+        toast(messageRes(error))
     }
 
     private fun copyDiagnostic() {
@@ -579,8 +755,8 @@ internal class BackupSettingsViewModel(
         state.update { it.copy(savedAtMillis = savedAt) }
     }
 
-    private fun toast(@StringRes messageRes: Int) {
-        emit(BackupSettingsEffect.Toast(messageRes))
+    private fun toast(@StringRes messageRes: Int, long: Boolean = false) {
+        emit(BackupSettingsEffect.Toast(messageRes, long))
     }
 
     private fun emit(effect: BackupSettingsEffect) {
@@ -618,6 +794,8 @@ internal class BackupSettingsViewModel(
 
     companion object {
         private const val TAG: String = "LedgerBackup"
+        private val searchSeconds: Int = (MigrationProtocol.SCAN_MILLIS / 1_000L).toInt()
+        private val confirmSeconds: Int = (MigrationProtocol.CONFIRM_MILLIS / 1_000L).toInt()
 
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {

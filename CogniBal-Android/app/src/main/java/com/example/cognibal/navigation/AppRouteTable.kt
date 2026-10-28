@@ -16,6 +16,8 @@ import com.example.cognibal.screen.feature.settings.appearance.AppearanceSetting
 import com.example.cognibal.screen.feature.settings.backup.BackupSettingsRoute
 import com.example.cognibal.screen.feature.settings.overview.OverviewRoute
 import com.example.cognibal.screen.feature.settings.reports.ReportsRoute
+import com.example.cognibal.screen.feature.settings.more.MoreSettingsRoute
+import com.example.cognibal.screen.feature.legal.LegalDocumentRoute
 import com.example.cognibal.screen.feature.settings.security.SecuritySettingsRoute
 import com.example.cognibal.screen.feature.settings.budget.BudgetRoute
 import com.example.cognibal.screen.feature.settings.assets.AssetsRoute
@@ -94,6 +96,21 @@ internal fun EntryProviderScope<NavKey>.appRoutes(navigator: AppNavigator) {
         metadata = ListDetailSceneStrategy.detailPane(),
     ) {
         SecuritySettingsRoute(
+            onBack = dropUnlessResumed(block = navigator::back),
+            onOpenDocument = { kind -> navigator.navigate(LegalPage(kind)) },
+        )
+    }
+    entry<LegalPage> { key ->
+        LegalDocumentRoute(
+            kind = key.kind,
+            onBack = dropUnlessResumed(block = navigator::back),
+            modifier = Modifier.fillMaxSize(),
+        )
+    }
+    entry<MoreSettings>(
+        metadata = ListDetailSceneStrategy.detailPane(),
+    ) {
+        MoreSettingsRoute(
             onBack = dropUnlessResumed(block = navigator::back),
         )
     }

@@ -8,24 +8,37 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -83,27 +96,77 @@ internal fun BillDateDialog(
     }
 }
 
+/**
+ * 时间从底部弹出。
+ *
+ * 弹层窗口自己会跟着输入法上移。这里只补导航栏露出输入法的那一截，
+ * 键盘升起时不再垫出第二段空白，收起后按钮仍停在系统栏上方。
+ */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun BillTimeDialog(
+internal fun BillTimeSheet(
     hour: Int,
     minute: Int,
-    second: Int,
-    onConfirm: (hour: Int, minute: Int, second: Int) -> Unit,
+    onConfirm: (hour: Int, minute: Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val colors = MaterialTheme.appColors
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var value by remember {
-        mutableStateOf(WheelDateTime.of(2000, 1, 1, hour, minute, second))
+        mutableStateOf(WheelDateTime.of(2000, 1, 1, hour, minute))
     }
-    WheelConfirmDialog(
-        title = stringResource(R.string.bill_entry_time),
-        onConfirm = { onConfirm(value.hour, value.minute, value.second) },
-        onDismiss = onDismiss,
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = colors.cardBackground,
+        contentColor = colors.textPrimary,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
+        tonalElevation = 0.dp,
+        contentWindowInsets = {
+            WindowInsets.navigationBars.exclude(WindowInsets.ime).only(WindowInsetsSides.Bottom)
+        },
     ) {
-        CogniBalWheelDateTimePicker(
-            value = value,
-            onValueChange = { value = it },
-            mode = WheelDateTimeMode.Time,
-        )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(R.string.bill_entry_time),
+                color = colors.textPrimary,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(horizontal = 24.dp),
+            )
+            Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
+                CogniBalWheelDateTimePicker(
+                    value = value,
+                    onValueChange = { value = it },
+                    mode = WheelDateTimeMode.Time,
+                )
+            }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp)
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onDismiss) {
+                    Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
+                }
+                TextButton(onClick = { onConfirm(value.hour, value.minute) }) {
+                    Text(
+                        text = stringResource(R.string.done),
+                        color = colors.primary,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -218,7 +281,7 @@ internal fun AccountPickDialog(
                         )
                         if (selected) {
                             Icon(
-                                imageVector = Icons.Rounded.Check,
+                                imageVector = Icons.Outlined.Check,
                                 contentDescription = null,
                                 tint = colors.primary,
                             )
@@ -258,6 +321,7 @@ internal fun CreateCategoryDialog(
             Column(
                 modifier = Modifier
                     .heightIn(max = 420.dp)
+                    .imePadding()
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
@@ -272,8 +336,8 @@ internal fun CreateCategoryDialog(
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedTextColor = colors.textPrimary,
                         unfocusedTextColor = colors.textPrimary,
-                        focusedBorderColor = colors.primary,
-                        unfocusedBorderColor = colors.divider,
+                        focusedBorderColor = colors.primary.copy(alpha = 0.45f),
+                        unfocusedBorderColor = colors.cardBackground,
                         focusedLabelColor = colors.primary,
                         unfocusedLabelColor = colors.textSecondary,
                         cursorColor = colors.primary,

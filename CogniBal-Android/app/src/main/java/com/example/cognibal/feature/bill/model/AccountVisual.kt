@@ -28,6 +28,18 @@ internal fun AccountType.labelRes(): Int = when (this) {
     AccountType.Other -> R.string.account_type_other
 }
 
+/** 类型和入库图标一一对应。选类型就是选图标，不再单独挑。 */
+internal fun AccountType.pairedIcon(): AccountIcon = when (this) {
+    AccountType.Cash -> AccountIcon.Cash
+    AccountType.DebitCard -> AccountIcon.Bank
+    AccountType.CreditCard -> AccountIcon.Card
+    AccountType.EWallet -> AccountIcon.Phone
+    AccountType.Other -> AccountIcon.Other
+}
+
+/** 账户类型图标。圆角字形，卡面和类型选择用同一支。读屏仍走 [labelRes]。 */
+internal fun AccountType.icon(): ImageVector = pairedIcon().image
+
 /**
  * 账户图标。 [storageKey] 写入账户表的 icon 列，换语言不会改已经入库的值。
  */

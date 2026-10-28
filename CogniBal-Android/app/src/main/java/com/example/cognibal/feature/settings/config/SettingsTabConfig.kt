@@ -2,7 +2,7 @@ package com.example.cognibal.screen.feature.settings.config
 
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.example.cognibal.R
 
@@ -13,5 +13,5 @@ import com.example.cognibal.R
  */
 internal object SettingsTabConfig {
     @StringRes val labelRes: Int = R.string.tab_settings
-    val icon: ImageVector = Icons.Rounded.Settings
+    val icon: ImageVector = Icons.Outlined.Settings
 }

@@ -1,25 +1,21 @@
 package com.example.cognibal.screen.feature.settings
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,33 +24,24 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.annotation.StringRes
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AccountBalance
-import androidx.compose.material.icons.rounded.AccountBalanceWallet
-import androidx.compose.material.icons.rounded.BarChart
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.ChevronRight
-import androidx.compose.material.icons.rounded.Contrast
-import androidx.compose.material.icons.rounded.DarkMode
-import androidx.compose.material.icons.rounded.LightMode
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Payments
-import androidx.compose.material.icons.rounded.PieChart
-import androidx.compose.material.icons.rounded.Savings
-import androidx.compose.material.icons.rounded.Storage
-import androidx.compose.material.icons.rounded.Vibration
-import androidx.compose.material.icons.rounded.Visibility
-import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.outlined.Contrast
+import androidx.compose.material.icons.outlined.DarkMode
+import androidx.compose.material.icons.outlined.LightMode
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.PieChart
+import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -71,7 +58,6 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Shape
@@ -90,12 +76,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cognibal.R
-import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
-import com.example.cognibal.screen.feature.settings.model.AppPreferences
 import com.example.cognibal.screen.feature.settings.model.CurrencyPreference
 import com.example.cognibal.screen.feature.settings.model.DarkModePreference
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.AppThemeStyle
+import com.example.cognibal.ui.theme.CogniBalCardElevation
 import com.example.cognibal.ui.theme.LocalAppThemeStyle
 import com.example.cognibal.ui.theme.LocalThemeReveal
 import com.example.cognibal.ui.theme.MonochromeDarkAppColors
@@ -130,148 +115,6 @@ fun UserStatsHeader(
 }
 
 /**
- * 分层二：用户总盈余卡片。
- */
-@Composable
-fun SurplusCard(
-    surplus: Long,
-    surplusOverflow: Boolean,
-    isVisible: Boolean,
-    currencySymbol: String,
-    onToggleVisibility: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.appColors
-    val amountColor = when {
-        surplusOverflow -> colors.textSecondary
-        surplus < 0L -> colors.expense
-        else -> colors.textPrimary
-    }
-
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp))
-            .interactiveClick(onClick = onToggleVisibility),
-        shape = RoundedCornerShape(20.dp),
-        color = colors.cardBackground,
-        shadowElevation = 1.dp,
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            colors.primaryContainer.copy(alpha = if (colors.isDark) 0.16f else 0.28f),
-                            colors.cardBackground,
-                        ),
-                    ),
-                )
-                .padding(horizontal = 18.dp, vertical = 16.dp),
-        ) {
-            Column(modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(30.dp)
-                                .background(colors.primary.copy(alpha = if (colors.isDark) 0.18f else 0.12f), RoundedCornerShape(8.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Rounded.AccountBalanceWallet,
-                                contentDescription = null,
-                                tint = colors.primary,
-                                modifier = Modifier.size(17.dp),
-                            )
-                        }
-                        Text(
-                            text = stringResource(R.string.surplus_total),
-                            color = colors.textSecondary,
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium,
-                        )
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(30.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(colors.primary.copy(alpha = if (colors.isDark) 0.18f else 0.12f)),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = if (isVisible) Icons.Rounded.Visibility else Icons.Rounded.VisibilityOff,
-                            contentDescription = stringResource(
-                                if (isVisible) R.string.hide_amount else R.string.show_amount,
-                            ),
-                            tint = colors.primary,
-                            modifier = Modifier.size(17.dp),
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                AnimatedContent(
-                    targetState = isVisible,
-                    transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(180)) },
-                    label = "surplusAmount",
-                ) { visible ->
-                    if (visible && surplusOverflow) {
-                        Text(
-                            text = stringResource(R.string.account_balance_overflow),
-                            color = amountColor,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    } else if (visible) {
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                        ) {
-                            Text(
-                                text = currencySymbol,
-                                color = amountColor,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(bottom = 2.dp, end = 4.dp),
-                            )
-                            Text(
-                                text = formatMinorAmount(surplus),
-                                color = amountColor,
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = (-0.5).sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    } else {
-                        Text(
-                            text = "••••••",
-                            color = colors.textPrimary,
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 2.sp,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
  * 设置页快捷账务工具入口。
  *
  * 总览、统计、报表、预算、资产打开对应页面。
@@ -280,62 +123,61 @@ internal enum class SettingsShortcut(
     @StringRes val labelRes: Int,
     val icon: ImageVector,
 ) {
-    Overview(R.string.shortcut_overview, Icons.Rounded.CalendarMonth),
-    Statistics(R.string.shortcut_statistics, Icons.Rounded.PieChart),
-    Reports(R.string.shortcut_reports, Icons.Rounded.BarChart),
-    Budget(R.string.shortcut_budget, Icons.Rounded.Savings),
-    Assets(R.string.shortcut_assets, Icons.Rounded.AccountBalance),
+    Overview(R.string.shortcut_overview, Icons.Outlined.CalendarMonth),
+    Statistics(R.string.shortcut_statistics, Icons.Outlined.PieChart),
+    Reports(R.string.shortcut_reports, Icons.Outlined.BarChart),
+    Budget(R.string.shortcut_budget, Icons.Outlined.Savings),
+    Assets(R.string.shortcut_assets, Icons.Outlined.AccountBalance),
 }
 
 /**
- * 总览和统计并排。其余入口按 [columns] 折行。
- * 宽屏两列时用横向条目，窄屏四列时图标在上。
+ * 总览、统计、报表、预算、资产排成一行，收在同一张卡片里，横跨这一页的内容宽度。
+ *
+ * 不再给每个入口单独做卡片，手机上才能留出字距。每格至少 48.dp；更窄时改为横向滚动。
+ * 文案固定 12.sp、单行居中，放不下再末尾省略。读屏拿到完整文案。
  */
 @Composable
 internal fun SettingsShortcutBar(
     onShortcutClick: (SettingsShortcut) -> Unit,
-    columns: Int = 4,
     modifier: Modifier = Modifier,
 ) {
-    val featured = listOf(SettingsShortcut.Overview, SettingsShortcut.Statistics)
-    val tools = SettingsShortcut.entries.filter { shortcut -> shortcut !in featured }
-    Column(
+    val colors = MaterialTheme.appColors
+    val scrollState = rememberScrollState()
+    Surface(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = colors.cardBackground,
+        shadowElevation = CogniBalCardElevation,
     ) {
-        Row(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Max),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                .padding(horizontal = 4.dp, vertical = 4.dp),
         ) {
-            featured.forEach { shortcut ->
-                SettingsShortcutItem(
-                    shortcut = shortcut,
-                    isGrid = true,
-                    onClick = dropUnlessResumed { onShortcutClick(shortcut) },
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight(),
-                )
-            }
-        }
-        tools.chunked(columns).forEach { rowItems ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                rowItems.forEach { shortcut ->
-                    SettingsShortcutItem(
-                        shortcut = shortcut,
-                        isGrid = columns <= 2,
-                        onClick = dropUnlessResumed { onShortcutClick(shortcut) },
-                        modifier = Modifier.weight(1f),
-                    )
+            val shortcuts = SettingsShortcut.entries
+            val fits = maxWidth / shortcuts.size >= ShortcutMinWidth
+            if (fits) {
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    shortcuts.forEach { shortcut ->
+                        SettingsShortcutItem(
+                            shortcut = shortcut,
+                            onClick = dropUnlessResumed { onShortcutClick(shortcut) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
-                if (columns <= 2) {
-                    repeat(columns - rowItems.size) {
-                        Spacer(modifier = Modifier.weight(1f))
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(scrollState),
+                ) {
+                    shortcuts.forEach { shortcut ->
+                        SettingsShortcutItem(
+                            shortcut = shortcut,
+                            onClick = dropUnlessResumed { onShortcutClick(shortcut) },
+                            modifier = Modifier.width(ShortcutMinWidth),
+                        )
                     }
                 }
             }
@@ -343,88 +185,51 @@ internal fun SettingsShortcutBar(
     }
 }
 
+private val ShortcutMinWidth = 48.dp
+
 @Composable
 private fun SettingsShortcutItem(
     shortcut: SettingsShortcut,
-    isGrid: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
-    val shape = RoundedCornerShape(16.dp)
     val iconBg = colors.primary.copy(alpha = if (colors.isDark) 0.18f else 0.12f)
+    val label = stringResource(shortcut.labelRes)
 
-    Surface(
+    Column(
         modifier = modifier
-            .clip(shape)
-            .interactiveClick(onClick = onClick),
-        shape = shape,
-        color = colors.cardBackground,
-        shadowElevation = 1.dp,
+            .clip(RoundedCornerShape(12.dp))
+            .interactiveClick(onClick = onClick)
+            .padding(horizontal = 2.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        if (isGrid) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(iconBg, RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = shortcut.icon,
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(19.dp),
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(shortcut.labelRes),
-                    color = colors.textPrimary,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        } else {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp, horizontal = 4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(36.dp)
-                        .background(iconBg, RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = shortcut.icon,
-                        contentDescription = null,
-                        tint = colors.primary,
-                        modifier = Modifier.size(19.dp),
-                    )
-                }
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = stringResource(shortcut.labelRes),
-                    color = colors.textPrimary,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .background(iconBg, RoundedCornerShape(10.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = shortcut.icon,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(18.dp),
+            )
         }
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(
+            text = label,
+            modifier = Modifier.fillMaxWidth(),
+            color = colors.textPrimary,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -441,9 +246,9 @@ fun SettingsSectionCard(
     val colors = MaterialTheme.appColors
     Surface(
         color = colors.cardBackground,
-        shape = RoundedCornerShape(20.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         modifier = modifier.fillMaxWidth(),
-        shadowElevation = 1.dp,
+        shadowElevation = CogniBalCardElevation,
     ) {
         Column(
             modifier = Modifier
@@ -534,7 +339,7 @@ fun SettingActionItem(
 
         val mirrorChevron = LocalLayoutDirection.current == LayoutDirection.Rtl
         Icon(
-            imageVector = Icons.Rounded.ChevronRight,
+            imageVector = Icons.Outlined.ChevronRight,
             contentDescription = null,
             tint = colors.textTertiary.copy(alpha = 0.7f),
             modifier = Modifier
@@ -544,91 +349,10 @@ fun SettingActionItem(
     }
 }
 
-/**
- * 设置项：开关行组件
- */
-@Composable
-fun SettingSwitchItem(
-    icon: ImageVector,
-    title: String,
-    subtitle: String = "",
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val colors = MaterialTheme.appColors
-
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(
-                role = Role.Switch,
-                onClick = { onCheckedChange(!checked) },
-            )
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Box(
-            modifier = Modifier
-                .size(34.dp)
-                .background(colors.primary.copy(alpha = if (colors.isDark) 0.18f else 0.12f), RoundedCornerShape(10.dp)),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = colors.primary,
-                modifier = Modifier.size(18.dp),
-            )
-        }
-
-        Spacer(modifier = Modifier.width(12.dp))
-
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = title,
-                color = colors.textPrimary,
-                fontSize = 14.5.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            if (subtitle.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = subtitle,
-                    color = colors.textTertiary,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.width(10.dp))
-
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            colors = SwitchDefaults.colors(
-                checkedThumbColor = colors.onPrimary,
-                checkedTrackColor = colors.primary,
-                uncheckedThumbColor = colors.textTertiary,
-                uncheckedTrackColor = colors.tagBackground,
-            ),
-        )
-    }
-}
-
-/**
- * 细微分割线组件（轻柔中性灰微弱划分，无突兀边框感）
- */
+/** 设置项之间留白，不再画分割线。 */
 @Composable
 fun SettingsDivider(modifier: Modifier = Modifier) {
-    val colors = MaterialTheme.appColors
-    HorizontalDivider(
-        modifier = modifier.padding(vertical = 2.dp),
-        thickness = 0.5.dp,
-        color = colors.divider.copy(alpha = 0.45f),
-    )
+    Spacer(modifier.height(4.dp))
 }
 
 @Composable
@@ -680,7 +404,7 @@ fun ThemeModeSelector(
             .padding(horizontal = 4.dp, vertical = 8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SettingsItemIcon(icon = Icons.Rounded.Contrast)
+            SettingsItemIcon(icon = Icons.Outlined.Contrast)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -715,9 +439,9 @@ fun ThemeModeSelector(
             DarkModePreference.entries.forEach { option ->
                 val isSelected = option == shownPreference
                 val icon = when (option) {
-                    DarkModePreference.FOLLOW_SYSTEM -> Icons.Rounded.Contrast
-                    DarkModePreference.LIGHT -> Icons.Rounded.LightMode
-                    DarkModePreference.DARK -> Icons.Rounded.DarkMode
+                    DarkModePreference.FOLLOW_SYSTEM -> Icons.Outlined.Contrast
+                    DarkModePreference.LIGHT -> Icons.Outlined.LightMode
+                    DarkModePreference.DARK -> Icons.Outlined.DarkMode
                 }
 
                 val containerColor = if (isSelected) colors.cardBackground else Color.Transparent
@@ -825,7 +549,7 @@ private fun DarkModePreference.showsDarkTheme(systemDark: Boolean): Boolean = wh
 }
 
 /**
- * 主题色：暖奶油青绿、黑白色。
+ * 主题色：柔和蓝、墨色。两套都是同一种颜色贯穿。
  */
 @Composable
 fun ThemeStyleSelector(
@@ -841,7 +565,7 @@ fun ThemeStyleSelector(
             .padding(horizontal = 4.dp, vertical = 8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SettingsItemIcon(icon = Icons.Rounded.Palette)
+            SettingsItemIcon(icon = Icons.Outlined.Palette)
             Spacer(modifier = Modifier.width(14.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -899,7 +623,7 @@ private fun ThemeStyleCard(
     val palette = ThemeCardPalette(
         primary = swatches.primary,
         secondary = swatches.tagBackground,
-        expense = swatches.expense,
+        expense = swatches.chartExpense,
     )
 
     val shape = RoundedCornerShape(14.dp)
@@ -940,7 +664,7 @@ private fun ThemeStyleCard(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector = Icons.Rounded.Check,
+                            imageVector = Icons.Outlined.Check,
                             contentDescription = stringResource(R.string.selected),
                             tint = colors.onPrimary,
                             modifier = Modifier.size(11.dp),
@@ -983,77 +707,6 @@ private fun ThemeStyleCard(
                 fontSize = 11.sp,
             )
     }
-}
-
-/**
- * 更多功能弹窗（货币符号、触感反馈、清理缓存）
- */
-@Composable
-fun MoreSettingsDialog(
-    preferences: AppPreferences,
-    cacheSizeText: String,
-    onOpenCurrencySelect: () -> Unit,
-    onHapticFeedbackChange: (Boolean) -> Unit,
-    onOpenClearCache: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val colors = MaterialTheme.appColors
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.more_features),
-                color = colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                SettingActionItem(
-                    icon = Icons.Rounded.Payments,
-                    title = stringResource(R.string.default_currency),
-                    valueText = preferences.currency.symbol,
-                    onClick = {
-                        onDismiss()
-                        onOpenCurrencySelect()
-                    },
-                )
-
-                SettingsDivider()
-
-                SettingSwitchItem(
-                    icon = Icons.Rounded.Vibration,
-                    title = stringResource(R.string.haptic_feedback),
-                    checked = preferences.hapticFeedback,
-                    onCheckedChange = onHapticFeedbackChange,
-                )
-
-                SettingsDivider()
-
-                SettingActionItem(
-                    icon = Icons.Rounded.Storage,
-                    title = stringResource(R.string.clear_temp_cache),
-                    valueText = cacheSizeText,
-                    onClick = {
-                        onDismiss()
-                        onOpenClearCache()
-                    },
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(
-                    text = stringResource(R.string.close),
-                    color = colors.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        },
-        containerColor = colors.cardBackground,
-        shape = RoundedCornerShape(20.dp),
-    )
 }
 
 /**

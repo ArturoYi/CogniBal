@@ -37,9 +37,12 @@ val Context.appPreferencesDataStore: DataStore<Preferences> by preferencesDataSt
 internal object Keys {
     val themeStyle = stringPreferencesKey("key_theme_style")
     val darkMode = stringPreferencesKey("key_dark_mode")
+    /** 旧版触感开关，只参与 SharedPreferences 迁移。 */
     val hapticFeedback = booleanPreferencesKey("key_haptic_feedback")
     val currency = stringPreferencesKey("key_currency")
     val budgetNotify = booleanPreferencesKey("key_budget_notify")
+    val budgetHomeVisible = booleanPreferencesKey("key_budget_home_visible")
+    val acceptedLegalVersion = stringPreferencesKey("key_accepted_legal_version")
 
     /** 旧版当前账户。启动时迁进 account.is_default 后删除。 */
     val selectedAccountId = longPreferencesKey("key_selected_account_id")

@@ -28,11 +28,11 @@
     <string name="theme_dark">Dunkel</string>
     <string name="theme_dark_subtitle">Sanfter Kontrast für die Nacht</string>
     <string name="theme_color">Designfarbe</string>
-    <string name="theme_color_subtitle">Gedämpfte Farben, angenehm für die Augen</string>
-    <string name="theme_warm_cream">Warmes Creme</string>
-    <string name="theme_warm_cream_desc">Augenschonend · warmer Cremeton</string>
-    <string name="theme_monochrome">Schwarzweiß</string>
-    <string name="theme_monochrome_desc">Schlicht · weiches Tintengrau</string>
+    <string name="theme_color_subtitle">Eine Farbe, weich und flach</string>
+    <string name="theme_warm_cream">Sanftes Blau</string>
+    <string name="theme_warm_cream_desc">Ein Blau durch die ganze App</string>
+    <string name="theme_monochrome">Tinte</string>
+    <string name="theme_monochrome_desc">Eine Tinte, dieselben weichen Karten</string>
     <string name="selected">Ausgewählt</string>
     <string name="user_stats">CogniBal begleitet dich seit %1$s, mit %2$s.</string>
     <string name="surplus_total">Saldo</string>
@@ -44,9 +44,7 @@
     <string name="shortcut_assets">Vermögen</string>
     <string name="shortcut_overview">Übersicht</string>
     <string name="shortcut_coming_soon">%1$s kommt bald</string>
-    <string name="more_features">Mehr</string>
     <string name="default_currency">Standardwährung</string>
-    <string name="haptic_feedback">Vibrieren bei Berührung</string>
     <string name="clear_temp_cache">Temporären Cache löschen</string>
     <string name="close">Schließen</string>
     <string name="cancel">Abbrechen</string>
@@ -63,7 +61,6 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_description">CogniBal ist eine Buchhaltungs-App mit ruhigem, gut lesbarem Erscheinungsbild. Das Layout passt sich dem Bildschirm an, damit die Übersicht klar und angenehm bleibt.</string>
     <string name="open_source">Open-Source-Lizenzen</string>
-    <string name="open_source_toast">CogniBal steht unter der Apache-2.0-Lizenz</string>
     <string name="done">Fertig</string>
     <string name="security_terms">Nutzungsbedingungen</string>
     <string name="security_terms_subtitle">Bedingungen lesen</string>

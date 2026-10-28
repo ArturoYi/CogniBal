@@ -5,9 +5,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.cognibal.data.database.entity.Account
+import com.example.cognibal.data.database.entity.Category
 import com.example.cognibal.data.database.model.BillType
 import com.example.cognibal.data.database.query.CategoryAmountSummary
+import com.example.cognibal.data.database.query.PeriodAmountSummary
 import com.example.cognibal.data.preferences.AppPreferencesRepository
+import com.example.cognibal.data.repository.AccountRepository
+import com.example.cognibal.data.repository.BillRepository
 import com.example.cognibal.data.repository.CategoryRepository
 import com.example.cognibal.data.repository.StatsRepository
 import com.example.cognibal.di.LedgerEntryPoint
@@ -36,9 +41,12 @@ import kotlinx.coroutines.flow.update
  *
  * 月份和三档留在这里。全部档同时要支出和收入的分类；单档只订阅那一档。
  * 图的扇区在这里算好，界面不再对金额做聚合。
+ * 同月账单一起备好，点开分类时再按分类取出。
  */
 internal class StatisticsViewModel(
     private val stats: StatsRepository,
+    private val bills: BillRepository,
+    private val accounts: AccountRepository,
     private val categories: CategoryRepository,
     private val preferences: AppPreferencesRepository,
 ) : ViewModel() {
@@ -66,41 +74,53 @@ internal class StatisticsViewModel(
     private fun observe(month: YearMonth, kind: StatisticsKind): Flow<StatisticsUiState> {
         val start = month.startInclusive()
         val end = month.endExclusive()
-        return combine(
+        val totals = combine(
             stats.observePeriod(start, end),
             breakdown(kind, BillType.Expense, start, end),
             breakdown(kind, BillType.Income, start, end),
+        ) { period, expenseRows, incomeRows ->
+            PeriodBreakdown(period, expenseRows, incomeRows)
+        }
+        val names = combine(
             categories.observeAll(),
+            accounts.observeAll(),
             preferences.preferences,
-        ) { period, expenseRows, incomeRows, categoryRows, prefs ->
+        ) { categoryRows, accountRows, prefs ->
+            LedgerNames(categoryRows, accountRows, prefs.currency.symbol)
+        }
+        return combine(totals, names, bills.observeBetween(start, end)) { breakdown, book, billRows ->
             val (total, overflow) = when (kind) {
-                StatisticsKind.Expense -> period.expenseAmount to false
-                StatisticsKind.Income -> period.incomeAmount to false
-                StatisticsKind.All -> balanceOf(period.incomeAmount, period.expenseAmount)
+                StatisticsKind.Expense -> breakdown.period.expenseAmount to false
+                StatisticsKind.Income -> breakdown.period.incomeAmount to false
+                StatisticsKind.All -> balanceOf(
+                    breakdown.period.incomeAmount,
+                    breakdown.period.expenseAmount,
+                )
             }
             val sections = statisticsSections(
                 kind = kind,
-                expenseRows = expenseRows,
-                incomeRows = incomeRows,
-                categories = categoryRows,
-                expenseTotal = period.expenseAmount,
-                incomeTotal = period.incomeAmount,
+                expenseRows = breakdown.expenseRows,
+                incomeRows = breakdown.incomeRows,
+                categories = book.categories,
+                expenseTotal = breakdown.period.expenseAmount,
+                incomeTotal = breakdown.period.incomeAmount,
             )
             StatisticsUiState(
                 loading = false,
                 month = month,
                 canGoNext = month < YearMonth.now(),
                 kind = kind,
-                currencySymbol = prefs.currency.symbol,
+                currencySymbol = book.currencySymbol,
                 total = total,
                 totalOverflow = overflow,
                 slices = statisticsSlices(
                     kind = kind,
                     sections = sections,
-                    expenseTotal = period.expenseAmount,
-                    incomeTotal = period.incomeAmount,
+                    expenseTotal = breakdown.period.expenseAmount,
+                    incomeTotal = breakdown.period.incomeAmount,
                 ),
                 sections = sections,
+                bills = statisticsBills(billRows, book.accounts, kind),
             )
         }
     }
@@ -134,6 +154,8 @@ internal class StatisticsViewModel(
                 )
                 StatisticsViewModel(
                     stats = entry.statsRepository(),
+                    bills = entry.billRepository(),
+                    accounts = entry.accountRepository(),
                     categories = entry.categoryRepository(),
                     preferences = AppPreferencesRepository.create(application),
                 )
@@ -141,3 +163,15 @@ internal class StatisticsViewModel(
         }
     }
 }
+
+private data class PeriodBreakdown(
+    val period: PeriodAmountSummary,
+    val expenseRows: List<CategoryAmountSummary>,
+    val incomeRows: List<CategoryAmountSummary>,
+)
+
+private data class LedgerNames(
+    val categories: List<Category>,
+    val accounts: List<Account>,
+    val currencySymbol: String,
+)

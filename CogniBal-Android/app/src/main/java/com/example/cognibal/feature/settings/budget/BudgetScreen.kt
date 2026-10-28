@@ -6,29 +6,39 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -36,13 +46,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
@@ -55,14 +61,12 @@ import com.example.cognibal.data.repository.BudgetLevel
 import com.example.cognibal.screen.feature.bill.BudgetStatusBanner
 import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
 import com.example.cognibal.screen.feature.settings.SettingsSubpage
-import com.example.cognibal.screen.feature.settings.budget.state.BudgetCategoryOption
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetEditorState
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetIssue
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetLineUi
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetUiEvent
 import com.example.cognibal.screen.feature.settings.budget.state.BudgetUiState
 import com.example.cognibal.screen.feature.settings.component.InsightCard
-import com.example.cognibal.screen.feature.settings.component.InsightSegments
 import com.example.cognibal.screen.feature.settings.component.formatYearMonth
 import com.example.cognibal.ui.background.PageBackgroundHost
 import com.example.cognibal.ui.interaction.interactiveClick
@@ -74,6 +78,7 @@ import com.example.cognibal.ui.theme.budgetNearColor
 import java.time.LocalDate
 import java.time.YearMonth
 import kotlin.math.roundToInt
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun BudgetRoute(
@@ -131,60 +136,70 @@ internal fun BudgetScreen(
             fontSize = 13.sp,
             lineHeight = 18.sp,
         )
-        val banner = budgetBanner(uiState.current.filter { it.enabled })
+        val budget = uiState.current.firstOrNull()
+        val banner = budgetBanner(listOfNotNull(budget).filter { it.enabled })
         if (banner != null) {
             BudgetStatusBanner(over = banner.over, text = banner.text)
         }
         InsightCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            if (uiState.loading && budget == null) {
                 Text(
-                    text = stringResource(R.string.bill_budget_title),
-                    color = colors.textPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                )
-                if (!uiState.loading && uiState.editor == null) {
-                    Text(
-                        text = stringResource(R.string.budget_add),
-                        color = colors.primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.interactiveClick { onEvent(BudgetUiEvent.Add) },
-                    )
-                }
-            }
-            if (uiState.current.isEmpty() && !uiState.loading) {
-                Text(
-                    text = stringResource(R.string.budget_empty),
+                    text = stringResource(R.string.loading_indicator_cd),
                     color = colors.textTertiary,
                     fontSize = 14.sp,
                 )
-            }
-            uiState.current.forEach { line ->
+            } else if (budget == null) {
+                Text(
+                    text = stringResource(R.string.budget_empty),
+                    color = colors.textPrimary,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    text = stringResource(R.string.budget_add_hint),
+                    color = colors.textSecondary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
+                )
+                Button(
+                    onClick = { onEvent(BudgetUiEvent.Add) },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.primary,
+                        contentColor = colors.onPrimary,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(R.string.budget_add),
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.bill_budget_global),
+                        color = colors.textPrimary,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
+                    )
+                    Text(
+                        text = stringResource(R.string.budget_edit),
+                        color = colors.primary,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.interactiveClick {
+                            onEvent(BudgetUiEvent.Edit(budget.id))
+                        },
+                    )
+                }
                 BudgetLine(
-                    line = line,
+                    line = budget,
                     currencySymbol = uiState.currencySymbol,
-                    onClick = { onEvent(BudgetUiEvent.Edit(line.id)) },
+                    onClick = { onEvent(BudgetUiEvent.Edit(budget.id)) },
                 )
             }
-        }
-        val editor = uiState.editor
-        if (editor != null) {
-            BudgetEditor(
-                editor = editor,
-                categories = uiState.categories,
-                currencySymbol = uiState.currencySymbol,
-                issue = uiState.issue,
-                onEvent = onEvent,
-                onDelete = { confirmDelete = true },
-            )
-        } else if (uiState.issue == BudgetIssue.NoScope) {
-            Text(
-                text = stringResource(R.string.budget_no_scope),
-                color = colors.expense,
-                fontSize = 13.sp,
-            )
         }
         if (uiState.history.isNotEmpty()) {
             Text(
@@ -201,6 +216,31 @@ internal fun BudgetScreen(
                         onClick = null,
                     )
                 }
+            }
+        }
+        InsightCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = stringResource(R.string.budget_home_visible),
+                        color = colors.textPrimary,
+                        fontSize = 15.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Text(
+                        text = stringResource(R.string.budget_home_visible_subtitle),
+                        color = colors.textTertiary,
+                        fontSize = 12.sp,
+                        lineHeight = 16.sp,
+                        modifier = Modifier.padding(top = 2.dp),
+                    )
+                }
+                Switch(
+                    checked = uiState.homeVisible,
+                    onCheckedChange = { visible ->
+                        onEvent(BudgetUiEvent.HomeVisibleChanged(visible))
+                    },
+                )
             }
         }
         InsightCard {
@@ -225,6 +265,25 @@ internal fun BudgetScreen(
                     onCheckedChange = onNotifyChange,
                 )
             }
+        }
+    }
+    val editor = uiState.editor
+    if (editor != null) {
+        if (editor.id == null) {
+            AddBudgetSheet(
+                editor = editor,
+                currencySymbol = uiState.currencySymbol,
+                issue = uiState.issue,
+                onEvent = onEvent,
+            )
+        } else {
+            EditBudgetSheet(
+                editor = editor,
+                currencySymbol = uiState.currencySymbol,
+                issue = uiState.issue,
+                onEvent = onEvent,
+                onDelete = { confirmDelete = true },
+            )
         }
     }
     if (confirmDelete) {
@@ -351,188 +410,191 @@ private fun BudgetLine(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BudgetEditor(
+private fun AddBudgetSheet(
     editor: BudgetEditorState,
-    categories: List<BudgetCategoryOption>,
+    currencySymbol: String,
+    issue: BudgetIssue?,
+    onEvent: (BudgetUiEvent) -> Unit,
+) {
+    BudgetFormSheet(
+        title = stringResource(R.string.budget_add),
+        subtitle = stringResource(R.string.budget_add_hint),
+        editor = editor,
+        currencySymbol = currencySymbol,
+        issue = issue,
+        onEvent = onEvent,
+        onDelete = null,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditBudgetSheet(
+    editor: BudgetEditorState,
     currencySymbol: String,
     issue: BudgetIssue?,
     onEvent: (BudgetUiEvent) -> Unit,
     onDelete: () -> Unit,
 ) {
+    val month = editor.periodStart?.let { formatYearMonth(YearMonth.from(it.toLocalDate())) }
+    BudgetFormSheet(
+        title = stringResource(R.string.budget_edit),
+        subtitle = month,
+        editor = editor,
+        currencySymbol = currencySymbol,
+        issue = issue,
+        onEvent = onEvent,
+        onDelete = onDelete,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BudgetFormSheet(
+    title: String,
+    subtitle: String?,
+    editor: BudgetEditorState,
+    currencySymbol: String,
+    issue: BudgetIssue?,
+    onEvent: (BudgetUiEvent) -> Unit,
+    onDelete: (() -> Unit)?,
+) {
     val colors = MaterialTheme.appColors
-    InsightCard {
-        Text(
-            text = stringResource(if (editor.id == null) R.string.budget_add else R.string.budget_edit),
-            color = colors.textPrimary,
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-        )
-        if (editor.id == null && editor.allowGlobal && editor.allowCategory) {
-            InsightSegments(
-                labels = listOf(
-                    stringResource(R.string.bill_budget_global),
-                    stringResource(R.string.budget_category),
-                ),
-                selectedIndex = if (editor.global) 0 else 1,
-                onSelect = { index -> onEvent(BudgetUiEvent.ScopeGlobal(index == 0)) },
-            )
-        } else {
-            val name = categories.firstOrNull { it.id == editor.categoryId }?.name
-            Text(
-                text = budgetTitle(editor.global, name, missing = !editor.global && name == null && editor.id != null),
-                color = colors.textSecondary,
-                fontSize = 14.sp,
-            )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
+    fun close() {
+        if (editor.saving) return
+        scope.launch {
+            sheetState.hide()
+            onEvent(BudgetUiEvent.DismissEditor)
         }
-        if (!editor.global && editor.id == null) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                categories.forEach { category ->
-                    CategoryChip(
-                        name = category.name,
-                        selected = category.id == editor.categoryId,
-                        onClick = { onEvent(BudgetUiEvent.CategorySelected(category.id)) },
-                    )
-                }
-            }
-        }
-        OutlinedTextField(
-            value = editor.amountText,
-            onValueChange = { onEvent(BudgetUiEvent.AmountChanged(it)) },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !editor.saving,
-            singleLine = true,
-            prefix = { Text(text = currencySymbol, color = colors.textSecondary) },
-            label = { Text(text = stringResource(R.string.budget_amount)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            shape = RoundedCornerShape(14.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = colors.textPrimary,
-                unfocusedTextColor = colors.textPrimary,
-                focusedBorderColor = colors.primary,
-                unfocusedBorderColor = colors.divider,
-                cursorColor = colors.primary,
-                focusedLabelColor = colors.primary,
-                unfocusedLabelColor = colors.textTertiary,
-                focusedContainerColor = colors.cardBackground,
-                unfocusedContainerColor = colors.cardBackground,
-            ),
-        )
-        if (editor.id == null || editor.periodType == BudgetPeriodType.Month) {
+    }
+    ModalBottomSheet(
+        onDismissRequest = { if (!editor.saving) onEvent(BudgetUiEvent.DismissEditor) },
+        sheetState = sheetState,
+        containerColor = colors.cardBackground,
+        contentColor = colors.textPrimary,
+        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
+        tonalElevation = 0.dp,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
             Text(
-                text = if (editor.cycleDay == 1) {
-                    stringResource(R.string.budget_cycle_calendar)
-                } else {
-                    stringResource(R.string.budget_cycle_day, editor.cycleDay)
-                },
+                text = title,
                 color = colors.textPrimary,
-                fontSize = 14.sp,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
             )
-            Text(
-                text = stringResource(R.string.budget_cycle_hint, editor.cycleDay),
-                color = colors.textTertiary,
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-            )
-            if (editor.cycleDay > 28) {
+            if (subtitle != null) {
                 Text(
-                    text = stringResource(R.string.budget_cycle_short_month, editor.cycleDay),
-                    color = colors.textTertiary,
-                    fontSize = 12.sp,
-                    lineHeight = 16.sp,
+                    text = subtitle,
+                    color = colors.textSecondary,
+                    fontSize = 13.sp,
+                    lineHeight = 18.sp,
                 )
             }
-            Slider(
-                value = editor.cycleDay.toFloat(),
-                onValueChange = { value ->
-                    onEvent(BudgetUiEvent.CycleDayChanged(value.roundToInt()))
-                },
+            BudgetAmountField(
+                amountText = editor.amountText,
+                currencySymbol = currencySymbol,
                 enabled = !editor.saving,
-                valueRange = 1f..31f,
-                steps = 29,
+                onAmount = { onEvent(BudgetUiEvent.AmountChanged(it)) },
             )
-        }
-        Text(
-            text = stringResource(R.string.budget_alert) + " " +
-                stringResource(R.string.budget_alert_value, editor.alertPercent),
-            color = colors.textPrimary,
-            fontSize = 14.sp,
-        )
-        Slider(
-            value = editor.alertPercent.toFloat(),
-            onValueChange = { value ->
-                onEvent(BudgetUiEvent.AlertChanged(value.roundToInt()))
-            },
-            enabled = !editor.saving,
-            valueRange = BudgetMathMin..BudgetMathMax,
-            steps = 49,
-        )
-        Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.budget_enabled),
+                text = stringResource(R.string.budget_alert) + " " +
+                    stringResource(R.string.budget_alert_value, editor.alertPercent),
                 color = colors.textPrimary,
                 fontSize = 14.sp,
-                modifier = Modifier.weight(1f),
             )
-            Switch(
-                checked = editor.enabled,
-                onCheckedChange = { onEvent(BudgetUiEvent.EnabledChanged(it)) },
+            Slider(
+                value = editor.alertPercent.toFloat(),
+                onValueChange = { value ->
+                    onEvent(BudgetUiEvent.AlertChanged(value.roundToInt()))
+                },
                 enabled = !editor.saving,
+                valueRange = BudgetMathMin..BudgetMathMax,
+                steps = 49,
             )
-        }
-        if (issue != null && issue != BudgetIssue.NoScope) {
-            Text(
-                text = stringResource(issue.messageRes()),
-                color = colors.expense,
-                fontSize = 13.sp,
-            )
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (editor.id != null) {
-                TextButton(onClick = onDelete, enabled = !editor.saving) {
-                    Text(text = stringResource(R.string.budget_delete), color = colors.expense)
-                }
+            if (issue != null && issue != BudgetIssue.NoScope) {
+                Text(
+                    text = stringResource(issue.messageRes()),
+                    color = colors.expense,
+                    fontSize = 13.sp,
+                )
             }
-            TextButton(onClick = { onEvent(BudgetUiEvent.DismissEditor) }, enabled = !editor.saving) {
-                Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
-            }
-            TextButton(onClick = { onEvent(BudgetUiEvent.Save) }, enabled = !editor.saving) {
+            Button(
+                onClick = { onEvent(BudgetUiEvent.Save) },
+                enabled = !editor.saving,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                shape = RoundedCornerShape(14.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colors.primary,
+                    contentColor = colors.onPrimary,
+                ),
+            ) {
                 Text(
                     text = stringResource(R.string.bill_entry_save),
-                    color = colors.primary,
                     fontWeight = FontWeight.Bold,
                 )
+            }
+            TextButton(
+                onClick = ::close,
+                enabled = !editor.saving,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
+            }
+            if (onDelete != null) {
+                Spacer(Modifier.height(4.dp))
+                TextButton(
+                    onClick = onDelete,
+                    enabled = !editor.saving,
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(text = stringResource(R.string.budget_delete), color = colors.expense)
+                }
             }
         }
     }
 }
 
 @Composable
-private fun CategoryChip(
-    name: String,
-    selected: Boolean,
-    onClick: () -> Unit,
+private fun BudgetAmountField(
+    amountText: String,
+    currencySymbol: String,
+    enabled: Boolean,
+    onAmount: (String) -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    Text(
-        text = name,
-        color = if (selected) colors.onPrimary else colors.textPrimary,
-        fontSize = 13.sp,
-        maxLines = 1,
-        modifier = Modifier
-            .clip(RoundedCornerShape(99.dp))
-            .background(if (selected) colors.primary else colors.tagBackground)
-            .semantics { this.selected = selected }
-            .interactiveClick(role = Role.RadioButton, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+    OutlinedTextField(
+        value = amountText,
+        onValueChange = onAmount,
+        modifier = Modifier.fillMaxWidth(),
+        enabled = enabled,
+        singleLine = true,
+        prefix = { Text(text = currencySymbol, color = colors.textSecondary) },
+        label = { Text(text = stringResource(R.string.budget_amount)) },
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        shape = RoundedCornerShape(14.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedTextColor = colors.textPrimary,
+            unfocusedTextColor = colors.textPrimary,
+            focusedBorderColor = colors.primary,
+            unfocusedBorderColor = colors.divider,
+            cursorColor = colors.primary,
+            focusedLabelColor = colors.primary,
+            unfocusedLabelColor = colors.textTertiary,
+            focusedContainerColor = colors.cardBackground,
+            unfocusedContainerColor = colors.cardBackground,
+        ),
     )
 }
 

@@ -23,12 +23,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Backup
-import androidx.compose.material.icons.rounded.Info
-import androidx.compose.material.icons.rounded.Mail
-import androidx.compose.material.icons.rounded.Palette
-import androidx.compose.material.icons.rounded.Security
-import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Mail
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Security
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +45,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -60,10 +61,13 @@ import com.example.cognibal.navigation.AppearanceSettings
 import com.example.cognibal.navigation.Assets
 import com.example.cognibal.navigation.BackupSettings
 import com.example.cognibal.navigation.Budget
+import com.example.cognibal.navigation.LegalPage
+import com.example.cognibal.navigation.MoreSettings
 import com.example.cognibal.navigation.Overview
 import com.example.cognibal.navigation.Reports
 import com.example.cognibal.navigation.SecuritySettings
 import com.example.cognibal.navigation.Statistics
+import com.example.cognibal.screen.feature.legal.LegalDocumentKind
 import com.example.cognibal.screen.feature.settings.state.SettingsUiEvent
 import com.example.cognibal.screen.feature.settings.state.SettingsUiState
 import com.example.cognibal.ui.background.PageBackgroundHost
@@ -86,8 +90,6 @@ internal fun SettingsListRoute(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
-    val cacheClearedMessage = stringResource(R.string.cache_cleared)
-    val openSourceMessage = stringResource(R.string.open_source_toast)
     val feedbackSubject = stringResource(R.string.feedback_email_subject)
     val feedbackUnavailable = stringResource(R.string.feedback_email_unavailable)
     val shortcutComingSoon = SettingsShortcut.entries
@@ -97,16 +99,13 @@ internal fun SettingsListRoute(
         }
     val onEvent = { event: SettingsUiEvent ->
         viewModel.onEvent(event)
-        when (event) {
-            SettingsUiEvent.ConfirmClearCache ->
-                Toast.makeText(context, cacheClearedMessage, Toast.LENGTH_SHORT).show()
-            SettingsUiEvent.SendFeedback -> {
-                if (!context.composeFeedbackEmail(feedbackSubject)) {
-                    Toast.makeText(context, feedbackUnavailable, Toast.LENGTH_SHORT).show()
-                }
-            }
-            else -> Unit
+        if (event == SettingsUiEvent.SendFeedback && !context.composeFeedbackEmail(feedbackSubject)) {
+            Toast.makeText(context, feedbackUnavailable, Toast.LENGTH_SHORT).show()
         }
+    }
+    val openLicense = dropUnlessResumed {
+        viewModel.onEvent(SettingsUiEvent.DismissAboutDialog)
+        onNavigate(LegalPage(LegalDocumentKind.License))
     }
     SettingsScreen(
         uiState = uiState,
@@ -119,9 +118,7 @@ internal fun SettingsListRoute(
                 Toast.makeText(context, shortcutComingSoon.getValue(shortcut), Toast.LENGTH_SHORT).show()
             }
         },
-        onOpenSourceLicenses = {
-            Toast.makeText(context, openSourceMessage, Toast.LENGTH_SHORT).show()
-        },
+        onOpenSourceLicenses = openLicense,
         onNavigate = onNavigate,
         modifier = modifier,
     )
@@ -133,8 +130,8 @@ internal fun SettingsListRoute(
  * 核心视觉与结构：
  * 1. 柔和主色+中性灰打底，无刺眼高饱和，无突兀边框；
  * 2. 统一圆角 (20.dp) 与轻阴影，模块按意图分层分组，富有律动与呼吸感；
- * 3. 窄屏自上而下流畅展开：使用统计 -> 精炼总盈余 -> 总览与统计并排，下面是其余快捷入口 -> 备份、安全、外观 -> 通用与支持，反馈在最底；
- * 4. 宽屏（折叠屏展开/平板/桌面）自适应双栏并排：左侧财务看板（盈余与分析工具），右侧系统偏好设置，比例舒适饱满。
+ * 3. 窄屏自上而下：使用统计 -> 总览、统计、报表、预算、资产横跨整行 -> 备份、安全、外观 -> 通用与支持，反馈在最底；
+ * 4. 宽屏（折叠屏展开/平板/桌面）：快捷入口仍横跨整行，下面偏好与系统设置并排。
  */
 @Composable
 internal fun SettingsScreen(
@@ -146,7 +143,6 @@ internal fun SettingsScreen(
     modifier: Modifier = Modifier,
 ) {
     RequestPageBackground()
-    val preferences = uiState.preferences
     val colors = MaterialTheme.appColors
     val versionName = appVersionName()
     SettingsHome(
@@ -156,63 +152,6 @@ internal fun SettingsScreen(
         onNavigate = onNavigate,
         modifier = modifier,
     )
-
-    if (uiState.showMoreDialog) {
-        MoreSettingsDialog(
-            preferences = preferences,
-            cacheSizeText = uiState.cacheSizeText,
-            onOpenCurrencySelect = { onEvent(SettingsUiEvent.OpenCurrencyDialog) },
-            onHapticFeedbackChange = { onEvent(SettingsUiEvent.HapticFeedbackChanged(it)) },
-            onOpenClearCache = { onEvent(SettingsUiEvent.OpenClearCacheDialog) },
-            onDismiss = { onEvent(SettingsUiEvent.DismissMoreDialog) },
-        )
-    }
-
-    if (uiState.showCurrencyDialog) {
-        CurrencySelectDialog(
-            selectedCurrency = preferences.currency,
-            onSelect = { onEvent(SettingsUiEvent.CurrencySelected(it)) },
-            onDismiss = { onEvent(SettingsUiEvent.DismissCurrencyDialog) },
-        )
-    }
-
-    if (uiState.showClearCacheDialog) {
-        AlertDialog(
-            onDismissRequest = { onEvent(SettingsUiEvent.DismissClearCacheDialog) },
-            title = {
-                Text(
-                    text = stringResource(R.string.clear_cache_title),
-                    color = colors.textPrimary,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.clear_cache_message, uiState.cacheSizeText),
-                    color = colors.textSecondary,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                )
-            },
-            confirmButton = {
-                TextButton(onClick = { onEvent(SettingsUiEvent.ConfirmClearCache) }) {
-                    Text(
-                        text = stringResource(R.string.clear_cache_confirm),
-                        color = colors.primary,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { onEvent(SettingsUiEvent.DismissClearCacheDialog) }) {
-                    Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
-                }
-            },
-            containerColor = colors.cardBackground,
-            shape = RoundedCornerShape(20.dp),
-        )
-    }
 
     if (uiState.showAboutDialog) {
         AlertDialog(
@@ -276,7 +215,6 @@ private fun SettingsHome(
     onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val preferences = uiState.preferences
     val colors = MaterialTheme.appColors
     val contentPadding = listContentPadding()
     val layoutDirection = LocalLayoutDirection.current
@@ -307,44 +245,30 @@ private fun SettingsHome(
                 ),
             verticalArrangement = Arrangement.spacedBy(if (layout.compactHeight) 12.dp else 16.dp),
         ) {
+            UserStatsHeader(
+                daysInUse = uiState.daysInUse,
+                totalRecords = uiState.totalRecordsCount,
+            )
+            SettingsShortcutBar(onShortcutClick = onOpenShortcut)
             if (layout.isWide) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     verticalAlignment = Alignment.Top,
                 ) {
+                    SettingsPageGroup(
+                        entries = preferenceAndSecurityEntries,
+                        onNavigate = onNavigate,
+                        modifier = Modifier.weight(1f),
+                    )
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(14.dp),
                     ) {
-                        UserStatsHeader(
-                            daysInUse = uiState.daysInUse,
-                            totalRecords = uiState.totalRecordsCount,
-                        )
-                        SurplusCard(
-                            surplus = uiState.totalSurplus,
-                            surplusOverflow = uiState.surplusOverflow,
-                            isVisible = uiState.isSurplusVisible,
-                            currencySymbol = preferences.currency.symbol,
-                            onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
-                        )
-                        SettingsShortcutBar(
-                            onShortcutClick = onOpenShortcut,
-                            columns = 2,
-                        )
-                    }
-
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        SettingsPageGroup(
-                            entries = preferenceAndSecurityEntries,
-                            onNavigate = onNavigate,
-                        )
                         SettingsCardGroup(
                             entries = systemAndSupportEntries,
                             onEvent = onEvent,
+                            onNavigate = onNavigate,
                         )
                         Text(
                             text = stringResource(R.string.app_version_footer, versionName),
@@ -358,21 +282,6 @@ private fun SettingsHome(
                     }
                 }
             } else {
-                UserStatsHeader(
-                    daysInUse = uiState.daysInUse,
-                    totalRecords = uiState.totalRecordsCount,
-                )
-                SurplusCard(
-                    surplus = uiState.totalSurplus,
-                    surplusOverflow = uiState.surplusOverflow,
-                    isVisible = uiState.isSurplusVisible,
-                    currencySymbol = preferences.currency.symbol,
-                    onToggleVisibility = { onEvent(SettingsUiEvent.ToggleSurplusVisibility) },
-                )
-                SettingsShortcutBar(
-                    onShortcutClick = onOpenShortcut,
-                    columns = 4,
-                )
                 SettingsPageGroup(
                     entries = preferenceAndSecurityEntries,
                     onNavigate = onNavigate,
@@ -380,6 +289,7 @@ private fun SettingsHome(
                 SettingsCardGroup(
                     entries = systemAndSupportEntries,
                     onEvent = onEvent,
+                    onNavigate = onNavigate,
                 )
                 Text(
                     text = stringResource(R.string.app_version_footer, versionName),
@@ -449,7 +359,8 @@ private val MediumHeight = WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND.dp
 private data class SettingsEntry(
     val icon: ImageVector,
     @StringRes val titleRes: Int,
-    val event: SettingsUiEvent,
+    val event: SettingsUiEvent? = null,
+    val destination: NavKey? = null,
 )
 
 private data class SettingsPageEntry(
@@ -460,17 +371,17 @@ private data class SettingsPageEntry(
 
 private val preferenceAndSecurityEntries = listOf(
     SettingsPageEntry(
-        icon = Icons.Rounded.Backup,
+        icon = Icons.Outlined.Backup,
         titleRes = R.string.settings_backup,
         key = BackupSettings,
     ),
     SettingsPageEntry(
-        icon = Icons.Rounded.Security,
+        icon = Icons.Outlined.Security,
         titleRes = R.string.settings_security,
         key = SecuritySettings,
     ),
     SettingsPageEntry(
-        icon = Icons.Rounded.Palette,
+        icon = Icons.Outlined.Palette,
         titleRes = R.string.settings_appearance,
         key = AppearanceSettings,
     ),
@@ -486,17 +397,17 @@ private fun SettingsShortcut.page(): NavKey? = when (this) {
 
 private val systemAndSupportEntries = listOf(
     SettingsEntry(
-        icon = Icons.Rounded.Tune,
+        icon = Icons.Outlined.Tune,
         titleRes = R.string.settings_more,
-        event = SettingsUiEvent.OpenMoreDialog,
+        destination = MoreSettings,
     ),
     SettingsEntry(
-        icon = Icons.Rounded.Info,
+        icon = Icons.Outlined.Info,
         titleRes = R.string.settings_about,
         event = SettingsUiEvent.OpenAboutDialog,
     ),
     SettingsEntry(
-        icon = Icons.Rounded.Mail,
+        icon = Icons.Outlined.Mail,
         titleRes = R.string.settings_feedback,
         event = SettingsUiEvent.SendFeedback,
     ),
@@ -524,20 +435,27 @@ private fun SettingsPageGroup(
 private fun SettingsCardGroup(
     entries: List<SettingsEntry>,
     onEvent: (SettingsUiEvent) -> Unit,
+    onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     SettingsSectionCard(modifier = modifier) {
         entries.forEachIndexed { index, entry ->
             if (index > 0) SettingsDivider()
+            val destination = entry.destination
             SettingActionItem(
                 icon = entry.icon,
                 title = stringResource(entry.titleRes),
-                onClick = { onEvent(entry.event) },
+                onClick = if (destination != null) {
+                    dropUnlessResumed { onNavigate(destination) }
+                } else {
+                    { onEvent(checkNotNull(entry.event)) }
+                },
             )
         }
     }
 }
 
+/** 与协议正文里的联系邮箱一致。改地址时两处一起改。 */
 private const val FEEDBACK_EMAIL = "lzm.cyr@gmail.com"
 
 /** 打开系统邮件的写信界面，收件人已填好。没有可处理的邮件应用时返回 false。 */
@@ -578,7 +496,25 @@ private fun SettingsScreenWarmCreamPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
         PageBackgroundHost {
             SettingsScreen(
-                uiState = SettingsUiState(isSurplusVisible = false),
+                uiState = SettingsUiState(),
+                onEvent = {},
+                onOpenShortcut = {},
+                onOpenSourceLicenses = {},
+                onNavigate = {},
+            )
+        }
+    }
+}
+
+@Preview(name = "Narrow", widthDp = 320, heightDp = 720, showBackground = true)
+@Preview(name = "Narrow el", widthDp = 320, heightDp = 720, locale = "el", showBackground = true)
+@Preview(name = "Cover", widthDp = 280, heightDp = 640, showBackground = true)
+@Composable
+private fun SettingsScreenNarrowPreview() {
+    CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
+        PageBackgroundHost {
+            SettingsScreen(
+                uiState = SettingsUiState(),
                 onEvent = {},
                 onOpenShortcut = {},
                 onOpenSourceLicenses = {},
@@ -594,10 +530,7 @@ private fun SettingsScreenMonochromeDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = true) {
         PageBackgroundHost {
             SettingsScreen(
-                uiState = SettingsUiState(
-                    isSurplusVisible = true,
-                    totalSurplus = 1_285_000L,
-                ),
+                uiState = SettingsUiState(),
                 onEvent = {},
                 onOpenShortcut = {},
                 onOpenSourceLicenses = {},

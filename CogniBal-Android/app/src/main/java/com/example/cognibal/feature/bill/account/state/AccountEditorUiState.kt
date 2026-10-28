@@ -12,7 +12,7 @@ internal data class AccountEditorUiState(
     val isEdit: Boolean = false,
     val name: String = "",
     val type: AccountType = AccountType.Cash,
-    val icon: AccountIcon = AccountIcon.Wallet,
+    val icon: AccountIcon = AccountIcon.Cash,
     /** 备份里不是枚举键的图标。用户重新选过图标后清空，保存时改用枚举键。 */
     val iconKeyOverride: String? = null,
     val color: AccountColor = AccountColor.Teal,
@@ -35,8 +35,9 @@ internal sealed interface AccountEditorUiEvent {
     data class RemarkChanged(val value: String) : AccountEditorUiEvent
     data class OpeningBalanceChanged(val value: String) : AccountEditorUiEvent
     data class TypeSelected(val type: AccountType) : AccountEditorUiEvent
-    data class IconSelected(val icon: AccountIcon) : AccountEditorUiEvent
     data class ColorSelected(val color: AccountColor) : AccountEditorUiEvent
+    /** 取色板里选中的颜色。写成 `#AARRGGBB`，不占用预设键。 */
+    data class CustomColorSelected(val hex: String) : AccountEditorUiEvent
     data object Save : AccountEditorUiEvent
     data class SetEnabled(val enabled: Boolean) : AccountEditorUiEvent
     data object DeleteClicked : AccountEditorUiEvent

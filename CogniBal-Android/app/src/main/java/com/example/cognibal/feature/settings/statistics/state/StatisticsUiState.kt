@@ -1,6 +1,7 @@
 package com.example.cognibal.screen.feature.settings.statistics.state
 
 import com.example.cognibal.screen.feature.settings.model.CurrencyPreference
+import java.time.LocalDateTime
 import java.time.YearMonth
 
 /** 顶部三档。全部看支出和收入的对比，另外两档看该档的分类构成。 */
@@ -46,6 +47,17 @@ internal data class StatisticsSectionUi(
     val categories: List<CategoryShareUi>,
 )
 
+/** 统计里能点开的一笔支出或收入。转账不进这里。 */
+internal data class StatisticsBillUi(
+    val id: Long,
+    val categoryId: Long,
+    val kind: StatisticsKind,
+    val amount: Long,
+    val time: LocalDateTime,
+    val remark: String?,
+    val accountName: String?,
+)
+
 internal data class StatisticsUiState(
     val loading: Boolean = true,
     val month: YearMonth = YearMonth.now(),
@@ -57,6 +69,8 @@ internal data class StatisticsUiState(
     val totalOverflow: Boolean = false,
     val slices: List<StatisticsSliceUi> = emptyList(),
     val sections: List<StatisticsSectionUi> = emptyList(),
+    /** 当前档、当前月的账单。点开某个分类后按分类取出。 */
+    val bills: List<StatisticsBillUi> = emptyList(),
 )
 
 internal sealed interface StatisticsUiEvent {

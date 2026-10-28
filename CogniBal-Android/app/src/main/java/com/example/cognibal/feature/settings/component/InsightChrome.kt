@@ -17,9 +17,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
-import androidx.compose.material.icons.rounded.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -103,7 +103,7 @@ internal fun MonthStepper(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         StepperButton(
-            icon = Icons.AutoMirrored.Rounded.KeyboardArrowLeft,
+            icon = Icons.AutoMirrored.Outlined.KeyboardArrowLeft,
             description = stringResource(R.string.insight_previous_month),
             enabled = true,
             tint = colors.primary,
@@ -146,7 +146,7 @@ internal fun MonthStepper(
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 Icon(
-                    imageVector = Icons.Rounded.KeyboardArrowDown,
+                    imageVector = Icons.Outlined.KeyboardArrowDown,
                     contentDescription = null,
                     tint = colors.textSecondary,
                     modifier = Modifier
@@ -156,7 +156,7 @@ internal fun MonthStepper(
             }
         }
         StepperButton(
-            icon = Icons.AutoMirrored.Rounded.KeyboardArrowRight,
+            icon = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
             description = stringResource(R.string.insight_next_month),
             enabled = canGoNext,
             tint = colors.primary.copy(alpha = if (canGoNext) 1f else 0.35f),
@@ -291,25 +291,21 @@ internal fun MoneySummary(
         MoneyColumn(
             label = stringResource(R.string.bill_month_income),
             amount = moneyText(currencySymbol, income),
-            color = colors.income,
+            color = colors.textPrimary,
             compact = compact,
             modifier = Modifier.weight(1f),
         )
         MoneyColumn(
             label = stringResource(R.string.bill_month_expense),
             amount = moneyText(currencySymbol, expense),
-            color = colors.expense,
+            color = colors.textPrimary,
             compact = compact,
             modifier = Modifier.weight(1f),
         )
         MoneyColumn(
             label = stringResource(R.string.bill_month_balance),
             amount = moneyText(currencySymbol, balance, balanceOverflow),
-            color = when {
-                balanceOverflow -> colors.textSecondary
-                balance < 0L -> colors.expense
-                else -> colors.income
-            },
+            color = if (balanceOverflow) colors.textSecondary else colors.textPrimary,
             compact = compact,
             modifier = Modifier.weight(1f),
         )
@@ -338,7 +334,7 @@ private fun MoneyColumn(
         Text(
             text = amount,
             color = color,
-            fontSize = if (compact) 13.sp else 15.sp,
+            fontSize = if (compact) 14.sp else 17.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
