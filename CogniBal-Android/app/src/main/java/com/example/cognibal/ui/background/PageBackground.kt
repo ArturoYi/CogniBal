@@ -1,8 +1,11 @@
 package com.example.cognibal.ui.background
 
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -15,7 +18,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import com.example.cognibal.ui.theme.WarmCreamLight_Background
 
 /**
@@ -48,12 +54,52 @@ fun PageBackground(
     style: PageBackgroundStyle = PageBackgroundStyle(),
     content: @Composable () -> Unit,
 ) {
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        color = style.baseColor(),
-        contentColor = MaterialTheme.colorScheme.onBackground,
-        content = content,
-    )
+    val base = style.baseColor()
+    val custom = style.color != Color.Unspecified && style.color.alpha > 0f
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(base),
+    ) {
+        if (!custom && base.luminance() < 0.2f) {
+            CryptoField()
+        }
+        CompositionLocalProvider(LocalContentColor provides MaterialTheme.colorScheme.onBackground) {
+            content()
+        }
+    }
+}
+
+/**
+ * 暗色页面上的两团光源。卡片是实色玻璃，光留在缝里，才看得出层次。
+ * 金色在上方，冷色在下方，都不铺成紫粉渐变。
+ */
+@Composable
+private fun CryptoField() {
+    Canvas(Modifier.fillMaxSize()) {
+        val goldCenter = Offset(size.width * 0.86f, size.height * 0.06f)
+        val goldRadius = size.minDimension * 0.78f
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(Color(0xFFF59E0B).copy(alpha = 0.18f), Color.Transparent),
+                center = goldCenter,
+                radius = goldRadius,
+            ),
+            radius = goldRadius,
+            center = goldCenter,
+        )
+        val coolCenter = Offset(size.width * 0.08f, size.height * 0.78f)
+        val coolRadius = size.minDimension * 0.7f
+        drawCircle(
+            brush = Brush.radialGradient(
+                colors = listOf(Color(0xFF38BDF8).copy(alpha = 0.10f), Color.Transparent),
+                center = coolCenter,
+                radius = coolRadius,
+            ),
+            radius = coolRadius,
+            center = coolCenter,
+        )
+    }
 }
 
 /**

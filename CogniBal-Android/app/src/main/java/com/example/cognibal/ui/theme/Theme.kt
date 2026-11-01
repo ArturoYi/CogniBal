@@ -32,9 +32,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 /**
- * 主题风格。两套都是柔和扁平，只换贯穿全应用的那一种颜色。
+ * 主题风格。浅色是柔和扁平。暗色是同一套石板玻璃，只换贯穿全应用的那一种颜色。
  *
- * - [WarmCream] 柔和蓝。枚举名沿用旧偏好键，避免已保存的选择被重置
+ * - [WarmCream] 浅色柔和蓝，暗色金色。枚举名沿用旧偏好键，避免已保存的选择被重置
  * - [Monochrome] 墨色。卡片、字号和圆角与柔和蓝相同
  */
 enum class AppThemeStyle(
@@ -61,7 +61,7 @@ val MaterialTheme.appColors: AppColors
 /**
  * CogniBal 全局主题入口
  *
- * 两套主题均完整适配浅色模式（Light）与暗色模式（Dark）
+ * 两套主题均完整适配浅色模式（Light）与暗色模式（Dark）。暗色默认是金色玻璃。
  *
  * @param themeStyle 主题风格，默认柔和蓝 [AppThemeStyle.WarmCream]
  * @param darkTheme 是否使用暗色模式，默认跟随系统 [isSystemInDarkTheme]
@@ -192,11 +192,12 @@ private fun ThemeShowcaseCard(
                 }
             }
 
+            val cardShape = MaterialTheme.shapes.extraLarge
             Surface(
                 color = colors.cardBackground,
-                shape = MaterialTheme.shapes.extraLarge,
-                shadowElevation = CogniBalCardElevation,
-                modifier = Modifier.fillMaxWidth(),
+                shape = cardShape,
+                shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
+                modifier = Modifier.fillMaxWidth().glassEdge(cardShape, colors.isDark),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -242,7 +243,7 @@ private fun WarmCreamLightPreview() {
     }
 }
 
-@Preview(name = "柔和蓝 (暗色)", showBackground = true, backgroundColor = 0xFF10151C)
+@Preview(name = "柔和蓝 (暗色)", showBackground = true, backgroundColor = 0xFF0F172A)
 @Composable
 private fun WarmCreamDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = true) {
@@ -258,7 +259,7 @@ private fun MonochromeLightPreview() {
     }
 }
 
-@Preview(name = "墨色 (暗色)", showBackground = true, backgroundColor = 0xFF10151C)
+@Preview(name = "墨色 (暗色)", showBackground = true, backgroundColor = 0xFF0F172A)
 @Composable
 private fun MonochromeDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = true) {

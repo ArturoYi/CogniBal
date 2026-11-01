@@ -81,6 +81,7 @@ import com.example.cognibal.screen.feature.settings.model.DarkModePreference
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.AppThemeStyle
 import com.example.cognibal.ui.theme.CogniBalCardElevation
+import com.example.cognibal.ui.theme.glassEdge
 import com.example.cognibal.ui.theme.LocalAppThemeStyle
 import com.example.cognibal.ui.theme.LocalThemeReveal
 import com.example.cognibal.ui.theme.MonochromeDarkAppColors
@@ -143,11 +144,12 @@ internal fun SettingsShortcutBar(
 ) {
     val colors = MaterialTheme.appColors
     val scrollState = rememberScrollState()
+    val shape = MaterialTheme.shapes.extraLarge
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
+        modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+        shape = shape,
         color = colors.cardBackground,
-        shadowElevation = CogniBalCardElevation,
+        shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
     ) {
         BoxWithConstraints(
             modifier = Modifier
@@ -236,7 +238,7 @@ private fun SettingsShortcutItem(
 /**
  * 分层三：垂直功能卡片容器
  *
- * 统一 20.dp 圆角、纯色卡片底与细腻微阴影，彻底去除边框
+ * 统一 20.dp 圆角。浅色靠微阴影，暗色改玻璃描边。
  */
 @Composable
 fun SettingsSectionCard(
@@ -244,11 +246,12 @@ fun SettingsSectionCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = MaterialTheme.appColors
+    val shape = MaterialTheme.shapes.extraLarge
     Surface(
         color = colors.cardBackground,
-        shape = MaterialTheme.shapes.extraLarge,
-        modifier = modifier.fillMaxWidth(),
-        shadowElevation = CogniBalCardElevation,
+        shape = shape,
+        modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+        shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
     ) {
         Column(
             modifier = Modifier

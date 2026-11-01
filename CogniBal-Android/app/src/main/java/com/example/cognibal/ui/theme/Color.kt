@@ -8,9 +8,9 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 // =========================================================================
-// 柔和扁平。页面是冷灰，卡片是纯白（暗色是抬起一层的冷灰蓝）。
-// 层次靠底色差和弱阴影，不靠分割线。
-// 主色只有一种蓝。黑白主题换成同一种墨色，卡片和字号不变。
+// 浅色仍是柔和扁平：冷灰页面、白卡片、一种蓝。
+// 暗色是加密钱包的玻璃底：石板页面、抬起的玻璃卡片、金色主操作。
+// 金色只出现在暗色。浅底上金色对比不够，不能拿来写字。
 // 支出金额用正文色加负号；expense 只留给超支提示。
 // =========================================================================
 
@@ -23,21 +23,23 @@ private val LightDivider = Color(0xFFE4EAF3)
 private val LightOnAccent = Color(0xFFFFFFFF)
 private val LightAlert = Color(0xFFD4534E)
 
-private val DarkBackground = Color(0xFF10151C)
-private val DarkCard = Color(0xFF1A2230)
-private val DarkTextPrimary = Color(0xFFF3F6FB)
+private val DarkBackground = Color(0xFF0F172A)
+private val DarkCard = Color(0xFF2A3346)
+private val DarkTextPrimary = Color(0xFFF8FAFC)
 private val DarkTextSecondary = Color(0xFFA8B3C7)
-private val DarkTextTertiary = Color(0xFF7D8BA3)
-private val DarkDivider = Color(0xFF2C3648)
-private val DarkOnAccent = Color(0xFF0E1626)
+private val DarkTextTertiary = Color(0xFF94A3B8)
+private val DarkDivider = Color(0xFF8B9BB0)
+private val DarkOnAccent = Color(0xFF0F172A)
 private val DarkAlert = Color(0xFFFF8D88)
 
 private val SoftBlue = Color(0xFF2E6BDB)
 private val SoftBlueContainer = Color(0xFFE7F0FF)
 private val SoftBlueOnContainer = Color(0xFF1E4FAE)
-private val SoftBlueDark = Color(0xFF9EBEFF)
-private val SoftBlueDarkContainer = Color(0xFF1B3158)
-private val SoftBlueDarkOnContainer = Color(0xFFD6E6FF)
+private val CryptoGold = Color(0xFFF59E0B)
+private val CryptoGoldBright = Color(0xFFFBBF24)
+private val CryptoGoldDeep = Color(0xFFD97706)
+private val CryptoGoldContainer = Color(0xFF3A3118)
+private val CryptoGoldOnContainer = Color(0xFFFDE68A)
 
 private val Ink = Color(0xFF243040)
 private val InkContainer = Color(0xFFE7ECF3)
@@ -64,18 +66,18 @@ val WarmCreamLight_OnHero = LightOnAccent
 
 val WarmCreamDark_Background = DarkBackground
 val WarmCreamDark_CardBackground = DarkCard
-val WarmCreamDark_Primary = SoftBlueDark
+val WarmCreamDark_Primary = CryptoGold
 val WarmCreamDark_OnPrimary = DarkOnAccent
-val WarmCreamDark_Secondary = SoftBlueDarkContainer
-val WarmCreamDark_OnSecondary = SoftBlueDarkOnContainer
+val WarmCreamDark_Secondary = CryptoGoldContainer
+val WarmCreamDark_OnSecondary = CryptoGoldOnContainer
 val WarmCreamDark_Expense = DarkAlert
 val WarmCreamDark_TextPrimary = DarkTextPrimary
 val WarmCreamDark_TextSecondary = DarkTextSecondary
 val WarmCreamDark_TextTertiary = DarkTextTertiary
 val WarmCreamDark_Divider = DarkDivider
 val WarmCreamDark_NavBar = DarkCard
-val WarmCreamDark_Hero = SoftBlue
-val WarmCreamDark_OnHero = LightOnAccent
+val WarmCreamDark_Hero = Color(0xFF243044)
+val WarmCreamDark_OnHero = DarkTextPrimary
 
 val MonochromeLight_Background = LightBackground
 val MonochromeLight_CardBackground = LightCard
@@ -109,7 +111,7 @@ val MonochromeDark_OnHero = DarkOnAccent
 
 // =========================================================================
 // 语义色。income 跟主色同一支，图表和正数都走它。
-// hero 是结余卡：浅色就是主色，暗色仍用那支实心蓝，白字才压得住。
+// hero 只在主题预览里当结余卡。暗色是深玻璃，浅字才压得住。
 // =========================================================================
 
 @Immutable
@@ -185,8 +187,8 @@ val WarmCreamDarkAppColors = AppColors(
     navBarBackground = WarmCreamDark_NavBar,
     hero = WarmCreamDark_Hero,
     onHero = WarmCreamDark_OnHero,
-    chartIncome = Color(0xFF3E5680),
-    chartExpense = SoftBlueDark,
+    chartIncome = CryptoGoldBright,
+    chartExpense = CryptoGoldDeep,
     isDark = true,
 )
 
@@ -235,7 +237,7 @@ val MonochromeDarkAppColors = AppColors(
     navBarBackground = MonochromeDark_NavBar,
     hero = MonochromeDark_Hero,
     onHero = MonochromeDark_OnHero,
-    chartIncome = Color(0xFF5A6574),
+    chartIncome = Color(0xFF7D8BA3),
     chartExpense = InkDark,
     isDark = true,
 )
@@ -287,8 +289,8 @@ val WarmCreamDarkColorScheme: ColorScheme = darkColorScheme(
     onPrimaryContainer = WarmCreamDark_OnSecondary,
     secondary = WarmCreamDark_Primary,
     onSecondary = WarmCreamDark_OnPrimary,
-    secondaryContainer = SoftBlueDarkContainer,
-    onSecondaryContainer = SoftBlueDarkOnContainer,
+    secondaryContainer = CryptoGoldContainer,
+    onSecondaryContainer = CryptoGoldOnContainer,
     tertiary = WarmCreamDark_Primary,
     onTertiary = WarmCreamDark_OnPrimary,
     tertiaryContainer = WarmCreamDark_Secondary,
@@ -302,8 +304,8 @@ val WarmCreamDarkColorScheme: ColorScheme = darkColorScheme(
     surfaceContainerLowest = WarmCreamDark_NavBar,
     surfaceContainerLow = DarkCard,
     surfaceContainer = WarmCreamDark_CardBackground,
-    surfaceContainerHigh = Color(0xFF243044),
-    surfaceContainerHighest = DarkDivider,
+    surfaceContainerHigh = Color(0xFF313A50),
+    surfaceContainerHighest = Color(0xFF3E4C63),
     surfaceTint = Color.Transparent,
     error = WarmCreamDark_Expense,
     onError = DarkOnAccent,
@@ -368,8 +370,8 @@ val MonochromeDarkColorScheme: ColorScheme = darkColorScheme(
     surfaceContainerLowest = MonochromeDark_NavBar,
     surfaceContainerLow = DarkCard,
     surfaceContainer = MonochromeDark_CardBackground,
-    surfaceContainerHigh = Color(0xFF243044),
-    surfaceContainerHighest = DarkDivider,
+    surfaceContainerHigh = Color(0xFF313A50),
+    surfaceContainerHighest = Color(0xFF3E4C63),
     surfaceTint = Color.Transparent,
     error = MonochromeDark_Expense,
     onError = DarkOnAccent,

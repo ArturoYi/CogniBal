@@ -39,8 +39,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -65,6 +67,7 @@ import androidx.compose.ui.unit.dp
 import com.example.cognibal.screen.feature.expense.config.AddExpenseConfig
 import com.example.cognibal.ui.theme.AppThemeStyle
 import com.example.cognibal.ui.theme.CogniBalTheme
+import com.example.cognibal.ui.theme.GlassRim
 import com.example.cognibal.ui.theme.appColors
 
 /** 底栏自身高度，不含凸起和系统栏。 */
@@ -95,7 +98,7 @@ internal fun bottomNavigationOverlayInsets(): WindowInsets {
 }
 
 /**
- * Index 导航。窄窗口是白底底栏，中间圆形按钮向上凸起。
+ * Index 导航。窄窗口底栏跟卡片同色，暗色再加一道玻璃边。中间圆形按钮向上凸起。
  *
  * 选中只改图标和文案的颜色，不铺指示底。阴影用大模糊和低透明度，没有硬边厚度。
  * 底栏背景铺到屏幕边缘，系统栏留白只垫在图标下面。
@@ -112,6 +115,7 @@ internal fun IndexNavigationBar(
     interactive: Boolean = true,
 ) {
     val barColor = MaterialTheme.colorScheme.surfaceContainerLowest
+    val isDark = MaterialTheme.appColors.isDark
     val barModifier = if (interactive) modifier else modifier.clearAndSetSemantics {}
     when (placement) {
         IndexNavigationPlacement.BottomStacked,
@@ -128,6 +132,7 @@ internal fun IndexNavigationBar(
                         Modifier
                             .fillMaxWidth()
                             .background(barColor)
+                            .then(if (isDark) Modifier.glassTopEdge() else Modifier)
                             .windowInsetsPadding(bottomBarInsets()),
                     ) {
                         Row(
@@ -173,6 +178,7 @@ internal fun IndexNavigationBar(
                         .width(RailWidth)
                         .fillMaxHeight()
                         .background(barColor)
+                        .then(if (isDark) Modifier.glassStartEdge() else Modifier)
                         .windowInsetsPadding(sideRailInsets())
                         .verticalScroll(rememberScrollState())
                         .padding(vertical = 12.dp),
@@ -416,6 +422,27 @@ private fun shadowPaint(color: Color, blurRadiusPx: Float): Paint {
     }
 }
 
+private fun Modifier.glassTopEdge(): Modifier = drawBehind {
+    val stroke = 1.dp.toPx()
+    drawLine(
+        color = GlassRim,
+        start = Offset(0f, stroke / 2f),
+        end = Offset(size.width, stroke / 2f),
+        strokeWidth = stroke,
+    )
+}
+
+private fun Modifier.glassStartEdge(): Modifier = drawBehind {
+    val stroke = 1.dp.toPx()
+    val x = if (layoutDirection == LayoutDirection.Ltr) stroke / 2f else size.width - stroke / 2f
+    drawLine(
+        color = GlassRim,
+        start = Offset(x, 0f),
+        end = Offset(x, size.height),
+        strokeWidth = stroke,
+    )
+}
+
 /** 底栏图标躲开系统导航栏和两侧切口，背景仍铺到屏幕边缘。 */
 @Composable
 private fun bottomBarInsets(): WindowInsets =
@@ -441,7 +468,7 @@ private fun IndexNavigationBarLightPreview() {
     }
 }
 
-@Preview(name = "底栏预览 - 暗色模式", showBackground = true, backgroundColor = 0xFF212529)
+@Preview(name = "底栏预览 - 暗色模式", showBackground = true, backgroundColor = 0xFF0F172A)
 @Composable
 private fun IndexNavigationBarDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = true) {

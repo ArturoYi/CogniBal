@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.TextAutoSize
@@ -33,7 +34,6 @@ import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.SwapHoriz
-import androidx.compose.material.icons.outlined.SwitchAccount
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -41,14 +41,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -59,6 +64,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.cognibal.R
@@ -77,7 +83,9 @@ import com.example.cognibal.ui.insets.screenContentWindowInsets
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.CogniBalCardElevation
 import com.example.cognibal.ui.theme.appColors
+import com.example.cognibal.ui.theme.glassEdge
 import com.example.cognibal.ui.theme.budgetNearColor
+import kotlin.math.roundToInt
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -185,7 +193,7 @@ private fun AccountHero(
 
 /**
  * 结余卡。底色是账户自己的颜色，浅色和深色只改明暗。
- * 左上是当前月份的结余，收入和支出在底下一行。
+ * 结余是唯一的大数字。收入和支出在下面分成两列，仍用卡上的浅字。
  */
 @Composable
 private fun AccountCard(
@@ -202,35 +210,53 @@ private fun AccountCard(
     val incomeText = cardAmount(currencySymbol, income, figuresReady)
     val expenseText = cardAmount(currencySymbol, expense, figuresReady)
     val balanceText = cardAmount(currencySymbol, balance, figuresReady, overflow = balanceOverflow)
+    val switchInteraction = remember { MutableInteractionSource() }
+    val cardCoords = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    var switchAnchor by remember { mutableStateOf(SwitchAnchor.Empty) }
     AccountHeroSurface(color = tint) { paint ->
         val muted = paint.on.copy(alpha = 0.78f)
-        Column(
+        Box(
                 modifier =
-                        Modifier.fillMaxWidth()
-                                .padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 14.dp),
+                        Modifier.fillMaxWidth().onGloballyPositioned { coordinates ->
+                            cardCoords[0] = coordinates
+                        },
         ) {
-            Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
+            Column(
+                    modifier =
+                            Modifier.fillMaxWidth()
+                                    .padding(start = 18.dp, end = 18.dp, top = 14.dp, bottom = 14.dp),
             ) {
-                Text(
-                        text = stringResource(R.string.bill_card_month_balance, currentMonthLabel()),
-                        color = muted,
-                        style = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                )
-                AccountSwitchButton(
-                        account = account,
-                        onColor = paint.on,
-                        onOpenAccounts = onOpenAccounts,
-                )
-            }
-            Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-            ) {
+                Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                            text = stringResource(R.string.bill_card_month_balance, currentMonthLabel()),
+                            color = muted,
+                            style = MaterialTheme.typography.labelMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f),
+                    )
+                    AccountSwitchLabel(
+                            account = account,
+                            onColor = paint.on,
+                            interaction = switchInteraction,
+                            onPlaced = { coordinates ->
+                                val parent = cardCoords[0] ?: return@AccountSwitchLabel
+                                if (!parent.isAttached || !coordinates.isAttached) return@AccountSwitchLabel
+                                val origin = parent.localPositionOf(coordinates, Offset.Zero)
+                                val next =
+                                        SwitchAnchor(
+                                                x = origin.x.roundToInt(),
+                                                y = origin.y.roundToInt(),
+                                                width = coordinates.size.width,
+                                                height = coordinates.size.height,
+                                        )
+                                if (next != switchAnchor) switchAnchor = next
+                            },
+                    )
+                }
                 Text(
                         text = balanceText,
                         color = paint.on,
@@ -247,30 +273,32 @@ private fun AccountCard(
                                         maxFontSize = 34.sp,
                                         stepSize = 1.sp,
                                 ),
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.fillMaxWidth().padding(top = 2.dp),
                 )
-                Icon(
-                        imageVector = accountIconImage(account.iconKey),
-                        contentDescription = null,
-                        tint = paint.on.copy(alpha = 0.28f),
-                        modifier = Modifier.padding(start = 8.dp).size(32.dp),
-                )
+                Row(
+                        modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(20.dp),
+                ) {
+                    HeroAmount(
+                            label = stringResource(R.string.bill_figure_income),
+                            value = incomeText,
+                            color = muted,
+                            modifier = Modifier.weight(1f),
+                    )
+                    HeroAmount(
+                            label = stringResource(R.string.bill_figure_expense),
+                            value = expenseText,
+                            color = muted,
+                            modifier = Modifier.weight(1f),
+                    )
+                }
             }
-            Row(
-                    modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    horizontalArrangement = Arrangement.spacedBy(20.dp),
-            ) {
-                HeroAmount(
-                        label = stringResource(R.string.bill_figure_income),
-                        value = incomeText,
-                        color = muted,
-                )
-                HeroAmount(
-                        label = stringResource(R.string.bill_figure_expense),
-                        value = expenseText,
-                        color = muted,
-                )
-            }
+            AccountSwitchTarget(
+                    account = account,
+                    anchor = switchAnchor,
+                    interaction = switchInteraction,
+                    onOpenAccounts = onOpenAccounts,
+            )
         }
     }
 }
@@ -280,60 +308,99 @@ private fun HeroAmount(
         label: String,
         value: String,
         color: Color,
+        modifier: Modifier = Modifier,
 ) {
-    Text(
-            text = "$label $value",
-            color = color,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.titleSmall.merge(TextStyle(fontFeatureSettings = "tnum")),
-            modifier = Modifier.clearAndSetSemantics { contentDescription = "$label $value" },
-    )
-}
-
-@Composable
-private fun AccountSwitchButton(
-        account: AccountItemUi,
-        onColor: Color,
-        onOpenAccounts: () -> Unit,
-) {
-    val description = stringResource(R.string.account_switch_cd, account.name)
-    PressFade(
-            onClick = onOpenAccounts,
-            modifier =
-                    Modifier.collapseTouchHeight()
-                            .semantics { contentDescription = description },
-            contentAlignment = Alignment.CenterEnd,
+    Column(
+            modifier = modifier.clearAndSetSemantics { contentDescription = "$label $value" },
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                    text = account.name,
-                    color = onColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.widthIn(max = 132.dp),
-            )
-            Icon(
-                    imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = null,
-                    tint = onColor.copy(alpha = 0.85f),
-                    modifier = Modifier.size(18.dp),
-            )
-        }
+        Text(
+                text = label,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelMedium,
+        )
+        Text(
+                text = value,
+                color = color,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleSmall.merge(TextStyle(fontFeatureSettings = "tnum")),
+        )
     }
 }
 
-/** 点击热区仍按 48.dp，但不再把这一行撑高，避免结余卡顶部空出一截。 */
-private fun Modifier.collapseTouchHeight(): Modifier = layout { measurable, constraints ->
-    val placeable = measurable.measure(constraints)
-    val textHeight = 28.dp.roundToPx()
-    if (placeable.height <= textHeight) {
-        layout(placeable.width, placeable.height) { placeable.place(0, 0) }
-    } else {
-        layout(placeable.width, textHeight) {
-            placeable.place(0, (textHeight - placeable.height) / 2)
-        }
+/** 账户名只负责占位和按下变淡。点击落在 [AccountSwitchTarget]，行高保持文字高度。 */
+@Composable
+private fun AccountSwitchLabel(
+        account: AccountItemUi,
+        onColor: Color,
+        interaction: MutableInteractionSource,
+        onPlaced: (LayoutCoordinates) -> Unit,
+) {
+    val pressed by interaction.collectIsPressedAsState()
+    Row(
+            modifier =
+                    Modifier.graphicsLayer { alpha = if (pressed) 0.72f else 1f }
+                            .clearAndSetSemantics {}
+                            .onGloballyPositioned(onPlaced),
+            verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+                text = account.name,
+                color = onColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier.widthIn(max = 132.dp),
+        )
+        Icon(
+                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = onColor.copy(alpha = 0.85f),
+                modifier = Modifier.size(18.dp),
+        )
+    }
+}
+
+/**
+ * 盖在账户名上的 48.dp 热区。挂在结余卡这一层，才不会把账户名那一行撑高。
+ */
+@Composable
+private fun AccountSwitchTarget(
+        account: AccountItemUi,
+        anchor: SwitchAnchor,
+        interaction: MutableInteractionSource,
+        onOpenAccounts: () -> Unit,
+) {
+    if (!anchor.placed) return
+    val density = LocalDensity.current
+    val description = stringResource(R.string.account_switch_cd, account.name)
+    val touch = 48.dp
+    val touchPx = with(density) { touch.roundToPx() }
+    val widthPx = maxOf(anchor.width, touchPx)
+    val left = anchor.x + anchor.width - widthPx
+    val top = (anchor.y + anchor.height / 2 - touchPx / 2).coerceAtLeast(0)
+    Box(
+            modifier =
+                    Modifier.offset { IntOffset(left, top) }
+                            .semantics { contentDescription = description }
+                            .interactiveClick(interactionSource = interaction, onClick = onOpenAccounts)
+                            .size(with(density) { widthPx.toDp() }, touch),
+    )
+}
+
+private data class SwitchAnchor(
+        val x: Int,
+        val y: Int,
+        val width: Int,
+        val height: Int,
+) {
+    val placed: Boolean
+        get() = width > 0 && height > 0
+
+    companion object {
+        val Empty = SwitchAnchor(x = 0, y = 0, width = 0, height = 0)
     }
 }
 
@@ -433,7 +500,7 @@ private fun BudgetBlock(
         )
         Column(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp)) {
             when {
-                uiState.loading && budget == null -> PendingLine()
+                uiState.loading && budget == null -> BudgetTrackPlaceholder()
                 budget == null ->
                         Text(
                                 text = stringResource(R.string.bill_budget_empty),
@@ -470,6 +537,13 @@ private fun HomeBudgetBar(
     val spentDescription = stringResource(R.string.bill_figure_expense) + " " + spentText
     val limitDescription = stringResource(R.string.bill_budget_global) + " " + limitText
     Column(modifier = Modifier.fillMaxWidth()) {
+        Text(
+                text = budgetPercentLabel(budget.spent, budget.limit),
+                color = color,
+                maxLines = 1,
+                style = MaterialTheme.typography.labelMedium.merge(TextStyle(fontFeatureSettings = "tnum")),
+                modifier = Modifier.padding(bottom = 8.dp).clearAndSetSemantics {},
+        )
         LinearProgressIndicator(
                 progress = { budget.ratio },
                 modifier =
@@ -487,7 +561,7 @@ private fun HomeBudgetBar(
         ) {
             Text(
                     text = spentText,
-                    color = colors.textSecondary,
+                    color = colors.textPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     style = amountStyle,
@@ -498,7 +572,7 @@ private fun HomeBudgetBar(
             )
             Text(
                     text = limitText,
-                    color = colors.textSecondary,
+                    color = colors.textTertiary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.End,
@@ -510,6 +584,20 @@ private fun HomeBudgetBar(
             )
         }
     }
+}
+
+/** 加载时的进度槽，高度和进度条一致。 */
+@Composable
+private fun BudgetTrackPlaceholder() {
+    val description = stringResource(R.string.loading_indicator_cd)
+    Box(
+            modifier =
+                    Modifier.fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(MaterialTheme.appColors.tagBackground)
+                            .clearAndSetSemantics { contentDescription = description },
+    )
 }
 
 /** 总预算的分类名为空，且不是缺失分类。同一周期里启用的总预算最多一条。 */
@@ -550,14 +638,14 @@ private fun RecentBlock(
         )
         when {
             headerState.loading && headerState.currentId == null ->
-                    PendingLine(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp))
-            pending -> PendingLine(modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp))
+                    PendingLine(modifier = recentMessagePadding)
+            pending -> PendingLine(modifier = recentMessagePadding)
             showEmptyAccount || uiState.recent.isEmpty() ->
                     Text(
                             text = stringResource(R.string.bill_recent_week_empty),
                             color = MaterialTheme.appColors.textTertiary,
                             fontSize = 14.sp,
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
+                            modifier = recentMessagePadding,
                     )
             else ->
                     WeekBillList(
@@ -618,20 +706,13 @@ private fun WeekBillRow(
             verticalAlignment = Alignment.CenterVertically,
     ) {
         BillMark(bill = bill)
-        Text(
-                text = title,
-                color = colors.textPrimary,
-                style = MaterialTheme.typography.titleSmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f).padding(horizontal = 12.dp),
-        )
-        Column(horizontalAlignment = Alignment.End) {
+        Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
             Text(
-                    text = currencySymbol + formatMinorAmount(bill.signedAmount),
-                    color = amountColor,
-                    style = MaterialTheme.typography.titleMedium,
+                    text = title,
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.titleSmall,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
             )
             Text(
                     text = clockText(bill.time),
@@ -640,8 +721,17 @@ private fun WeekBillRow(
                     modifier = Modifier.padding(top = 2.dp),
             )
         }
+        Text(
+                text = currencySymbol + formatMinorAmount(bill.signedAmount),
+                color = amountColor,
+                style = MaterialTheme.typography.titleMedium.merge(TextStyle(fontFeatureSettings = "tnum")),
+                maxLines = 1,
+        )
     }
 }
+
+/** 和日期标题同一套左右边距，空状态和加载行不会贴边。 */
+private val recentMessagePadding = Modifier.padding(start = 16.dp, end = 16.dp, top = 14.dp, bottom = 16.dp)
 
 @Composable
 private fun BillMark(bill: BillRowUi) {
@@ -725,7 +815,7 @@ private fun SectionHeader(
         if (action != null && onAction != null) {
             PressFade(onClick = onAction) {
                 Row(
-                        modifier = Modifier.heightIn(min = 32.dp).padding(horizontal = 2.dp),
+                        modifier = Modifier.heightIn(min = 48.dp).padding(horizontal = 2.dp),
                         verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
@@ -764,11 +854,12 @@ private fun LedgerCard(
         content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = MaterialTheme.appColors
+    val shape = MaterialTheme.shapes.extraLarge
     Surface(
-            modifier = modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
+            modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+            shape = shape,
             color = colors.cardBackground,
-            shadowElevation = CogniBalCardElevation,
+            shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
     ) { Column(content = content) }
 }
 
@@ -903,11 +994,12 @@ internal fun BillEntryRow(
                 BillType.Income -> Icons.Outlined.ArrowUpward
                 BillType.Transfer -> Icons.Outlined.SwapHoriz
             }
+    val shape = MaterialTheme.shapes.extraLarge
     Surface(
-            modifier = modifier.fillMaxWidth(),
-            shape = MaterialTheme.shapes.extraLarge,
+            modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+            shape = shape,
             color = colors.cardBackground,
-            shadowElevation = CogniBalCardElevation,
+            shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
     ) {
         Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),

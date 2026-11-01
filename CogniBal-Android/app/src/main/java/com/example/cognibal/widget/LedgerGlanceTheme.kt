@@ -34,7 +34,7 @@ import com.example.cognibal.ui.theme.WarmCreamLight_TextSecondary
 import com.example.cognibal.ui.theme.budgetNearColor
 
 /**
- * 小组件跟应用同一套浅色卡片和主色，深浅跟系统走。
+ * 小组件跟应用同一套卡片和主色，深浅跟系统走。暗色主色是金。
  *
  * 不用动态取色，避免桌面颜色和账本里的柔和蓝、墨色对不上。
  */

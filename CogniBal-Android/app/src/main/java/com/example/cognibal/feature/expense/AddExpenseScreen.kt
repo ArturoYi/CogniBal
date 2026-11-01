@@ -95,6 +95,7 @@ import com.example.cognibal.ui.insets.screenContentWindowInsets
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.preview.FormFactorPreviews
 import com.example.cognibal.ui.theme.CogniBalCardElevation
+import com.example.cognibal.ui.theme.glassEdge
 import com.example.cognibal.ui.theme.CogniBalTheme
 import com.example.cognibal.ui.theme.appColors
 import java.time.LocalDateTime
@@ -491,11 +492,12 @@ private fun CategorySection(
     onCreate: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
+    val shape = RoundedCornerShape(20.dp)
     Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+        shape = shape,
         color = colors.cardBackground,
-        shadowElevation = CogniBalCardElevation,
+        shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
     ) {
         Column(
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp),
