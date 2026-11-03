@@ -3,83 +3,91 @@ package com.example.cognibal.widget
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.glance.GlanceTheme
 import androidx.glance.material3.ColorProviders
-import com.example.cognibal.ui.theme.MonochromeDark_OnPrimary
-import com.example.cognibal.ui.theme.MonochromeDark_OnSecondary
-import com.example.cognibal.ui.theme.MonochromeDark_Primary
-import com.example.cognibal.ui.theme.MonochromeDark_Secondary
-import com.example.cognibal.ui.theme.MonochromeLight_OnPrimary
-import com.example.cognibal.ui.theme.MonochromeLight_OnSecondary
-import com.example.cognibal.ui.theme.MonochromeLight_Primary
-import com.example.cognibal.ui.theme.MonochromeLight_Secondary
-import com.example.cognibal.ui.theme.WarmCreamDark_CardBackground
-import com.example.cognibal.ui.theme.WarmCreamDark_Divider
-import com.example.cognibal.ui.theme.WarmCreamDark_Expense
-import com.example.cognibal.ui.theme.WarmCreamDark_OnPrimary
-import com.example.cognibal.ui.theme.WarmCreamDark_OnSecondary
-import com.example.cognibal.ui.theme.WarmCreamDark_Primary
-import com.example.cognibal.ui.theme.WarmCreamDark_Secondary
-import com.example.cognibal.ui.theme.WarmCreamDark_TextPrimary
-import com.example.cognibal.ui.theme.WarmCreamDark_TextSecondary
-import com.example.cognibal.ui.theme.WarmCreamLight_CardBackground
-import com.example.cognibal.ui.theme.WarmCreamLight_Divider
-import com.example.cognibal.ui.theme.WarmCreamLight_Expense
-import com.example.cognibal.ui.theme.WarmCreamLight_OnPrimary
-import com.example.cognibal.ui.theme.WarmCreamLight_OnSecondary
-import com.example.cognibal.ui.theme.WarmCreamLight_Primary
-import com.example.cognibal.ui.theme.WarmCreamLight_Secondary
-import com.example.cognibal.ui.theme.WarmCreamLight_TextPrimary
-import com.example.cognibal.ui.theme.WarmCreamLight_TextSecondary
-import com.example.cognibal.ui.theme.budgetNearColor
+
+private val Paper = Color(0xFFFFFFFF)
+private val Ink = Color(0xFF111111)
+private val MuteLight = Color(0xFF666666)
+private val LineLight = Color(0xFFE5E5E5)
+private val FillLight = Color(0xFFF3F3F3)
+
+private val Night = Color(0xFF111111)
+private val NightInk = Color(0xFFFFFFFF)
+private val MuteNight = Color(0xFFA3A3A3)
+private val LineNight = Color(0xFF2C2C2C)
+private val FillNight = Color(0xFF242424)
 
 /**
- * 小组件跟应用同一套卡片和主色，深浅跟系统走。暗色主色是金。
- *
- * 不用动态取色，避免桌面颜色和账本里的柔和蓝、墨色对不上。
+ * 桌面卡片只用黑白，深浅跟系统走。浅色是白底黑字，夜间是黑底白字。
+ * 卡片底色用 background，系统会按当前深浅选用对应的一档。
  */
 @Composable
-internal fun LedgerGlanceTheme(
-    monochrome: Boolean,
-    content: @Composable () -> Unit,
-) {
+internal fun LedgerGlanceTheme(content: @Composable () -> Unit) {
     GlanceTheme(
         colors = ColorProviders(
-            light = lightScheme(monochrome),
-            dark = darkScheme(monochrome),
+            light = lightScheme(),
+            dark = darkScheme(),
         ),
         content = content,
     )
 }
 
-private fun lightScheme(monochrome: Boolean) = lightColorScheme(
-    primary = if (monochrome) MonochromeLight_Primary else WarmCreamLight_Primary,
-    onPrimary = if (monochrome) MonochromeLight_OnPrimary else WarmCreamLight_OnPrimary,
-    secondary = if (monochrome) MonochromeLight_Secondary else WarmCreamLight_Secondary,
-    onSecondary = if (monochrome) MonochromeLight_OnSecondary else WarmCreamLight_OnSecondary,
-    tertiary = budgetNearColor(isDark = false),
-    background = WarmCreamLight_CardBackground,
-    surface = WarmCreamLight_CardBackground,
-    surfaceVariant = WarmCreamLight_Secondary,
-    onBackground = WarmCreamLight_TextPrimary,
-    onSurface = WarmCreamLight_TextPrimary,
-    onSurfaceVariant = WarmCreamLight_TextSecondary,
-    outline = WarmCreamLight_Divider,
-    error = WarmCreamLight_Expense,
+private fun lightScheme() = lightColorScheme(
+    primary = Ink,
+    onPrimary = Paper,
+    primaryContainer = FillLight,
+    onPrimaryContainer = Ink,
+    secondary = FillLight,
+    onSecondary = Ink,
+    secondaryContainer = Paper,
+    onSecondaryContainer = Ink,
+    tertiary = MuteLight,
+    onTertiary = Paper,
+    tertiaryContainer = FillLight,
+    onTertiaryContainer = Ink,
+    background = Paper,
+    onBackground = Ink,
+    surface = Paper,
+    onSurface = Ink,
+    surfaceVariant = FillLight,
+    onSurfaceVariant = MuteLight,
+    outline = LineLight,
+    error = Ink,
+    onError = Paper,
+    errorContainer = FillLight,
+    onErrorContainer = Ink,
+    inverseSurface = Night,
+    inverseOnSurface = NightInk,
+    inversePrimary = NightInk,
 )
 
-private fun darkScheme(monochrome: Boolean) = darkColorScheme(
-    primary = if (monochrome) MonochromeDark_Primary else WarmCreamDark_Primary,
-    onPrimary = if (monochrome) MonochromeDark_OnPrimary else WarmCreamDark_OnPrimary,
-    secondary = if (monochrome) MonochromeDark_Secondary else WarmCreamDark_Secondary,
-    onSecondary = if (monochrome) MonochromeDark_OnSecondary else WarmCreamDark_OnSecondary,
-    tertiary = budgetNearColor(isDark = true),
-    background = WarmCreamDark_CardBackground,
-    surface = WarmCreamDark_CardBackground,
-    surfaceVariant = WarmCreamDark_Secondary,
-    onBackground = WarmCreamDark_TextPrimary,
-    onSurface = WarmCreamDark_TextPrimary,
-    onSurfaceVariant = WarmCreamDark_TextSecondary,
-    outline = WarmCreamDark_Divider,
-    error = WarmCreamDark_Expense,
+private fun darkScheme() = darkColorScheme(
+    primary = NightInk,
+    onPrimary = Night,
+    primaryContainer = FillNight,
+    onPrimaryContainer = NightInk,
+    secondary = FillNight,
+    onSecondary = NightInk,
+    secondaryContainer = Night,
+    onSecondaryContainer = NightInk,
+    tertiary = MuteNight,
+    onTertiary = Night,
+    tertiaryContainer = FillNight,
+    onTertiaryContainer = NightInk,
+    background = Night,
+    onBackground = NightInk,
+    surface = Night,
+    onSurface = NightInk,
+    surfaceVariant = FillNight,
+    onSurfaceVariant = MuteNight,
+    outline = LineNight,
+    error = NightInk,
+    onError = Night,
+    errorContainer = FillNight,
+    onErrorContainer = NightInk,
+    inverseSurface = Paper,
+    inverseOnSurface = Ink,
+    inversePrimary = Ink,
 )

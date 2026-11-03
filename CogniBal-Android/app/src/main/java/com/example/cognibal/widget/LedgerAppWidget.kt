@@ -44,7 +44,7 @@ class LedgerAppWidget : GlanceAppWidget() {
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val content = LedgerWidgetLoader.load(context)
         provideContent {
-            LedgerGlanceTheme(monochrome = content.monochrome) {
+            LedgerGlanceTheme {
                 LedgerWidgetBody(content)
             }
         }
@@ -61,7 +61,7 @@ private fun LedgerWidgetBody(content: LedgerWidgetContent) {
         putExtra(AppShortcuts.EXTRA_KIND, AppShortcuts.KIND_EXPENSE)
     }
     Scaffold(
-        backgroundColor = GlanceTheme.colors.widgetBackground,
+        backgroundColor = GlanceTheme.colors.background,
         horizontalPadding = 16.dp,
         modifier = GlanceModifier.fillMaxSize().padding(vertical = 12.dp),
     ) {
@@ -80,7 +80,7 @@ private fun LedgerWidgetBody(content: LedgerWidgetContent) {
                 Figure(
                     label = context.getString(R.string.bill_figure_income),
                     amount = widgetMoney(content.currencySymbol, content.income, false, overflow, locale),
-                    color = GlanceTheme.colors.primary,
+                    color = GlanceTheme.colors.onSurface,
                     modifier = GlanceModifier.defaultWeight(),
                 )
                 Figure(
@@ -104,7 +104,7 @@ private fun LedgerWidgetBody(content: LedgerWidgetContent) {
             }
             Spacer(GlanceModifier.defaultWeight().height(12.dp))
             Button(
-                text = context.getString(R.string.bill_home_title),
+                text = context.getString(R.string.bill_fab_cd),
                 onClick = actionStartActivity(record),
                 modifier = GlanceModifier.fillMaxWidth(),
                 maxLines = 1,

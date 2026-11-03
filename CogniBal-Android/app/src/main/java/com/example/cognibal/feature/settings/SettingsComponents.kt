@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -80,14 +81,12 @@ import com.example.cognibal.screen.feature.settings.model.CurrencyPreference
 import com.example.cognibal.screen.feature.settings.model.DarkModePreference
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.AppThemeStyle
-import com.example.cognibal.ui.theme.CogniBalCardElevation
-import com.example.cognibal.ui.theme.glassEdge
 import com.example.cognibal.ui.theme.LocalAppThemeStyle
+import com.example.cognibal.ui.theme.SelectableAccentStyles
+import com.example.cognibal.ui.theme.accentInk
+import com.example.cognibal.ui.theme.cardFace
+import com.example.cognibal.ui.theme.sameAccent
 import com.example.cognibal.ui.theme.LocalThemeReveal
-import com.example.cognibal.ui.theme.MonochromeDarkAppColors
-import com.example.cognibal.ui.theme.MonochromeLightAppColors
-import com.example.cognibal.ui.theme.WarmCreamDarkAppColors
-import com.example.cognibal.ui.theme.WarmCreamLightAppColors
 import com.example.cognibal.ui.theme.appColors
 import com.example.cognibal.ui.theme.revealOrRun
 
@@ -146,10 +145,10 @@ internal fun SettingsShortcutBar(
     val scrollState = rememberScrollState()
     val shape = MaterialTheme.shapes.extraLarge
     Surface(
-        modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+        modifier = modifier.fillMaxWidth().cardFace(shape),
         shape = shape,
         color = colors.cardBackground,
-        shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
+        shadowElevation = 0.dp,
     ) {
         BoxWithConstraints(
             modifier = Modifier
@@ -238,7 +237,7 @@ private fun SettingsShortcutItem(
 /**
  * 分层三：垂直功能卡片容器
  *
- * 统一 20.dp 圆角。浅色靠微阴影，暗色改玻璃描边。
+ * 统一圆角和纯色卡片。浅色、夜间都靠底色差和轻阴影，不加描边。
  */
 @Composable
 fun SettingsSectionCard(
@@ -250,8 +249,8 @@ fun SettingsSectionCard(
     Surface(
         color = colors.cardBackground,
         shape = shape,
-        modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
-        shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
+        modifier = modifier.fillMaxWidth().cardFace(shape),
+        shadowElevation = 0.dp,
     ) {
         Column(
             modifier = Modifier
@@ -552,7 +551,7 @@ private fun DarkModePreference.showsDarkTheme(systemDark: Boolean): Boolean = wh
 }
 
 /**
- * 主题色：柔和蓝、墨色。两套都是同一种颜色贯穿。
+ * 主色方案。页面保持中性灰，只换主色和辅助色。
  */
 @Composable
 fun ThemeStyleSelector(
@@ -585,58 +584,33 @@ fun ThemeStyleSelector(
                 )
             }
         }
-        Spacer(modifier = Modifier.height(10.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            AppThemeStyle.entries.forEach { style ->
-                val isSelected = style == currentStyle
-                ThemeStyleCard(
-                    style = style,
-                    isSelected = isSelected,
-                    onClick = { onSelectStyle(style) },
-                    modifier = Modifier.weight(1f),
-                )
-            }
+        Spacer(modifier = Modifier.height(6.dp))
+        SelectableAccentStyles.forEach { style ->
+            AccentStyleRow(
+                style = style,
+                isSelected = style.sameAccent(currentStyle),
+                onClick = { onSelectStyle(style) },
+            )
         }
     }
 }
 
-private data class ThemeCardPalette(
-    val primary: Color,
-    val secondary: Color,
-    val expense: Color,
-)
-
 @Composable
-private fun ThemeStyleCard(
+private fun AccentStyleRow(
     style: AppThemeStyle,
     isSelected: Boolean,
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
     val themeReveal = LocalThemeReveal.current
-    val swatches = when (style) {
-        AppThemeStyle.WarmCream -> if (colors.isDark) WarmCreamDarkAppColors else WarmCreamLightAppColors
-        AppThemeStyle.Monochrome -> if (colors.isDark) MonochromeDarkAppColors else MonochromeLightAppColors
-    }
-    val palette = ThemeCardPalette(
-        primary = swatches.primary,
-        secondary = swatches.tagBackground,
-        expense = swatches.chartExpense,
-    )
-
-    val shape = RoundedCornerShape(14.dp)
-    val containerColor = colors.tagBackground
-        .copy(alpha = if (isSelected) 0.55f else 0.2f)
-        .compositeOver(colors.cardBackground)
-    Column(
-        modifier = modifier
+    val ink = style.accentInk(colors.isDark)
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 48.dp)
             .clip(shape)
-            .background(containerColor)
+            .background(if (isSelected) colors.tagBackground else Color.Transparent)
             .themeOptionClick(shape = shape) { center ->
                 themeReveal.revealOrRun(
                     centerInRoot = center,
@@ -646,69 +620,38 @@ private fun ThemeStyleCard(
                     onClick()
                 }
             }
-            .padding(12.dp),
+            .padding(horizontal = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(style.nameRes),
-                    color = colors.textPrimary,
-                    fontSize = 13.5.sp,
-                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                )
-                if (isSelected) {
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .background(colors.primary, CircleShape),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.Check,
-                            contentDescription = stringResource(R.string.selected),
-                            tint = colors.onPrimary,
-                            modifier = Modifier.size(11.dp),
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clip(CircleShape)
-                        .background(palette.primary),
-                )
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clip(CircleShape)
-                        .background(palette.secondary),
-                )
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clip(CircleShape)
-                        .background(palette.expense),
-                )
-            }
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            Text(
-                text = stringResource(style.descriptionRes),
-                color = colors.textTertiary,
-                fontSize = 11.sp,
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .clip(CircleShape)
+                .background(ink.primary),
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Box(
+            modifier = Modifier
+                .size(18.dp)
+                .clip(CircleShape)
+                .background(ink.secondary),
+        )
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+            text = stringResource(style.nameRes),
+            color = colors.textPrimary,
+            fontSize = 15.sp,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+            modifier = Modifier.weight(1f),
+        )
+        if (isSelected) {
+            Icon(
+                imageVector = Icons.Outlined.Check,
+                contentDescription = stringResource(R.string.selected),
+                tint = ink.primary,
+                modifier = Modifier.size(18.dp),
             )
+        }
     }
 }
 

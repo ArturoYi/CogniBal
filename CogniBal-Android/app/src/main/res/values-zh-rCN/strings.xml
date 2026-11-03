@@ -61,7 +61,17 @@
     <string name="theme_dark">暗色</string>
     <string name="theme_dark_subtitle">温润暗沉，夜间更加护眼</string>
     <string name="theme_color">主题色</string>
-    <string name="theme_color_subtitle">一种颜色，柔和扁平</string>
+    <string name="theme_color_subtitle">页面保持灰，只换主色</string>
+    <string name="theme_scheme_mono">黑白</string>
+    <string name="theme_scheme_mono_desc">灰底上的墨色</string>
+    <string name="theme_scheme_vitality">活力橙蓝</string>
+    <string name="theme_scheme_vitality_desc">橙色配青绿</string>
+    <string name="theme_scheme_neon">霓虹紫粉</string>
+    <string name="theme_scheme_neon_desc">紫色配粉</string>
+    <string name="theme_scheme_lime">青柠撞色</string>
+    <string name="theme_scheme_lime_desc">青柠配青</string>
+    <string name="theme_scheme_cream">奶油青绿</string>
+    <string name="theme_scheme_cream_desc">压低的青绿，配一抹奶油</string>
     <string name="theme_warm_cream">柔和蓝</string>
     <string name="theme_warm_cream_desc">一种蓝贯穿全应用</string>
     <string name="theme_monochrome">墨色</string>
@@ -131,6 +141,7 @@
     <string name="about_version">版本：%1$s</string>
     <string name="about_description">知余是一款温润护眼的记账工具，布局会随屏幕尺寸自适应，记账时清晰、顺手。</string>
     <string name="open_source">开源许可与致谢</string>
+    <string name="open_source_subtitle">查看许可与致谢</string>
     <string name="done">完成</string>
     <string name="legal_consent_title">开始之前</string>
     <string name="legal_consent_body">知余把账本保存在这台设备上，没有账号，也不会上传账单。请先阅读下面三份文本。同意后才会进入账本；不同意将退出应用。</string>
@@ -258,7 +269,7 @@
     <string name="account_edit_cd">编辑%1$s</string>
     <string name="account_edit_current">编辑账户</string>
     <string name="account_switch_cd">切换账户，当前是%1$s</string>
-    <string name="account_default_name">现金</string>
+    <string name="account_default_name">默认账户</string>
     <string name="account_field_name">名称</string>
     <string name="account_field_name_hint">例如工资卡、现金</string>
     <string name="account_field_type">类型</string>

@@ -29,6 +29,16 @@ internal class AppearanceSettingsViewModel(
     private val languageConfirmation = MutableStateFlow<LanguageChoice?>(null)
     private val languageSwitch = MutableStateFlow<LanguageChoice?>(null)
 
+    /**
+     * 已经把这次选择交给系统。
+     *
+     * 第一次写入语言时，系统仍可能重建 Activity，盖层组合会重来。
+     * 标记要在 [AppCompatDelegate.setApplicationLocales] 之前写上，重建就发生在那次调用里。
+     * 不放进 [uiState]：配置一变就会重组，若靠状态切换盖层，会把还在播的这一遍拆掉。
+     */
+    var languageSwitchApplied: Boolean = false
+        private set
+
     val uiState: StateFlow<AppearanceSettingsUiState> = combine(
         repository.preferences,
         showLanguageDialog,
@@ -64,10 +74,14 @@ internal class AppearanceSettingsViewModel(
             AppearanceSettingsUiEvent.ConfirmLanguageSwitch -> {
                 val choice = languageConfirmation.value ?: return
                 // 确认框留着，等盖层盖住后再和语言列表一起关。
+                if (languageSwitch.value == null) {
+                    languageSwitchApplied = false
+                }
                 languageSwitch.value = choice
             }
             AppearanceSettingsUiEvent.ApplyLanguageSwitch -> applyLanguageSwitch()
             AppearanceSettingsUiEvent.LanguageSwitchFinished -> {
+                languageSwitchApplied = false
                 languageSwitch.value = null
                 languageConfirmation.value = null
                 showLanguageDialog.value = false
@@ -86,7 +100,8 @@ internal class AppearanceSettingsViewModel(
         } else {
             LocaleListCompat.forLanguageTags(choice.languageTag)
         }
-        // 相同语言不再写入。Activity 声明了 locale 配置变更，这里不会重建窗口。
+        // 相同语言不再写入。先打上标记，系统若仍在这次调用里重建窗口，新盖层不会再播一遍。
+        languageSwitchApplied = true
         if (locales != AppCompatDelegate.getApplicationLocales()) {
             AppCompatDelegate.setApplicationLocales(locales)
         }

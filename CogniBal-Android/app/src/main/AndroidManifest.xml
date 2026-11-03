@@ -61,8 +61,9 @@
                 android:value="true" />
         </service>
         <!--
-          locale|layoutDirection：应用内语言由本 Activity 自己消化。
-          不重建窗口，避免切语言时闪回启动页黑底。
+          locale|layoutDirection|screenLayout：应用内语言由本 Activity 自己消化。
+          第一次写入语言时，配置差里还有 screenLayout。漏掉这一项就会重建窗口，
+          语言盖层从头再播一遍，并闪回启动页黑底。
         -->
         <activity
             android:name=".MainActivity"
@@ -70,7 +71,7 @@
             android:label="@string/app_name"
             android:theme="@style/Theme.CogniBal.Splash"
             android:launchMode="singleTop"
-            android:configChanges="locale|layoutDirection"
+            android:configChanges="locale|layoutDirection|screenLayout"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

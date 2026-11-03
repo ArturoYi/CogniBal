@@ -119,13 +119,15 @@ class MainActivity : AppCompatActivity() {
                 ) {
                     val accepted = legalGate == LegalGate.Accepted
                     // 还没同意协议时不建账本、不把首页画出来。启动页盖住确认页，淡出后才能点同意。
+                    // 同意之后就要准备，不能只等开屏还盖着的那一次。快捷方式本来就没有开屏，
+                    // 正常启动也常常是开屏先收起、人再点同意。这两种都会跳过准备，
+                    // 第一次进来没有默认账户，首页也是空的，下次冷启动才补上。
                     val coverStartup = showSplash && shortcutTypeCode == null
-                    val warmHome = coverStartup && accepted
-                    val warmup = if (warmHome) rememberBillHomeWarmup() else BillHomeWarmup.Shown
+                    val warmup = if (accepted) rememberBillHomeWarmup() else BillHomeWarmup.Shown
                     // 数据写进状态后还要等它真正画出来。同一帧就揭开，会先闪出窗口底色。
                     var homeDrawn by remember { mutableStateOf(false) }
-                    LaunchedEffect(warmHome, warmup.contentReady) {
-                        if (!warmHome || !warmup.contentReady) {
+                    LaunchedEffect(coverStartup, warmup.contentReady) {
+                        if (!coverStartup || !warmup.contentReady) {
                             homeDrawn = false
                             return@LaunchedEffect
                         }
@@ -156,7 +158,7 @@ class MainActivity : AppCompatActivity() {
                                 modifier = Modifier.fillMaxSize(),
                             )
                         }
-                        if (accepted && (!coverStartup || warmup.composeHome)) {
+                        if (accepted && warmup.contentReady) {
                             IndexScreen(
                                 shortcutTypeCode = shortcutTypeCode,
                                 onShortcutConsumed = {

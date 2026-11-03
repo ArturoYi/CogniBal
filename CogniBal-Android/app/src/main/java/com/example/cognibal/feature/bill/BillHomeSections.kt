@@ -81,9 +81,8 @@ import com.example.cognibal.screen.feature.expense.model.categoryIcon
 import com.example.cognibal.screen.feature.expense.model.onCategory
 import com.example.cognibal.ui.insets.screenContentWindowInsets
 import com.example.cognibal.ui.interaction.interactiveClick
-import com.example.cognibal.ui.theme.CogniBalCardElevation
+import com.example.cognibal.ui.theme.cardFace
 import com.example.cognibal.ui.theme.appColors
-import com.example.cognibal.ui.theme.glassEdge
 import com.example.cognibal.ui.theme.budgetNearColor
 import kotlin.math.roundToInt
 import java.time.LocalDate
@@ -856,10 +855,10 @@ private fun LedgerCard(
     val colors = MaterialTheme.appColors
     val shape = MaterialTheme.shapes.extraLarge
     Surface(
-            modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+            modifier = modifier.fillMaxWidth().cardFace(shape),
             shape = shape,
             color = colors.cardBackground,
-            shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
+            shadowElevation = 0.dp,
     ) { Column(content = content) }
 }
 
@@ -996,10 +995,10 @@ internal fun BillEntryRow(
             }
     val shape = MaterialTheme.shapes.extraLarge
     Surface(
-            modifier = modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+            modifier = modifier.fillMaxWidth().cardFace(shape),
             shape = shape,
             color = colors.cardBackground,
-            shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
+            shadowElevation = 0.dp,
     ) {
         Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),

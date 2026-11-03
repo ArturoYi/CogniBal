@@ -233,11 +233,18 @@ internal fun LanguageSwitchConfirmDialog(
 @Composable
 internal fun LanguageSwitchCover(
     targetTag: String?,
+    alreadyApplied: Boolean,
     dialogsDismissed: Boolean,
     onCoverShown: () -> Unit,
     onApply: () -> Unit,
     onFinished: () -> Unit,
 ) {
+    // 只取盖层第一次进组合时的值。语言写入后配置会重组，不能跟着把这一遍拆掉。
+    val resumedAfterApply = remember { alreadyApplied }
+    if (resumedAfterApply) {
+        LaunchedEffect(targetTag) { onFinished() }
+        return
+    }
     val colors = MaterialTheme.appColors
     val coverColor = currentPageBackgroundColor()
     val context = LocalContext.current

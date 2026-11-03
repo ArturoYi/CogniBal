@@ -32,6 +32,7 @@ class AccountRepository @Inject constructor(
 
     /**
      * 启动时调用。没有账户就建一个现金账户，并标成当前展示。
+     * 这次新建的账户每次都是默认账户，插入后再标一次，避免只写在行上却没成为当前展示。
      * 已经有账户时不新增；[rememberedDisplayId] 是旧版偏好里记过的账户，还在就改成当前展示。
      * 判断和写入在同一个事务里，两次启动叠在一起也只会插入一条。
      */
@@ -40,7 +41,8 @@ class AccountRepository @Inject constructor(
         val row = newRow(account, LedgerTime.now(), isDefault = true)
         database.withTransaction {
             if (accountDao.count() == 0) {
-                accountDao.insert(row)
+                val id = accountDao.insert(row)
+                showOnly(id)
                 return@withTransaction
             }
             val remembered = rememberedDisplayId?.let { accountDao.getById(it) }

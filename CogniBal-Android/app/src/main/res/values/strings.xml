@@ -98,7 +98,17 @@
     <string name="theme_dark">Dark</string>
     <string name="theme_dark_subtitle">Softer contrast for the night</string>
     <string name="theme_color">Theme color</string>
-    <string name="theme_color_subtitle">One color, soft and flat</string>
+    <string name="theme_color_subtitle">Pages stay gray. Only the accent changes.</string>
+    <string name="theme_scheme_mono">Black and white</string>
+    <string name="theme_scheme_mono_desc">Ink on a gray page</string>
+    <string name="theme_scheme_vitality">Orange and teal</string>
+    <string name="theme_scheme_vitality_desc">Warm orange with teal</string>
+    <string name="theme_scheme_neon">Purple and pink</string>
+    <string name="theme_scheme_neon_desc">Purple with pink</string>
+    <string name="theme_scheme_lime">Lime and cyan</string>
+    <string name="theme_scheme_lime_desc">Lime with cyan</string>
+    <string name="theme_scheme_cream">Cream sage</string>
+    <string name="theme_scheme_cream_desc">A quiet cream green</string>
     <string name="theme_warm_cream">Soft blue</string>
     <string name="theme_warm_cream_desc">One blue across the app</string>
     <string name="theme_monochrome">Ink</string>
@@ -168,6 +178,7 @@
     <string name="about_version">Version %1$s</string>
     <string name="about_description">CogniBal is a bookkeeping app with a calm, easy-to-read look. Layouts adapt to the screen, so managing money stays clear and comfortable.</string>
     <string name="open_source">Licenses and notices</string>
+    <string name="open_source_subtitle">Read the licenses and notices</string>
     <string name="done">Done</string>
     <string name="legal_consent_title">Before you start</string>
     <string name="legal_consent_body">CogniBal keeps your ledger on this device. There is no account, and bills are not uploaded. Please read the documents below. Agree to open the ledger. Decline to close the app.</string>
@@ -295,7 +306,7 @@
     <string name="account_edit_cd">Edit %1$s</string>
     <string name="account_edit_current">Edit account</string>
     <string name="account_switch_cd">Switch account, current is %1$s</string>
-    <string name="account_default_name">Cash</string>
+    <string name="account_default_name">Default account</string>
     <string name="account_field_name">Name</string>
     <string name="account_field_name_hint">For example, Salary or Cash</string>
     <string name="account_field_type">Type</string>

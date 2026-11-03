@@ -3,8 +3,7 @@ package com.example.cognibal.ui.theme
 import androidx.compose.ui.graphics.Color
 
 /**
- * 接近预算的提示色。超支仍用 [AppColors.expense]。
- * 浅色用 orange 9：yellow 整组在浅底上对比不够。暗色用 yellow 5。
+ * 接近预算仍用中性灰，和正常进度的墨色分开。超支才用 [AppColors.expense]。
  */
 internal fun budgetNearColor(isDark: Boolean): Color =
-    if (isDark) OpenColor.Yellow5 else OpenColor.Orange9
+    if (isDark) Color(0xFFD4D4D8) else Color(0xFF3F3F46)

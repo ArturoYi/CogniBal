@@ -100,8 +100,7 @@ import com.example.cognibal.ui.background.RequestPageBackground
 import com.example.cognibal.ui.insets.listContentPadding
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.preview.FormFactorPreviews
-import com.example.cognibal.ui.theme.CogniBalCardElevation
-import com.example.cognibal.ui.theme.glassEdge
+import com.example.cognibal.ui.theme.cardFace
 import com.example.cognibal.ui.theme.CogniBalTheme
 import com.example.cognibal.ui.theme.appColors
 import com.example.cognibal.screen.feature.bill.model.accountMessageRes
@@ -490,13 +489,12 @@ private fun AccountEditorUiState.previewColorKey(): String = colorKeyOverride ?:
 
 @Composable
 private fun FormCard(content: @Composable ColumnScope.() -> Unit) {
-    val colors = MaterialTheme.appColors
     val shape = MaterialTheme.shapes.extraLarge
     Surface(
-        modifier = Modifier.fillMaxWidth().glassEdge(shape, colors.isDark),
+        modifier = Modifier.fillMaxWidth().cardFace(shape),
         shape = shape,
-        color = colors.cardBackground,
-        shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
+        color = MaterialTheme.appColors.cardBackground,
+        shadowElevation = 0.dp,
     ) {
         Column(
             modifier = Modifier

@@ -61,7 +61,17 @@
     <string name="theme_dark">深色</string>
     <string name="theme_dark_subtitle">溫潤暗沉，夜間更加護眼</string>
     <string name="theme_color">主題色彩</string>
-    <string name="theme_color_subtitle">一種顏色，柔和扁平</string>
+    <string name="theme_color_subtitle">頁面保持灰，只換主色</string>
+    <string name="theme_scheme_mono">黑白</string>
+    <string name="theme_scheme_mono_desc">灰底上的墨色</string>
+    <string name="theme_scheme_vitality">活力橙藍</string>
+    <string name="theme_scheme_vitality_desc">橙色配青綠</string>
+    <string name="theme_scheme_neon">霓虹紫粉</string>
+    <string name="theme_scheme_neon_desc">紫色配粉</string>
+    <string name="theme_scheme_lime">青檸撞色</string>
+    <string name="theme_scheme_lime_desc">青檸配青</string>
+    <string name="theme_scheme_cream">奶油青綠</string>
+    <string name="theme_scheme_cream_desc">壓低的青綠，配一抹奶油</string>
     <string name="theme_warm_cream">柔和藍</string>
     <string name="theme_warm_cream_desc">一種藍貫穿全應用</string>
     <string name="theme_monochrome">墨色</string>
@@ -131,6 +141,7 @@
     <string name="about_version">版本：%1$s</string>
     <string name="about_description">知余是一款溫潤護眼的記帳工具，版面會隨螢幕尺寸自動調整，記帳時清楚、順手。</string>
     <string name="open_source">軟體授權與致謝</string>
+    <string name="open_source_subtitle">查看授權與致謝</string>
     <string name="done">完成</string>
     <string name="legal_consent_title">開始之前</string>
     <string name="legal_consent_body">知余把帳簿保存在這台裝置上，沒有帳號，也不會上傳帳簿。請先閱讀下面三份文字。同意後才會進入帳簿；不同意將退出應用程式。</string>
@@ -258,7 +269,7 @@
     <string name="account_edit_cd">編輯%1$s</string>
     <string name="account_edit_current">編輯帳戶</string>
     <string name="account_switch_cd">切換帳戶，目前是%1$s</string>
-    <string name="account_default_name">現金</string>
+    <string name="account_default_name">預設帳戶</string>
     <string name="account_field_name">名稱</string>
     <string name="account_field_name_hint">例如薪資卡、現金</string>
     <string name="account_field_type">類型</string>

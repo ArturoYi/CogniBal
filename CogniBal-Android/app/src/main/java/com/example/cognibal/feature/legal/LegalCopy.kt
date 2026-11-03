@@ -35,6 +35,14 @@ internal fun LegalDocumentKind.titleRes(): Int = when (this) {
     LegalDocumentKind.License -> R.string.open_source
 }
 
+/** 确认页上这一行怎么说明“点开阅读”。 */
+@StringRes
+internal fun LegalDocumentKind.readHintRes(): Int = when (this) {
+    LegalDocumentKind.Terms -> R.string.security_terms_subtitle
+    LegalDocumentKind.Privacy -> R.string.security_privacy_subtitle
+    LegalDocumentKind.License -> R.string.open_source_subtitle
+}
+
 internal sealed interface LegalBlock {
     data class Heading(val text: String) : LegalBlock
     data class Paragraph(val text: String) : LegalBlock

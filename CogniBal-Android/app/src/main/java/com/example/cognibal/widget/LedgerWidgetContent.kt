@@ -1,12 +1,9 @@
 package com.example.cognibal.widget
 
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.cognibal.data.database.query.PeriodAmountSummary
 import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
 import com.example.cognibal.screen.feature.settings.model.AppPreferences
 import com.example.cognibal.screen.feature.settings.model.CurrencyPreference
-import com.example.cognibal.ui.theme.AppThemeStyle
 import java.time.LocalDateTime
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -16,7 +13,6 @@ import java.util.Locale
  * 桌面卡片上的数字。时间在绘制时另取，不放进这份快照。
  */
 internal data class LedgerWidgetContent(
-    val monochrome: Boolean = false,
     val currencySymbol: String = CurrencyPreference.CNY.symbol,
     val income: Long = 0L,
     val expense: Long = 0L,
@@ -27,7 +23,6 @@ internal data class LedgerWidgetContent(
 internal fun AppPreferences.toWidgetContent(summary: PeriodAmountSummary): LedgerWidgetContent {
     val (balance, overflow) = monthBalance(summary)
     return LedgerWidgetContent(
-        monochrome = themeStyle == AppThemeStyle.Monochrome,
         currencySymbol = currency.symbol,
         income = summary.incomeAmount,
         expense = summary.expenseAmount,

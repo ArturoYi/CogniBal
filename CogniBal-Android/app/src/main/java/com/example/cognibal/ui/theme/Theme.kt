@@ -32,17 +32,36 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 /**
- * 主题风格。浅色是柔和扁平。暗色是同一套石板玻璃，只换贯穿全应用的那一种颜色。
+ * 主题风格。两套都是黑白灰，浅色和夜间只换明暗。
  *
- * - [WarmCream] 浅色柔和蓝，暗色金色。枚举名沿用旧偏好键，避免已保存的选择被重置
- * - [Monochrome] 墨色。卡片、字号和圆角与柔和蓝相同
+ * - [WarmCream] 深墨。枚举名沿用旧偏好键，避免已保存的选择被重置
+ * - [Monochrome] 浅一档的墨。卡片和字号相同
  */
 enum class AppThemeStyle(
     @StringRes val nameRes: Int,
     @StringRes val descriptionRes: Int,
 ) {
-    WarmCream(R.string.theme_warm_cream, R.string.theme_warm_cream_desc),
-    Monochrome(R.string.theme_monochrome, R.string.theme_monochrome_desc),
+    /** 黑白。枚举名沿用旧偏好键，避免已保存的选择被重置。 */
+    WarmCream(R.string.theme_scheme_mono, R.string.theme_scheme_mono_desc),
+    Monochrome(R.string.theme_scheme_mono, R.string.theme_scheme_mono_desc),
+    Vitality(R.string.theme_scheme_vitality, R.string.theme_scheme_vitality_desc),
+    Neon(R.string.theme_scheme_neon, R.string.theme_scheme_neon_desc),
+    Lime(R.string.theme_scheme_lime, R.string.theme_scheme_lime_desc),
+    Cream(R.string.theme_scheme_cream, R.string.theme_scheme_cream_desc),
+}
+
+/** 设置里展示的主色。旧的墨色和黑白算同一种。 */
+internal val SelectableAccentStyles = listOf(
+    AppThemeStyle.WarmCream,
+    AppThemeStyle.Vitality,
+    AppThemeStyle.Neon,
+    AppThemeStyle.Lime,
+    AppThemeStyle.Cream,
+)
+
+internal fun AppThemeStyle.sameAccent(other: AppThemeStyle): Boolean {
+    fun AppThemeStyle.fold() = if (this == AppThemeStyle.Monochrome) AppThemeStyle.WarmCream else this
+    return fold() == other.fold()
 }
 
 /** 提供当前应用所选主题风格的 CompositionLocal */
@@ -61,9 +80,9 @@ val MaterialTheme.appColors: AppColors
 /**
  * CogniBal 全局主题入口
  *
- * 两套主题均完整适配浅色模式（Light）与暗色模式（Dark）。暗色默认是金色玻璃。
+ * 两套主题均完整适配浅色模式（Light）与暗色模式（Dark）。
  *
- * @param themeStyle 主题风格，默认柔和蓝 [AppThemeStyle.WarmCream]
+ * @param themeStyle 主题风格，默认深墨 [AppThemeStyle.WarmCream]
  * @param darkTheme 是否使用暗色模式，默认跟随系统 [isSystemInDarkTheme]
  * @param content 内容槽
  */
@@ -73,15 +92,14 @@ fun CogniBalTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = when (themeStyle) {
-        AppThemeStyle.WarmCream -> if (darkTheme) WarmCreamDarkColorScheme else WarmCreamLightColorScheme
-        AppThemeStyle.Monochrome -> if (darkTheme) MonochromeDarkColorScheme else MonochromeLightColorScheme
-    }
-
-    val appColors = when (themeStyle) {
-        AppThemeStyle.WarmCream -> if (darkTheme) WarmCreamDarkAppColors else WarmCreamLightAppColors
-        AppThemeStyle.Monochrome -> if (darkTheme) MonochromeDarkAppColors else MonochromeLightAppColors
-    }
+    val neutralColors = if (darkTheme) WarmCreamDarkAppColors else WarmCreamLightAppColors
+    val neutralScheme = if (darkTheme) WarmCreamDarkColorScheme else WarmCreamLightColorScheme
+    val appColors = neutralColors.withAccent(themeStyle)
+    val colorScheme = neutralScheme.withAccent(
+        style = themeStyle,
+        isDark = darkTheme,
+        onSurface = neutralColors.textPrimary,
+    )
 
     // 动态同步状态栏与导航栏图标明暗度
     val view = LocalView.current
@@ -196,8 +214,8 @@ private fun ThemeShowcaseCard(
             Surface(
                 color = colors.cardBackground,
                 shape = cardShape,
-                shadowElevation = if (colors.isDark) 0.dp else CogniBalCardElevation,
-                modifier = Modifier.fillMaxWidth().glassEdge(cardShape, colors.isDark),
+                shadowElevation = 0.dp,
+                modifier = Modifier.fillMaxWidth().cardFace(cardShape),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -235,19 +253,19 @@ private fun ThemeShowcaseCard(
     }
 }
 
-@Preview(name = "柔和蓝 (浅色)", showBackground = true)
+@Preview(name = "深墨 (浅色)", showBackground = true)
 @Composable
 private fun WarmCreamLightPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
-        ThemeShowcaseCard(themeName = "柔和蓝", modeName = "浅色")
+        ThemeShowcaseCard(themeName = "深墨", modeName = "浅色")
     }
 }
 
-@Preview(name = "柔和蓝 (暗色)", showBackground = true, backgroundColor = 0xFF0F172A)
+@Preview(name = "深墨 (暗色)", showBackground = true, backgroundColor = 0xFF141414)
 @Composable
 private fun WarmCreamDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = true) {
-        ThemeShowcaseCard(themeName = "柔和蓝", modeName = "暗色")
+        ThemeShowcaseCard(themeName = "深墨", modeName = "暗色")
     }
 }
 

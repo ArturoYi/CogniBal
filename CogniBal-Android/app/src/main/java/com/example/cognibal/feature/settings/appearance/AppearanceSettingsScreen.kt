@@ -40,6 +40,7 @@ internal fun AppearanceSettingsRoute(
         onEvent = viewModel::onEvent,
         onBack = onBack,
         modifier = modifier,
+        languageSwitchApplied = viewModel.languageSwitchApplied,
     )
 }
 
@@ -49,6 +50,7 @@ internal fun AppearanceSettingsScreen(
     onEvent: (AppearanceSettingsUiEvent) -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
+    languageSwitchApplied: Boolean = false,
 ) {
     val languageTag = currentApplicationLanguageTag()
     var languageDialogAttached by remember { mutableStateOf(false) }
@@ -101,6 +103,7 @@ internal fun AppearanceSettingsScreen(
     uiState.languageSwitch?.let { choice ->
         LanguageSwitchCover(
             targetTag = choice.languageTag,
+            alreadyApplied = languageSwitchApplied,
             dialogsDismissed = !uiState.showLanguageDialog &&
                 uiState.languageConfirmation == null &&
                 !languageDialogAttached &&

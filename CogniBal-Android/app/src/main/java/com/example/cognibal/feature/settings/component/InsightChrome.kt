@@ -50,6 +50,7 @@ import com.example.cognibal.R
 import com.example.cognibal.screen.feature.bill.tool.formatMinorAmount
 import com.example.cognibal.ui.interaction.interactiveClick
 import com.example.cognibal.ui.theme.appColors
+import com.example.cognibal.ui.theme.cardFace
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -64,11 +65,12 @@ internal fun InsightCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val colors = MaterialTheme.appColors
+    val shape = RoundedCornerShape(20.dp)
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        modifier = modifier.fillMaxWidth().cardFace(shape),
+        shape = shape,
         color = colors.cardBackground,
-        shadowElevation = 1.dp,
+        shadowElevation = 0.dp,
     ) {
         Column(
             modifier = Modifier.padding(contentPadding),

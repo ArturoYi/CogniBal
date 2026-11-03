@@ -116,26 +116,26 @@ internal fun BillRoute(
 }
 
 /**
- * 开屏盖住期间，首页可以画到什么程度。
+ * 同意之后，首页数据准备到哪一步。
  *
- * [composeHome] 为真才把首页放进组合。默认账户还没写完就订阅，会先读到空库。
- * [contentReady] 为真表示总资产、本月收支、预算和最近 7 天都已进状态，可以揭开。
+ * [contentReady] 为真表示默认账户已经写完，总资产、本月收支、预算和最近 7 天都已进状态。
+ * 这之前不把首页放进组合，避免先读到空库。
  */
 internal data class BillHomeWarmup(
-    val composeHome: Boolean,
     val contentReady: Boolean,
 ) {
     companion object {
-        /** 不走开屏时直接显示首页，不再等预热。 */
-        val Shown = BillHomeWarmup(composeHome = true, contentReady = true)
+        /** 协议还没同意。不要建账本，也不要订阅首页。 */
+        val Shown = BillHomeWarmup(contentReady = true)
     }
 }
 
 /**
- * 开屏还盖着的时候，把账单首页整份数据准备好。
+ * 同意协议之后、进入账本之前，把账单首页整份数据准备好。
  *
- * 先等默认账户写完再订阅，避免读到插入前的空库，揭开后又刷成真正的账户和金额。
- * 查询一直不回来时到点也把 [BillHomeWarmup.contentReady] 设为真，开屏不能一直盖着。
+ * 快捷方式和开屏已经收起再点同意，也走这里。先等默认账户写完再订阅，
+ * 避免读到插入前的空库，进来后又刷成真正的账户和金额。
+ * 查询一直不回来时到点也把 [BillHomeWarmup.contentReady] 设为真，不能一直停在空白页。
  */
 @Composable
 internal fun rememberBillHomeWarmup(): BillHomeWarmup {
@@ -145,7 +145,7 @@ internal fun rememberBillHomeWarmup(): BillHomeWarmup {
         LedgerStartup.ensureDefaultAccount(context)
         accountsReady = true
     }
-    if (!accountsReady) return BillHomeWarmup(composeHome = false, contentReady = false)
+    if (!accountsReady) return BillHomeWarmup(contentReady = false)
     val homeViewModel: BillHomeViewModel = viewModel(factory = BillHomeViewModel.Factory)
     val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
     var timedOut by remember { mutableStateOf(false) }
@@ -153,10 +153,7 @@ internal fun rememberBillHomeWarmup(): BillHomeWarmup {
         delay(BILL_HOME_REVEAL_TIMEOUT_MILLIS)
         timedOut = true
     }
-    return BillHomeWarmup(
-        composeHome = true,
-        contentReady = !uiState.loading || timedOut,
-    )
+    return BillHomeWarmup(contentReady = !uiState.loading || timedOut)
 }
 
 /**
