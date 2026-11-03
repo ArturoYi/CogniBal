@@ -23,3 +23,11 @@ captures/
 *.ap_
 *.aab
 *.dex
+
+# Xcode / Swift
+DerivedData/
+.derived/
+xcuserdata/
+*.xcuserstate
+**/.build/
+.swiftpm/
