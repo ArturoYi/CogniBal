@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Genel bakış</string>
     <string name="shortcut_coming_soon">%1$s yakında</string>
     <string name="default_currency">Varsayılan para birimi</string>
-    <string name="clear_temp_cache">Geçici önbelleği temizle</string>
     <string name="close">Kapat</string>
     <string name="cancel">İptal</string>
     <string name="choose_currency">Varsayılan para birimini seç</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">ABD doları ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">İngiliz sterlini (£)</string>
-    <string name="clear_cache_title">Yerel önbelleği temizle</string>
-    <string name="clear_cache_message">%1$s geçici önbellek temizlensin mi? İşlemleriniz etkilenmez.</string>
-    <string name="clear_cache_confirm">Temizle</string>
-    <string name="cache_cleared">Önbellek temizlendi</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Sürüm %1$s</string>
     <string name="about_description">CogniBal, sakin ve okunaklı bir hesap uygulamasıdır. Yerleşim ekrana uyum sağlar; böylece takip açık ve rahat kalır.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Şartları oku</string>
     <string name="security_privacy">Gizlilik politikası</string>
     <string name="security_privacy_subtitle">Verilerin nasıl kullanıldığını gör</string>
-    <string name="security_app_lock">Uygulama kilidi</string>
-    <string name="security_app_lock_subtitle">Uygulamayı açmadan önce kimliğini doğrula</string>
+    <string name="security_hide_content">Arka planda içeriği gizle</string>
+    <string name="security_hide_content_subtitle">Uygulamadan çıkınca ekran kapanır. Geri dönünce açılır</string>
+    <string name="security_content_hidden">İçerik gizlendi</string>
     <string name="backup_save">Yedekle</string>
     <string name="backup_save_subtitle">Geçerli işlemleri bu cihaza kaydet</string>
     <string name="backup_export">Yedeği dışa aktar</string>

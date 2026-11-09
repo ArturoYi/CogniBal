@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Resumen</string>
     <string name="shortcut_coming_soon">%1$s estará disponible pronto</string>
     <string name="default_currency">Moneda predeterminada</string>
-    <string name="clear_temp_cache">Borrar caché temporal</string>
     <string name="close">Cerrar</string>
     <string name="cancel">Cancelar</string>
     <string name="choose_currency">Elegir la moneda predeterminada</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Dólar estadounidense ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Libra esterlina (£)</string>
-    <string name="clear_cache_title">Borrar caché local</string>
-    <string name="clear_cache_message">¿Borrar %1$s de caché temporal? Tus movimientos no se verán afectados.</string>
-    <string name="clear_cache_confirm">Borrar</string>
-    <string name="cache_cleared">Caché borrada</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versión %1$s</string>
     <string name="about_description">CogniBal es una app de cuentas con un aspecto sereno y fácil de leer. El diseño se adapta a la pantalla para que llevar las cuentas sea claro y cómodo.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Leer las condiciones</string>
     <string name="security_privacy">Política de privacidad</string>
     <string name="security_privacy_subtitle">Ver cómo se usan los datos</string>
-    <string name="security_app_lock">Bloqueo de la app</string>
-    <string name="security_app_lock_subtitle">Verifica tu identidad antes de abrir la app</string>
+    <string name="security_hide_content">Ocultar el contenido en segundo plano</string>
+    <string name="security_hide_content_subtitle">Al salir, la pantalla se cubre. Al volver se descubre sola</string>
+    <string name="security_content_hidden">Contenido oculto</string>
     <string name="backup_save">Copiar</string>
     <string name="backup_save_subtitle">Guardar los movimientos actuales en este dispositivo</string>
     <string name="backup_export">Exportar copia</string>

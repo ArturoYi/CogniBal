@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Επισκόπηση</string>
     <string name="shortcut_coming_soon">Το %1$s έρχεται σύντομα</string>
     <string name="default_currency">Προεπιλεγμένο νόμισμα</string>
-    <string name="clear_temp_cache">Εκκαθάριση προσωρινής cache</string>
     <string name="close">Κλείσιμο</string>
     <string name="cancel">Ακύρωση</string>
     <string name="choose_currency">Επιλογή προεπιλεγμένου νομίσματος</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Δολάριο ΗΠΑ ($)</string>
     <string name="currency_eur">Ευρώ (€)</string>
     <string name="currency_gbp">Λίρα στερλίνα (£)</string>
-    <string name="clear_cache_title">Εκκαθάριση τοπικής cache</string>
-    <string name="clear_cache_message">Να διαγραφούν %1$s προσωρινής cache; Οι κινήσεις δεν επηρεάζονται.</string>
-    <string name="clear_cache_confirm">Εκκαθάριση</string>
-    <string name="cache_cleared">Η cache εκκαθαρίστηκε</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Έκδοση %1$s</string>
     <string name="about_description">Το CogniBal είναι μια εφαρμογή λογιστικής με ήρεμη, ευανάγνωστη εμφάνιση. Η διάταξη προσαρμόζεται στην οθόνη, ώστε η παρακολούθηση να μένει σαφής και άνετη.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Διαβάστε τους όρους</string>
     <string name="security_privacy">Πολιτική απορρήτου</string>
     <string name="security_privacy_subtitle">Δείτε πώς χρησιμοποιούνται τα δεδομένα</string>
-    <string name="security_app_lock">Κλείδωμα εφαρμογής</string>
-    <string name="security_app_lock_subtitle">Επιβεβαιώστε την ταυτότητά σας πριν ανοίξει η εφαρμογή</string>
+    <string name="security_hide_content">Απόκρυψη περιεχομένου στο παρασκήνιο</string>
+    <string name="security_hide_content_subtitle">Όταν φεύγετε, η οθόνη καλύπτεται. Στην επιστροφή αποκαλύπτεται</string>
+    <string name="security_content_hidden">Το περιεχόμενο κρύφτηκε</string>
     <string name="backup_save">Δημιουργία αντιγράφου</string>
     <string name="backup_save_subtitle">Αποθήκευση των τρεχουσών κινήσεων σε αυτήν τη συσκευή</string>
     <string name="backup_export">Εξαγωγή αντιγράφου</string>

@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Yleiskatsaus</string>
     <string name="shortcut_coming_soon">%1$s tulossa pian</string>
     <string name="default_currency">Oletusvaluutta</string>
-    <string name="clear_temp_cache">Tyhjennä väliaikainen välimuisti</string>
     <string name="close">Sulje</string>
     <string name="cancel">Peruuta</string>
     <string name="choose_currency">Valitse oletusvaluutta</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Yhdysvaltain dollari ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Englannin punta (£)</string>
-    <string name="clear_cache_title">Tyhjennä paikallinen välimuisti</string>
-    <string name="clear_cache_message">Tyhjennetäänkö %1$s väliaikaista välimuistia? Tapahtumat eivät muutu.</string>
-    <string name="clear_cache_confirm">Tyhjennä</string>
-    <string name="cache_cleared">Välimuisti tyhjennetty</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versio %1$s</string>
     <string name="about_description">CogniBal on kirjanpito-sovellus, jonka ulkoasu on rauhallinen ja helppolukuinen. Asettelu mukautuu näyttöön, joten seuranta pysyy selkeänä.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Lue ehdot</string>
     <string name="security_privacy">Tietosuojakäytäntö</string>
     <string name="security_privacy_subtitle">Katso, miten tietoja käytetään</string>
-    <string name="security_app_lock">Sovelluslukko</string>
-    <string name="security_app_lock_subtitle">Vahvista henkilöllisyytesi ennen sovelluksen avaamista</string>
+    <string name="security_hide_content">Piilota sisältö taustalla</string>
+    <string name="security_hide_content_subtitle">Kun poistut, näyttö peitetään. Palatessa peite poistuu</string>
+    <string name="security_content_hidden">Sisältö piilotettu</string>
     <string name="backup_save">Varmuuskopioi</string>
     <string name="backup_save_subtitle">Tallenna nykyiset tapahtumat tälle laitteelle</string>
     <string name="backup_export">Vie varmuuskopio</string>

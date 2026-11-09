@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Resumo</string>
     <string name="shortcut_coming_soon">%1$s em breve</string>
     <string name="default_currency">Moeda predefinida</string>
-    <string name="clear_temp_cache">Limpar cache temporário</string>
     <string name="close">Fechar</string>
     <string name="cancel">Cancelar</string>
     <string name="choose_currency">Escolher a moeda predefinida</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Dólar americano ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Libra esterlina (£)</string>
-    <string name="clear_cache_title">Limpar cache local</string>
-    <string name="clear_cache_message">Limpar %1$s de cache temporária? Os seus movimentos não serão afetados.</string>
-    <string name="clear_cache_confirm">Limpar</string>
-    <string name="cache_cleared">Cache limpo</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versão %1$s</string>
     <string name="about_description">O CogniBal é uma aplicação de finanças com um aspeto calmo e fácil de ler. O esquema adapta-se ao ecrã para o controlo ficar claro e confortável.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Ler os termos</string>
     <string name="security_privacy">Política de privacidade</string>
     <string name="security_privacy_subtitle">Ver como os dados são usados</string>
-    <string name="security_app_lock">Bloqueio do app</string>
-    <string name="security_app_lock_subtitle">Confirme a sua identidade antes de abrir a aplicação</string>
+    <string name="security_hide_content">Ocultar conteúdo em segundo plano</string>
+    <string name="security_hide_content_subtitle">Ao sair, o ecrã fica coberto. Ao voltar, destapa-se</string>
+    <string name="security_content_hidden">Conteúdo oculto</string>
     <string name="backup_save">Criar cópia</string>
     <string name="backup_save_subtitle">Guardar os movimentos atuais neste dispositivo</string>
     <string name="backup_export">Exportar cópia</string>

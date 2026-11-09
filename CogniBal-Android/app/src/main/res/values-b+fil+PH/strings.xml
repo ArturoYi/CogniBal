@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Pangkalahatang-ideya</string>
     <string name="shortcut_coming_soon">Malapit na ang %1$s</string>
     <string name="default_currency">Default na pera</string>
-    <string name="clear_temp_cache">I-clear ang pansamantalang cache</string>
     <string name="close">Isara</string>
     <string name="cancel">Kanselahin</string>
     <string name="choose_currency">Pumili ng default na pera</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Dolyar ng US ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Pound sterling (£)</string>
-    <string name="clear_cache_title">I-clear ang lokal na cache</string>
-    <string name="clear_cache_message">I-clear ang %1$s na pansamantalang cache? Hindi maaapektuhan ang mga tala mo.</string>
-    <string name="clear_cache_confirm">I-clear</string>
-    <string name="cache_cleared">Na-clear ang cache</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Bersyon %1$s</string>
     <string name="about_description">Ang CogniBal ay app sa pagtatala na kalmado at madaling basahin. Umaangkop ang layout sa screen para manatiling malinaw at komportable ang pagsubaybay.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Basahin ang mga tuntunin</string>
     <string name="security_privacy">Patakaran sa privacy</string>
     <string name="security_privacy_subtitle">Tingnan kung paano ginagamit ang data</string>
-    <string name="security_app_lock">Lock ng app</string>
-    <string name="security_app_lock_subtitle">Kumpirmahin ang pagkakakilanlan bago buksan ang app</string>
+    <string name="security_hide_content">Itago ang nilalaman sa background</string>
+    <string name="security_hide_content_subtitle">Kapag umaalis, natatakpan ang screen. Awtomatikong magbubukas sa pagbalik</string>
+    <string name="security_content_hidden">Nakatago ang nilalaman</string>
     <string name="backup_save">I-backup</string>
     <string name="backup_save_subtitle">I-save ang kasalukuyang mga tala sa device na ito</string>
     <string name="backup_export">I-export ang backup</string>

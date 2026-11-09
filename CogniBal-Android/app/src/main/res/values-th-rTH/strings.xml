@@ -45,7 +45,6 @@
     <string name="shortcut_overview">ภาพรวม</string>
     <string name="shortcut_coming_soon">%1$s จะเปิดเร็วๆ นี้</string>
     <string name="default_currency">สกุลเงินเริ่มต้น</string>
-    <string name="clear_temp_cache">ล้างแคชชั่วคราว</string>
     <string name="close">ปิด</string>
     <string name="cancel">ยกเลิก</string>
     <string name="choose_currency">เลือกสกุลเงินเริ่มต้น</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">ดอลลาร์สหรัฐ ($)</string>
     <string name="currency_eur">ยูโร (€)</string>
     <string name="currency_gbp">ปอนด์สเตอร์ลิง (£)</string>
-    <string name="clear_cache_title">ล้างแคชในเครื่อง</string>
-    <string name="clear_cache_message">ล้างแคชชั่วคราว %1$s หรือไม่ รายการของคุณจะไม่ได้รับผลกระทบ</string>
-    <string name="clear_cache_confirm">ล้าง</string>
-    <string name="cache_cleared">ล้างแคชแล้ว</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">เวอร์ชัน %1$s</string>
     <string name="about_description">CogniBal เป็นแอปจดบัญชีที่อ่านสบายตา เลย์เอาต์ปรับตามขนาดหน้าจอ เพื่อให้ติดตามรายการได้ชัดและลื่นไหล</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">อ่านข้อกำหนด</string>
     <string name="security_privacy">นโยบายความเป็นส่วนตัว</string>
     <string name="security_privacy_subtitle">ดูว่าใช้ข้อมูลอย่างไร</string>
-    <string name="security_app_lock">ล็อกแอป</string>
-    <string name="security_app_lock_subtitle">ยืนยันตัวตนก่อนเปิดแอป</string>
+    <string name="security_hide_content">ซ่อนเนื้อหาเมื่อแอปอยู่เบื้องหลัง</string>
+    <string name="security_hide_content_subtitle">เมื่อออกจากแอป หน้าจอจะถูกปิดทับ กลับมาแล้วจะเปิดเอง</string>
+    <string name="security_content_hidden">ซ่อนเนื้อหาแล้ว</string>
     <string name="backup_save">สำรองข้อมูล</string>
     <string name="backup_save_subtitle">บันทึกรายการปัจจุบันไว้ในอุปกรณ์นี้</string>
     <string name="backup_export">ส่งออกข้อมูลสำรอง</string>

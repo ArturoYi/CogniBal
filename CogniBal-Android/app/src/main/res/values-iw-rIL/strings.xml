@@ -45,7 +45,6 @@
     <string name="shortcut_overview">סקירה</string>
     <string name="shortcut_coming_soon">%1$s בקרוב</string>
     <string name="default_currency">מטבע ברירת מחדל</string>
-    <string name="clear_temp_cache">ניקוי מטמון זמני</string>
     <string name="close">סגירה</string>
     <string name="cancel">ביטול</string>
     <string name="choose_currency">בחירת מטבע ברירת מחדל</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">דולר ארה״ב ($)</string>
     <string name="currency_eur">אירו (€)</string>
     <string name="currency_gbp">לירה שטרלינג (£)</string>
-    <string name="clear_cache_title">ניקוי מטמון מקומי</string>
-    <string name="clear_cache_message">לנקות %1$s של מטמון זמני? התנועות לא יושפעו.</string>
-    <string name="clear_cache_confirm">ניקוי</string>
-    <string name="cache_cleared">המטמון נוקה</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">גרסה %1$s</string>
     <string name="about_description">CogniBal הוא יישום לניהול חשבונות עם מראה רגוע וקריא. הפריסה מתאימה את עצמה למסך, כדי שהמעקב יישאר ברור ונוח.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">קריאת התנאים</string>
     <string name="security_privacy">מדיניות פרטיות</string>
     <string name="security_privacy_subtitle">איך נעשה שימוש בנתונים</string>
-    <string name="security_app_lock">נעילת היישום</string>
-    <string name="security_app_lock_subtitle">אימות זהות לפני פתיחת היישום</string>
+    <string name="security_hide_content">הסתרת התוכן ברקע</string>
+    <string name="security_hide_content_subtitle">ביציאה המסך מכוסה. בחזרה הכיסוי מוסר</string>
+    <string name="security_content_hidden">התוכן מוסתר</string>
     <string name="backup_save">גיבוי</string>
     <string name="backup_save_subtitle">שמירת התנועות הנוכחיות במכשיר הזה</string>
     <string name="backup_export">ייצוא גיבוי</string>

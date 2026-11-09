@@ -1,0 +1,104 @@
+package com.cyr.cognobal.screen.feature.bill.model
+
+import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.AccountBalance
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.CreditCard
+import androidx.compose.material.icons.outlined.MoreHoriz
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Savings
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material.icons.outlined.Smartphone
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import com.cyr.cognobal.R
+import com.cyr.cognobal.data.database.model.AccountType
+import com.cyr.cognobal.ui.theme.OpenColor
+
+/**
+ * 账户类型的界面文案。库存里仍是 [AccountType.code]，不写翻译后的名字。
+ */
+@StringRes
+internal fun AccountType.labelRes(): Int = when (this) {
+    AccountType.Cash -> R.string.account_type_cash
+    AccountType.DebitCard -> R.string.account_type_debit
+    AccountType.CreditCard -> R.string.account_type_credit
+    AccountType.EWallet -> R.string.account_type_ewallet
+    AccountType.Other -> R.string.account_type_other
+}
+
+/** 类型和入库图标一一对应。选类型就是选图标，不再单独挑。 */
+internal fun AccountType.pairedIcon(): AccountIcon = when (this) {
+    AccountType.Cash -> AccountIcon.Cash
+    AccountType.DebitCard -> AccountIcon.Bank
+    AccountType.CreditCard -> AccountIcon.Card
+    AccountType.EWallet -> AccountIcon.Phone
+    AccountType.Other -> AccountIcon.Other
+}
+
+/** 账户类型图标。线性字形，卡面和类型选择用同一支。读屏仍走 [labelRes]。 */
+internal fun AccountType.icon(): ImageVector = pairedIcon().image
+
+/**
+ * 账户图标。 [storageKey] 写入账户表的 icon 列，换语言不会改已经入库的值。
+ */
+internal enum class AccountIcon(
+    val storageKey: String,
+    @param:StringRes val labelRes: Int,
+    val image: ImageVector,
+) {
+    Wallet("wallet", R.string.account_icon_wallet, Icons.Outlined.AccountBalanceWallet),
+    Cash("cash", R.string.account_icon_cash, Icons.Outlined.Payments),
+    Card("card", R.string.account_icon_card, Icons.Outlined.CreditCard),
+    Bank("bank", R.string.account_icon_bank, Icons.Outlined.AccountBalance),
+    Savings("savings", R.string.account_icon_savings, Icons.Outlined.Savings),
+    Phone("phone", R.string.account_icon_phone, Icons.Outlined.Smartphone),
+    Bag("bag", R.string.account_icon_bag, Icons.Outlined.ShoppingBag),
+    Other("other", R.string.account_icon_other, Icons.Outlined.MoreHoriz),
+    ;
+
+    companion object {
+        fun fromKey(key: String): AccountIcon? = entries.firstOrNull { it.storageKey == key }
+    }
+}
+
+/**
+ * 账户颜色。 [storageKey] 写入 color 列。
+ * 色值用 Open Color，按键取色。库存不跟主题变，换主题后仍能认出来。
+ * 结余卡绘制时会把这支颜色坐进当前主题，避免整张卡和页面各说各话。
+ */
+internal enum class AccountColor(
+    val storageKey: String,
+    @param:StringRes val labelRes: Int,
+    val color: Color,
+) {
+    Teal("teal", R.string.account_color_teal, OpenColor.Teal7),
+    Clay("clay", R.string.account_color_clay, OpenColor.Red7),
+    Sand("sand", R.string.account_color_sand, OpenColor.Orange6),
+    Blue("blue", R.string.account_color_blue, OpenColor.Blue6),
+    Lilac("lilac", R.string.account_color_lilac, OpenColor.Grape6),
+    Ink("ink", R.string.account_color_ink, OpenColor.Gray7),
+    Gray("gray", R.string.account_color_gray, OpenColor.Gray6),
+    ;
+
+    companion object {
+        fun fromKey(key: String): AccountColor? = entries.firstOrNull { it.storageKey == key }
+    }
+}
+
+internal fun accountIconImage(key: String): ImageVector {
+    return AccountIcon.fromKey(key)?.image ?: AccountIcon.Wallet.image
+}
+
+/** 认识枚举键；备份里的 `#AARRGGBB` 仍能画出原来的颜色。 */
+internal fun accountColorValue(key: String): Color {
+    AccountColor.fromKey(key)?.let { return it.color }
+    val hex = key.removePrefix("#")
+    val parsed = hex.toLongOrNull(16) ?: return AccountColor.Teal.color
+    return when (hex.length) {
+        6 -> Color(0xFF000000 or parsed)
+        8 -> Color(parsed)
+        else -> AccountColor.Teal.color
+    }
+}

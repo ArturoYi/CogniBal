@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     // 处理 @Composable。需要下面的 buildFeatures.compose。
@@ -8,9 +10,16 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.isFile) {
+        keystorePropertiesFile.inputStream().use { load(it) }
+    }
+}
+
 android {
     // R 类与生成代码的包名。
-    namespace = "com.example.cognibal"
+    namespace = "com.cyr.cognobal"
     compileSdk {
         // 已发布的 Android SDK 37，用于编译。
         version = release(37)
@@ -18,18 +27,33 @@ android {
 
     defaultConfig {
         // 安装到设备上的应用 ID，可与 namespace 不同。
-        applicationId = "com.example.cognibal"
+        applicationId = "com.cyr.cognobal"
         // Android 8.0。
         minSdk = 26
         // 运行时按此版本检查行为变更，与 compileSdk 对齐。
         targetSdk = 37
         // versionCode 给系统比较新旧，versionName 给人看。
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
+    }
+
+    // 正式签名只在本机 keystore.properties 存在时启用。密钥不进仓库。
+    signingConfigs {
+        create("release") {
+            if (keystorePropertiesFile.isFile) {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
+            if (keystorePropertiesFile.isFile) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             optimization {
                 // AGP 9.3：同时压缩无用代码和资源，并混淆。调试包不受影响。
                 enable = true
@@ -110,4 +134,6 @@ dependencies {
     // 桌面小组件。界面在 widget 包，开关在设置页。
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
+
+    testImplementation(libs.junit)
 }

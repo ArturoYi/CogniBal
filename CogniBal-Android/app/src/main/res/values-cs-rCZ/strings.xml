@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Přehled</string>
     <string name="shortcut_coming_soon">%1$s už brzy</string>
     <string name="default_currency">Výchozí měna</string>
-    <string name="clear_temp_cache">Vymazat dočasnou mezipaměť</string>
     <string name="close">Zavřít</string>
     <string name="cancel">Zrušit</string>
     <string name="choose_currency">Vybrat výchozí měnu</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Americký dolar ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Britská libra (£)</string>
-    <string name="clear_cache_title">Vymazat místní mezipaměť</string>
-    <string name="clear_cache_message">Vymazat %1$s dočasné mezipaměti? Pohyby zůstanou beze změny.</string>
-    <string name="clear_cache_confirm">Vymazat</string>
-    <string name="cache_cleared">Mezipaměť vymazána</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Verze %1$s</string>
     <string name="about_description">CogniBal je účetní aplikace s klidným, dobře čitelným vzhledem. Rozvržení se přizpůsobí obrazovce, takže přehled zůstane jasný a příjemný.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Přečíst podmínky</string>
     <string name="security_privacy">Zásady ochrany soukromí</string>
     <string name="security_privacy_subtitle">Jak se údaje používají</string>
-    <string name="security_app_lock">Zámek aplikace</string>
-    <string name="security_app_lock_subtitle">Před otevřením ověřte svou totožnost</string>
+    <string name="security_hide_content">Skrýt obsah na pozadí</string>
+    <string name="security_hide_content_subtitle">Po odchodu se obrazovka zakryje. Po návratu se sama odkryje</string>
+    <string name="security_content_hidden">Obsah skrytý</string>
     <string name="backup_save">Zálohovat</string>
     <string name="backup_save_subtitle">Uložit aktuální pohyby do tohoto zařízení</string>
     <string name="backup_export">Exportovat zálohu</string>

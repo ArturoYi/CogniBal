@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Обзор</string>
     <string name="shortcut_coming_soon">%1$s скоро появится</string>
     <string name="default_currency">Валюта по умолчанию</string>
-    <string name="clear_temp_cache">Очистить временный кэш</string>
     <string name="close">Закрыть</string>
     <string name="cancel">Отмена</string>
     <string name="choose_currency">Выбрать валюту по умолчанию</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Доллар США ($)</string>
     <string name="currency_eur">Евро (€)</string>
     <string name="currency_gbp">Фунт стерлингов (£)</string>
-    <string name="clear_cache_title">Очистить локальный кэш</string>
-    <string name="clear_cache_message">Очистить %1$s временного кэша? Операции не изменятся.</string>
-    <string name="clear_cache_confirm">Очистить</string>
-    <string name="cache_cleared">Кэш очищен</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Версия %1$s</string>
     <string name="about_description">CogniBal — приложение для учёта со спокойным, легко читаемым видом. Раскладка подстраивается под экран, поэтому учёт остаётся ясным и удобным.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Прочитать условия</string>
     <string name="security_privacy">Политика конфиденциальности</string>
     <string name="security_privacy_subtitle">Как используются данные</string>
-    <string name="security_app_lock">Защита приложения</string>
-    <string name="security_app_lock_subtitle">Подтвердите личность перед открытием приложения</string>
+    <string name="security_hide_content">Скрывать содержимое в фоне</string>
+    <string name="security_hide_content_subtitle">При уходе экран закрывается. При возвращении покрытие снимается</string>
+    <string name="security_content_hidden">Содержимое скрыто</string>
     <string name="backup_save">Создать копию</string>
     <string name="backup_save_subtitle">Сохранить текущие операции на этом устройстве</string>
     <string name="backup_export">Экспорт копии</string>

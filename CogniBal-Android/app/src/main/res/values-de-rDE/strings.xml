@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Übersicht</string>
     <string name="shortcut_coming_soon">%1$s kommt bald</string>
     <string name="default_currency">Standardwährung</string>
-    <string name="clear_temp_cache">Temporären Cache löschen</string>
     <string name="close">Schließen</string>
     <string name="cancel">Abbrechen</string>
     <string name="choose_currency">Standardwährung auswählen</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">US-Dollar ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Pfund Sterling (£)</string>
-    <string name="clear_cache_title">Lokalen Cache löschen</string>
-    <string name="clear_cache_message">%1$s temporären Cache löschen? Deine Buchungen bleiben erhalten.</string>
-    <string name="clear_cache_confirm">Löschen</string>
-    <string name="cache_cleared">Cache gelöscht</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Version %1$s</string>
     <string name="about_description">CogniBal ist eine Buchhaltungs-App mit ruhigem, gut lesbarem Erscheinungsbild. Das Layout passt sich dem Bildschirm an, damit die Übersicht klar und angenehm bleibt.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Bedingungen lesen</string>
     <string name="security_privacy">Datenschutz</string>
     <string name="security_privacy_subtitle">Sehen, wie Daten verwendet werden</string>
-    <string name="security_app_lock">App-Sperre</string>
-    <string name="security_app_lock_subtitle">Identität prüfen, bevor die App geöffnet wird</string>
+    <string name="security_hide_content">Inhalte im Hintergrund verbergen</string>
+    <string name="security_hide_content_subtitle">Beim Verlassen wird der Bildschirm abgedeckt. Beim Zurückkehren wird er wieder sichtbar</string>
+    <string name="security_content_hidden">Inhalt verborgen</string>
     <string name="backup_save">Sichern</string>
     <string name="backup_save_subtitle">Aktuelle Buchungen auf diesem Gerät speichern</string>
     <string name="backup_export">Sicherung exportieren</string>

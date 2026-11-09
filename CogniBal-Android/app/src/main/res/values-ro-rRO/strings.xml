@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Prezentare</string>
     <string name="shortcut_coming_soon">%1$s va fi disponibil în curând</string>
     <string name="default_currency">Monedă implicită</string>
-    <string name="clear_temp_cache">Șterge memoria temporară</string>
     <string name="close">Închide</string>
     <string name="cancel">Anulează</string>
     <string name="choose_currency">Alege moneda implicită</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Dolar american ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Liră sterlină (£)</string>
-    <string name="clear_cache_title">Șterge memoria locală</string>
-    <string name="clear_cache_message">Ștergi %1$s de memorie temporară? Înregistrările nu sunt afectate.</string>
-    <string name="clear_cache_confirm">Șterge</string>
-    <string name="cache_cleared">Memoria a fost ștearsă</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versiunea %1$s</string>
     <string name="about_description">CogniBal este o aplicație de evidență cu un aspect calm și ușor de citit. Aranjamentul se adaptează ecranului, ca evidența să rămână clară și confortabilă.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Citește termenii</string>
     <string name="security_privacy">Politica de confidențialitate</string>
     <string name="security_privacy_subtitle">Vezi cum sunt folosite datele</string>
-    <string name="security_app_lock">Blocarea aplicației</string>
-    <string name="security_app_lock_subtitle">Confirmă-ți identitatea înainte de a deschide aplicația</string>
+    <string name="security_hide_content">Ascunde conținutul în fundal</string>
+    <string name="security_hide_content_subtitle">La ieșire, ecranul este acoperit. La revenire se descoperă</string>
+    <string name="security_content_hidden">Conținut ascuns</string>
     <string name="backup_save">Fă o copie</string>
     <string name="backup_save_subtitle">Salvează înregistrările curente pe acest dispozitiv</string>
     <string name="backup_export">Exportă copia</string>

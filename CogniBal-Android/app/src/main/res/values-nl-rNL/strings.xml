@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Overzicht</string>
     <string name="shortcut_coming_soon">%1$s komt binnenkort</string>
     <string name="default_currency">Standaardvaluta</string>
-    <string name="clear_temp_cache">Tijdelijke cache wissen</string>
     <string name="close">Sluiten</string>
     <string name="cancel">Annuleren</string>
     <string name="choose_currency">Standaardvaluta kiezen</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Amerikaanse dollar ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Britse pond (£)</string>
-    <string name="clear_cache_title">Lokale cache wissen</string>
-    <string name="clear_cache_message">%1$s tijdelijke cache wissen? Je boekingen blijven behouden.</string>
-    <string name="clear_cache_confirm">Wissen</string>
-    <string name="cache_cleared">Cache gewist</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versie %1$s</string>
     <string name="about_description">CogniBal is een boekhoudapp met een rustige, goed leesbare vormgeving. De indeling past zich aan het scherm aan, zodat bijhouden helder en prettig blijft.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Voorwaarden lezen</string>
     <string name="security_privacy">Privacybeleid</string>
     <string name="security_privacy_subtitle">Zien hoe gegevens worden gebruikt</string>
-    <string name="security_app_lock">App-vergrendeling</string>
-    <string name="security_app_lock_subtitle">Bevestig je identiteit voordat de app opent</string>
+    <string name="security_hide_content">Inhoud verbergen op de achtergrond</string>
+    <string name="security_hide_content_subtitle">Bij het verlaten wordt het scherm afgedekt. Bij terugkomst wordt het weer zichtbaar</string>
+    <string name="security_content_hidden">Inhoud verborgen</string>
     <string name="backup_save">Back-up maken</string>
     <string name="backup_save_subtitle">Huidige boekingen op dit apparaat bewaren</string>
     <string name="backup_export">Back-up exporteren</string>

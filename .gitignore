@@ -24,6 +24,10 @@ captures/
 *.aab
 *.dex
 
+# Android release signing. The keystore stays on this machine.
+CogniBal-Android/keystore.properties
+CogniBal-Android/keystore/
+
 # Xcode / Swift
 DerivedData/
 .derived/

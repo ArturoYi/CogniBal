@@ -45,7 +45,6 @@
     <string name="shortcut_overview">نظرة عامة</string>
     <string name="shortcut_coming_soon">%1$s قريبًا</string>
     <string name="default_currency">العملة الافتراضية</string>
-    <string name="clear_temp_cache">مسح ذاكرة التخزين المؤقت</string>
     <string name="close">إغلاق</string>
     <string name="cancel">إلغاء</string>
     <string name="choose_currency">اختيار العملة الافتراضية</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">الدولار الأمريكي ($)</string>
     <string name="currency_eur">اليورو (€)</string>
     <string name="currency_gbp">الجنيه الإسترليني (£)</string>
-    <string name="clear_cache_title">مسح الذاكرة المحلية</string>
-    <string name="clear_cache_message">مسح %1$s من الذاكرة المؤقتة؟ لن تتأثر عملياتك.</string>
-    <string name="clear_cache_confirm">مسح</string>
-    <string name="cache_cleared">تم مسح الذاكرة المؤقتة</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">الإصدار %1$s</string>
     <string name="about_description">CogniBal تطبيق محاسبة بمظهر هادئ وسهل القراءة. يتكيف التخطيط مع الشاشة ليبقى تتبّع المال واضحًا ومريحًا.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">قراءة الشروط</string>
     <string name="security_privacy">سياسة الخصوصية</string>
     <string name="security_privacy_subtitle">الاطلاع على كيفية استخدام البيانات</string>
-    <string name="security_app_lock">قفل التطبيق</string>
-    <string name="security_app_lock_subtitle">أكّد هويتك قبل فتح التطبيق</string>
+    <string name="security_hide_content">إخفاء المحتوى في الخلفية</string>
+    <string name="security_hide_content_subtitle">عند المغادرة تُغطى الشاشة. يعود الكشف تلقائيًا عند الرجوع</string>
+    <string name="security_content_hidden">المحتوى مخفي</string>
     <string name="backup_save">نسخ احتياطي</string>
     <string name="backup_save_subtitle">حفظ العمليات الحالية على هذا الجهاز</string>
     <string name="backup_export">تصدير النسخة</string>

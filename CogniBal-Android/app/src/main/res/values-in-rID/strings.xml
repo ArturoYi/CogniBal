@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Ringkasan</string>
     <string name="shortcut_coming_soon">%1$s segera hadir</string>
     <string name="default_currency">Mata uang default</string>
-    <string name="clear_temp_cache">Hapus cache sementara</string>
     <string name="close">Tutup</string>
     <string name="cancel">Batal</string>
     <string name="choose_currency">Pilih mata uang default</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Dolar AS ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Pound sterling (£)</string>
-    <string name="clear_cache_title">Hapus cache lokal</string>
-    <string name="clear_cache_message">Hapus %1$s cache sementara? Transaksi Anda tidak terpengaruh.</string>
-    <string name="clear_cache_confirm">Hapus</string>
-    <string name="cache_cleared">Cache dihapus</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versi %1$s</string>
     <string name="about_description">CogniBal adalah aplikasi pembukuan dengan tampilan tenang dan mudah dibaca. Tata letak menyesuaikan layar agar pencatatan tetap jelas dan nyaman.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Baca ketentuannya</string>
     <string name="security_privacy">Kebijakan privasi</string>
     <string name="security_privacy_subtitle">Lihat bagaimana data digunakan</string>
-    <string name="security_app_lock">Kunci aplikasi</string>
-    <string name="security_app_lock_subtitle">Verifikasi identitas sebelum membuka aplikasi</string>
+    <string name="security_hide_content">Sembunyikan konten di latar belakang</string>
+    <string name="security_hide_content_subtitle">Saat keluar, layar ditutup. Kembali akan terbuka otomatis</string>
+    <string name="security_content_hidden">Konten disembunyikan</string>
     <string name="backup_save">Cadangkan</string>
     <string name="backup_save_subtitle">Simpan transaksi saat ini di perangkat ini</string>
     <string name="backup_export">Ekspor cadangan</string>

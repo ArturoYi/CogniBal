@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Áttekintés</string>
     <string name="shortcut_coming_soon">%1$s hamarosan</string>
     <string name="default_currency">Alapértelmezett pénznem</string>
-    <string name="clear_temp_cache">Ideiglenes gyorsítótár törlése</string>
     <string name="close">Bezárás</string>
     <string name="cancel">Mégse</string>
     <string name="choose_currency">Alapértelmezett pénznem választása</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">USA-dollár ($)</string>
     <string name="currency_eur">Euró (€)</string>
     <string name="currency_gbp">Brit font (£)</string>
-    <string name="clear_cache_title">Helyi gyorsítótár törlése</string>
-    <string name="clear_cache_message">Törli a(z) %1$s ideiglenes gyorsítótárat? A tételek megmaradnak.</string>
-    <string name="clear_cache_confirm">Törlés</string>
-    <string name="cache_cleared">A gyorsítótár törölve</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">%1$s verzió</string>
     <string name="about_description">A CogniBal egy nyugodt, jól olvasható könyvelőalkalmazás. Az elrendezés igazodik a képernyőhöz, így az áttekintés tiszta és kényelmes marad.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Feltételek elolvasása</string>
     <string name="security_privacy">Adatvédelmi szabályzat</string>
     <string name="security_privacy_subtitle">Hogyan használjuk az adatokat</string>
-    <string name="security_app_lock">Alkalmazászár</string>
-    <string name="security_app_lock_subtitle">Az alkalmazás megnyitása előtt igazolja a személyazonosságát</string>
+    <string name="security_hide_content">Tartalom elrejtése a háttérben</string>
+    <string name="security_hide_content_subtitle">Kilépéskor a képernyő letakaródik. Visszatéréskor újra látható</string>
+    <string name="security_content_hidden">Tartalom elrejtve</string>
     <string name="backup_save">Mentés</string>
     <string name="backup_save_subtitle">Az aktuális tételek mentése erre az eszközre</string>
     <string name="backup_export">Mentés exportálása</string>

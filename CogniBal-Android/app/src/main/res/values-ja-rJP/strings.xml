@@ -45,7 +45,6 @@
     <string name="shortcut_overview">概要</string>
     <string name="shortcut_coming_soon">%1$sは近日公開</string>
     <string name="default_currency">既定の通貨</string>
-    <string name="clear_temp_cache">一時キャッシュを削除</string>
     <string name="close">閉じる</string>
     <string name="cancel">キャンセル</string>
     <string name="choose_currency">既定の通貨を選択</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">米ドル ($)</string>
     <string name="currency_eur">ユーロ (€)</string>
     <string name="currency_gbp">英ポンド (£)</string>
-    <string name="clear_cache_title">ローカルキャッシュを削除</string>
-    <string name="clear_cache_message">%1$s の一時キャッシュを削除しますか？明細には影響しません。</string>
-    <string name="clear_cache_confirm">削除</string>
-    <string name="cache_cleared">キャッシュを削除しました</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">バージョン %1$s</string>
     <string name="about_description">CogniBal は、落ち着いて読みやすい家計アプリです。画面サイズに合わせてレイアウトが変わるので、記録がすっきり続きます。</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">規約を見る</string>
     <string name="security_privacy">プライバシーポリシー</string>
     <string name="security_privacy_subtitle">データの使い方を見る</string>
-    <string name="security_app_lock">アプリロック</string>
-    <string name="security_app_lock_subtitle">アプリを開く前に本人確認する</string>
+    <string name="security_hide_content">バックグラウンドで内容を隠す</string>
+    <string name="security_hide_content_subtitle">離れると画面が覆われます。戻ると自動で外れます</string>
+    <string name="security_content_hidden">内容は非表示です</string>
     <string name="backup_save">バックアップ</string>
     <string name="backup_save_subtitle">現在の明細をこのデバイスに保存</string>
     <string name="backup_export">バックアップを書き出す</string>

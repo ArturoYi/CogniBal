@@ -45,7 +45,6 @@
     <string name="shortcut_overview">अवलोकन</string>
     <string name="shortcut_coming_soon">%1$s जल्द आ रहा है</string>
     <string name="default_currency">डिफ़ॉल्ट मुद्रा</string>
-    <string name="clear_temp_cache">अस्थायी कैश साफ़ करें</string>
     <string name="close">बंद करें</string>
     <string name="cancel">रद्द करें</string>
     <string name="choose_currency">डिफ़ॉल्ट मुद्रा चुनें</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">अमेरिकी डॉलर ($)</string>
     <string name="currency_eur">यूरो (€)</string>
     <string name="currency_gbp">ब्रिटिश पाउंड (£)</string>
-    <string name="clear_cache_title">स्थानीय कैश साफ़ करें</string>
-    <string name="clear_cache_message">%1$s अस्थायी कैश साफ़ करें? आपके लेन-देन नहीं बदलेंगे।</string>
-    <string name="clear_cache_confirm">साफ़ करें</string>
-    <string name="cache_cleared">कैश साफ़ हो गया</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">संस्करण %1$s</string>
     <string name="about_description">CogniBal एक शांत, पढ़ने में आसान लेखा ऐप है। लेआउट स्क्रीन के अनुसार ढल जाता है, इसलिए हिसाब साफ़ और आरामदायक रहता है।</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">शर्तें पढ़ें</string>
     <string name="security_privacy">गोपनीयता नीति</string>
     <string name="security_privacy_subtitle">देखें कि डेटा का उपयोग कैसे होता है</string>
-    <string name="security_app_lock">ऐप लॉक</string>
-    <string name="security_app_lock_subtitle">ऐप खोलने से पहले पहचान की पुष्टि करें</string>
+    <string name="security_hide_content">बैकग्राउंड में सामग्री छिपाएँ</string>
+    <string name="security_hide_content_subtitle">ऐप छोड़ने पर स्क्रीन ढक जाती है। वापस आने पर अपने आप खुल जाती है</string>
+    <string name="security_content_hidden">सामग्री छिपी है</string>
     <string name="backup_save">बैकअप लें</string>
     <string name="backup_save_subtitle">मौजूदा लेन-देन इस डिवाइस पर सहेजें</string>
     <string name="backup_export">बैकअप निर्यात करें</string>

@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Огляд</string>
     <string name="shortcut_coming_soon">%1$s незабаром</string>
     <string name="default_currency">Валюта за замовчуванням</string>
-    <string name="clear_temp_cache">Очистити тимчасовий кеш</string>
     <string name="close">Закрити</string>
     <string name="cancel">Скасувати</string>
     <string name="choose_currency">Вибрати валюту за замовчуванням</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Долар США ($)</string>
     <string name="currency_eur">Євро (€)</string>
     <string name="currency_gbp">Фунт стерлінгів (£)</string>
-    <string name="clear_cache_title">Очистити локальний кеш</string>
-    <string name="clear_cache_message">Очистити %1$s тимчасового кешу? Операції не зміняться.</string>
-    <string name="clear_cache_confirm">Очистити</string>
-    <string name="cache_cleared">Кеш очищено</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Версія %1$s</string>
     <string name="about_description">CogniBal — застосунок для обліку зі спокійним, легким для читання виглядом. Розкладка підлаштовується під екран, тож облік лишається ясним і зручним.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Прочитати умови</string>
     <string name="security_privacy">Політика конфіденційності</string>
     <string name="security_privacy_subtitle">Як використовуються дані</string>
-    <string name="security_app_lock">Захист застосунку</string>
-    <string name="security_app_lock_subtitle">Підтвердьте особу перед відкриттям застосунку</string>
+    <string name="security_hide_content">Ховати вміст у фоні</string>
+    <string name="security_hide_content_subtitle">Коли виходите, екран закривається. Після повернення покриття зникає</string>
+    <string name="security_content_hidden">Вміст приховано</string>
     <string name="backup_save">Створити копію</string>
     <string name="backup_save_subtitle">Зберегти поточні операції на цьому пристрої</string>
     <string name="backup_export">Експорт копії</string>

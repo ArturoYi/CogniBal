@@ -1,4 +1,4 @@
-Effective date: October 28, 2026
+Effective date: November 9, 2026
 
 This policy describes how CogniBal (知余) actually handles information. The current version has no network permission, no developer server, and no advertising or analytics component. Processing happens on your device.
 
@@ -20,7 +20,7 @@ Bill amount, income, expense, or transfer, category, account, time, and note.
 
 Budget amount, period, alert level, category, and note.
 
-Preferences: theme, light or dark appearance, language, default currency, the budget-alert switch, whether budgets show on the home page, and which version of these documents you accepted.
+Preferences: theme, light or dark appearance, language, default currency, the budget-alert switch, whether budgets show on the home page, whether content is hidden when the app leaves the foreground, and which version of these documents you accepted.
 
 CogniBal uses this to keep the ledger, show summaries and budgets, send a budget alert you turned on, draw the home-screen widget, and finish a backup or migration you start.
 
@@ -48,11 +48,11 @@ Bluetooth migration uses a separate one-time key. That key stays in memory for t
 
 If you turn on Android or manufacturer device backup, the system may save app data under its own rules. That is controlled by system settings. It is not an upload to CogniBal.
 
-After you add the home-screen widget, it shows the current account’s income, expense, and balance for this month. Anyone who can see the home screen can see those numbers.
+After you add the home-screen widget, it shows the current account’s income, expense, and balance for this month. If the widget is too small, it drops some of those items. Amounts are not cut off mid-number. Anyone who can see the home screen can see whatever numbers remain.
 
 # 6. How long it stays
 
-Records remain until you delete them, clear the app’s data, or uninstall. Clearing the temporary cache does not delete the ledger. Importing a backup replaces current accounts, categories, bills, and budgets. If the file cannot be read, the current ledger is left as it is.
+Records remain until you delete them, clear the app’s data, or uninstall. The app has no separate clear-cache action. Importing a backup replaces current accounts, categories, bills, and budgets. It does not merge entries. If the file cannot be read, the current ledger is left as it is.
 
 After you uninstall, the local copy is removed. A system backup, or a file you already shared, is outside the app’s control.
 
@@ -62,7 +62,9 @@ The developer does not sell personal information and does not give the ledger to
 
 # 8. Security
 
-Set a device lock. The exported archive is not a substitute. App lock in Settings cannot yet ask you to verify before the app opens, so it is not an active lock.
+Set a device lock. The exported archive is not a substitute.
+
+Hide content in background, under Security and privacy, is on by default. After you leave the app, the recent-apps preview is a dark screen, and the ledger shows again when you return. In split screen, this side is covered when it loses focus. This only makes the amounts harder for someone else to see. It is not a lock, and it does not replace the device lock. On Android 13 and later, you can still take a screenshot while the app is open. On Android 12 and earlier, screenshots are also blocked while the app is open, because that is how the recent-apps preview is blocked. The home-screen widget is not covered. You can turn the switch off.
 
 # 9. Children
 

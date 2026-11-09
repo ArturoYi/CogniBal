@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Gambaran</string>
     <string name="shortcut_coming_soon">%1$s akan datang</string>
     <string name="default_currency">Mata wang lalai</string>
-    <string name="clear_temp_cache">Kosongkan cache sementara</string>
     <string name="close">Tutup</string>
     <string name="cancel">Batal</string>
     <string name="choose_currency">Pilih mata wang lalai</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Dolar AS ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Paun sterling (£)</string>
-    <string name="clear_cache_title">Kosongkan cache setempat</string>
-    <string name="clear_cache_message">Kosongkan %1$s cache sementara? Transaksi anda tidak terjejas.</string>
-    <string name="clear_cache_confirm">Kosongkan</string>
-    <string name="cache_cleared">Cache dikosongkan</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versi %1$s</string>
     <string name="about_description">CogniBal ialah aplikasi pembukuan dengan rupa yang tenang dan mudah dibaca. Susun atur menyesuaikan skrin supaya catatan kekal jelas dan selesa.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Baca syarat</string>
     <string name="security_privacy">Dasar privasi</string>
     <string name="security_privacy_subtitle">Lihat cara data digunakan</string>
-    <string name="security_app_lock">Kunci aplikasi</string>
-    <string name="security_app_lock_subtitle">Sahkan identiti sebelum membuka aplikasi</string>
+    <string name="security_hide_content">Sembunyikan kandungan di latar belakang</string>
+    <string name="security_hide_content_subtitle">Apabila keluar, skrin ditutup. Kembali akan dibuka sendiri</string>
+    <string name="security_content_hidden">Kandungan disembunyikan</string>
     <string name="backup_save">Sandarkan</string>
     <string name="backup_save_subtitle">Simpan transaksi semasa pada peranti ini</string>
     <string name="backup_export">Eksport sandaran</string>

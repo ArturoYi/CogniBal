@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Tổng quan</string>
     <string name="shortcut_coming_soon">%1$s sắp ra mắt</string>
     <string name="default_currency">Tiền tệ mặc định</string>
-    <string name="clear_temp_cache">Xóa bộ nhớ đệm tạm</string>
     <string name="close">Đóng</string>
     <string name="cancel">Hủy</string>
     <string name="choose_currency">Chọn tiền tệ mặc định</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Đô la Mỹ ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Bảng Anh (£)</string>
-    <string name="clear_cache_title">Xóa bộ nhớ đệm cục bộ</string>
-    <string name="clear_cache_message">Xóa %1$s bộ nhớ đệm tạm? Giao dịch của bạn không bị ảnh hưởng.</string>
-    <string name="clear_cache_confirm">Xóa</string>
-    <string name="cache_cleared">Đã xóa bộ nhớ đệm</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Phiên bản %1$s</string>
     <string name="about_description">CogniBal là ứng dụng ghi chép tài chính với giao diện điềm tĩnh, dễ đọc. Bố cục thích ứng với màn hình để việc theo dõi luôn rõ và thoải mái.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Đọc điều khoản</string>
     <string name="security_privacy">Chính sách quyền riêng tư</string>
     <string name="security_privacy_subtitle">Xem dữ liệu được dùng thế nào</string>
-    <string name="security_app_lock">Khóa ứng dụng</string>
-    <string name="security_app_lock_subtitle">Xác minh danh tính trước khi mở ứng dụng</string>
+    <string name="security_hide_content">Ẩn nội dung khi ở nền</string>
+    <string name="security_hide_content_subtitle">Khi rời ứng dụng, màn hình được phủ tối. Quay lại sẽ tự mở</string>
+    <string name="security_content_hidden">Đã ẩn nội dung</string>
     <string name="backup_save">Sao lưu</string>
     <string name="backup_save_subtitle">Lưu các giao dịch hiện tại trên thiết bị này</string>
     <string name="backup_export">Xuất bản sao lưu</string>

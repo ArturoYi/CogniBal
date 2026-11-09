@@ -45,7 +45,6 @@
     <string name="shortcut_overview">Oversikt</string>
     <string name="shortcut_coming_soon">%1$s kommer snart</string>
     <string name="default_currency">Standardvaluta</string>
-    <string name="clear_temp_cache">Tøm midlertidig buffer</string>
     <string name="close">Lukk</string>
     <string name="cancel">Avbryt</string>
     <string name="choose_currency">Velg standardvaluta</string>
@@ -53,10 +52,6 @@
     <string name="currency_usd">Amerikansk dollar ($)</string>
     <string name="currency_eur">Euro (€)</string>
     <string name="currency_gbp">Britisk pund (£)</string>
-    <string name="clear_cache_title">Tøm lokal buffer</string>
-    <string name="clear_cache_message">Tømme %1$s midlertidig buffer? Postene dine blir ikke påvirket.</string>
-    <string name="clear_cache_confirm">Tøm</string>
-    <string name="cache_cleared">Bufferen er tømt</string>
     <string name="about_title">CogniBal</string>
     <string name="about_version">Versjon %1$s</string>
     <string name="about_description">CogniBal er en bokføringsapp med et rolig, lettlest uttrykk. Oppsettet tilpasser seg skjermen, så oversikten forblir tydelig og behagelig.</string>
@@ -66,8 +61,9 @@
     <string name="security_terms_subtitle">Les vilkårene</string>
     <string name="security_privacy">Personvernerklæring</string>
     <string name="security_privacy_subtitle">Se hvordan data brukes</string>
-    <string name="security_app_lock">Applås</string>
-    <string name="security_app_lock_subtitle">Bekreft identiteten din før appen åpnes</string>
+    <string name="security_hide_content">Skjul innhold i bakgrunnen</string>
+    <string name="security_hide_content_subtitle">Når du forlater appen, dekkes skjermen. Den vises igjen når du kommer tilbake</string>
+    <string name="security_content_hidden">Innhold skjult</string>
     <string name="backup_save">Sikkerhetskopier</string>
     <string name="backup_save_subtitle">Lagre gjeldende poster på denne enheten</string>
     <string name="backup_export">Eksporter kopi</string>
