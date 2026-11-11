@@ -1,6 +1,5 @@
 package com.cyr.cognobal.screen.feature.bill.account
 
-import android.graphics.Color
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -14,6 +13,8 @@ import com.cyr.cognobal.data.repository.LedgerLimits
 import com.cyr.cognobal.data.repository.LedgerReject
 import com.cyr.cognobal.data.repository.NewAccount
 import com.cyr.cognobal.di.LedgerEntryPoint
+import com.cyr.cognobal.screen.feature.bill.account.state.AccountEditorUiEvent
+import com.cyr.cognobal.screen.feature.bill.account.state.AccountEditorUiState
 import com.cyr.cognobal.screen.feature.bill.model.AccountColor
 import com.cyr.cognobal.screen.feature.bill.model.pairedIcon
 import com.cyr.cognobal.screen.feature.bill.tool.parseMajorAmount
@@ -22,14 +23,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.launch
-import com.cyr.cognobal.screen.feature.bill.account.state.AccountEditorUiEvent
-import com.cyr.cognobal.screen.feature.bill.account.state.AccountEditorUiState
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
-import java.util.Locale
-import kotlin.random.Random
+import kotlinx.coroutines.launch
 
 /**
  * 新建或编辑一个账户。
@@ -47,7 +44,8 @@ internal class AccountEditorViewModel(
         AccountEditorUiState(
             ready = accountId == null,
             isEdit = accountId != null,
-            colorKeyOverride = if (accountId == null) vividColorHex() else null,
+            color = AccountColor.Ink,
+            colorKeyOverride = null,
         ),
     )
     val uiState: StateFlow<AccountEditorUiState> = _uiState
@@ -208,17 +206,6 @@ internal class AccountEditorViewModel(
 
     companion object {
         private const val AMOUNT_INPUT_LIMIT = 16
-
-        /** 新建时随机一支饱和色。避开灰、白和过暗，卡片上还能认出来。 */
-        private fun vividColorHex(): String {
-            val random = Random.Default
-            val hsv = floatArrayOf(
-                random.nextFloat() * 360f,
-                0.62f + random.nextFloat() * 0.28f,
-                0.78f + random.nextFloat() * 0.14f,
-            )
-            return String.format(Locale.US, "#%08X", Color.HSVToColor(hsv))
-        }
 
         fun factory(accountId: Long?): ViewModelProvider.Factory = viewModelFactory {
             initializer {

@@ -41,7 +41,5 @@
 		<string>el</string>
 		<string>he</string>
 	</array>
-	<key>UIRequiresFullScreen</key>
-	<false/>
 </dict>
 </plist>

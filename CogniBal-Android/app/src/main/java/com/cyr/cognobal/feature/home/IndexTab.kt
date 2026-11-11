@@ -1,19 +1,47 @@
 package com.cyr.cognobal.screen.feature.home
 
 import androidx.annotation.StringRes
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.outlined.AccountBalanceWallet
+import androidx.compose.material.icons.outlined.BarChart
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.ui.graphics.vector.ImageVector
+import com.cyr.cognobal.R
 import com.cyr.cognobal.screen.feature.bill.config.BillTabConfig
 import com.cyr.cognobal.screen.feature.settings.config.SettingsTabConfig
 
 /**
- * Index 的子页。声明顺序就是导航条从左到右、从上到下的顺序。
- *
- * 文案和图标来自各子页自己的 config。新增子页时在这里加一项，再在 Index 界面里接上对应页面。
+ * 底部导航四个主标签：首页、统计、资产、设置。
+ * 选中态采用实心字形，未选中态采用线性字形，与中央圆形加号形成对称五格节奏。
  */
 internal enum class IndexTab(
-    @StringRes val labelRes: Int,
+    @param:StringRes val labelRes: Int,
     val icon: ImageVector,
+    val selectedIcon: ImageVector,
 ) {
-    Bill(BillTabConfig.labelRes, BillTabConfig.icon),
-    Settings(SettingsTabConfig.labelRes, SettingsTabConfig.icon),
+    Bill(
+        labelRes = BillTabConfig.labelRes,
+        icon = Icons.Outlined.Home,
+        selectedIcon = Icons.Filled.Home,
+    ),
+    Statistics(
+        labelRes = R.string.shortcut_statistics,
+        icon = Icons.Outlined.BarChart,
+        selectedIcon = Icons.Filled.BarChart,
+    ),
+    Assets(
+        labelRes = R.string.shortcut_assets,
+        icon = Icons.Outlined.AccountBalanceWallet,
+        selectedIcon = Icons.Filled.AccountBalanceWallet,
+    ),
+    Settings(
+        labelRes = SettingsTabConfig.labelRes,
+        icon = Icons.Outlined.Tune,
+        selectedIcon = Icons.Filled.Tune,
+    ),
 }

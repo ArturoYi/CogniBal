@@ -27,7 +27,10 @@ internal object WidgetAvailability {
         val app = context.applicationContext
         val component = ComponentName(app, LedgerWidgetReceiver::class.java)
         val state = app.packageManager.getComponentEnabledSetting(component)
-        if (state == PackageManager.COMPONENT_ENABLED_STATE_ENABLED) return
+        val disabled = state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED ||
+            state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER ||
+            state == PackageManager.COMPONENT_ENABLED_STATE_DISABLED_UNTIL_USED
+        if (!disabled) return
         app.packageManager.setComponentEnabledSetting(
             component,
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
@@ -37,9 +40,9 @@ internal object WidgetAvailability {
 }
 
 /**
- * 账本或开关变化时刷新已经放在桌面上的小组件。
+ * 账本变化时刷新已经放在桌面上的小组件。
  *
- * 进程起来时只对齐接收器的启用状态。桌面上确实有小组件，才订阅账本，避免空开着数据库。
+ * 进程起来时对齐接收器的启用状态。桌面上确实有小组件，才订阅账本，并立刻重画一次。
  */
 internal object HomeWidgetRefresh {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -50,7 +53,10 @@ internal object HomeWidgetRefresh {
         val app = context.applicationContext
         scope.launch {
             WidgetAvailability.ensureEnabled(app)
-            if (hasPlacedWidgets(app)) startWatching(app)
+            if (!hasPlacedWidgets(app)) return@launch
+            startWatching(app)
+            // 上次更新如果被桌面丢掉，卡片会停在加载布局。打开应用时再推一次。
+            refreshNow(app)
         }
     }
 
@@ -63,7 +69,7 @@ internal object HomeWidgetRefresh {
         scope.launch { stopWatching() }
     }
 
-    /** 开关关掉后立刻把已经放在桌面上的卡片收成“未开启”，不等下一次账本变化。 */
+    /** 立刻重画已经放在桌面上的卡片。桌面上还没有卡片时，失败不用提示。 */
     fun refreshNow(context: Context) {
         val app = context.applicationContext
         scope.launch {
@@ -96,8 +102,8 @@ internal object HomeWidgetRefresh {
         try {
             LedgerWidgetLoader.observeContent(app)
                 .debounce(400.milliseconds)
-                .collect { content ->
-                LedgerAppWidget().updateAll(app)
+                .collect {
+                    LedgerAppWidget().updateAll(app)
                 }
         } catch (cancellation: CancellationException) {
             throw cancellation

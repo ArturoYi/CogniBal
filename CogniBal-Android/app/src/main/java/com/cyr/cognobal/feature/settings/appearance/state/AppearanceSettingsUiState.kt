@@ -12,7 +12,7 @@ internal data class AppearanceSettingsUiState(
     val showLanguageDialog: Boolean = false,
     val languageConfirmation: LanguageChoice? = null,
     val languageSwitch: LanguageChoice? = null,
-    val darkMode: DarkModePreference = DarkModePreference.DARK,
+    val darkMode: DarkModePreference = DarkModePreference.LIGHT,
     val themeStyle: AppThemeStyle = AppThemeStyle.WarmCream,
 )
 

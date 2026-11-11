@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   系统微件选择器靠这份元数据发现卡片。
-  initialLayout 用 Glance 自带的加载布局；previewLayout 给 Android 12 及以上，
-  previewImage 给更早的系统。两套预览都要有，选择器才列得出来。
+  第一帧用静态预览，不用系统的加载圈。Glance 还没画完、或这次更新失败时，
+  桌面会一直留着 initialLayout；加载圈会让人以为卡片坏了。
+  previewLayout 给 Android 12 及以上，previewImage 给更早的系统。
 -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description"
-    android:initialLayout="@layout/glance_default_loading_layout"
+    android:initialLayout="@layout/ledger_widget_preview"
     android:previewLayout="@layout/ledger_widget_preview"
     android:previewImage="@drawable/ledger_widget_preview_image"
     android:minWidth="@dimen/ledger_widget_min_width"

@@ -7,87 +7,85 @@ import androidx.compose.ui.graphics.Color
 import androidx.glance.GlanceTheme
 import androidx.glance.material3.ColorProviders
 
-private val Paper = Color(0xFFFFFFFF)
-private val Ink = Color(0xFF111111)
-private val MuteLight = Color(0xFF666666)
-private val LineLight = Color(0xFFE5E5E5)
-private val FillLight = Color(0xFFF3F3F3)
+private val DaySurface = Color(0xFFFFFFFF)
+private val DayInk = Color(0xFF18191E)
+private val DayMute = Color(0xFF5A6070)
+private val DayLine = Color(0xFFECEEF2)
+private val DayBrandTint = Color(0xFFF6F7F9)
+private val DayBrand = Color(0xFF1F2026)
 
-private val Night = Color(0xFF111111)
-private val NightInk = Color(0xFFFFFFFF)
-private val MuteNight = Color(0xFFA3A3A3)
-private val LineNight = Color(0xFF2C2C2C)
-private val FillNight = Color(0xFF242424)
+private val NightSurface = Color(0xFF181B22)
+private val NightInk = Color(0xFFF4F6FA)
+private val NightMute = Color(0xFFB4BCCB)
+private val NightLine = Color(0xFF252A36)
+private val NightFill = Color(0xFF222732)
+private val NightBrand = Color(0xFFE0B47D)
 
 /**
- * 桌面卡片只用黑白，深浅跟系统走。浅色是白底黑字，夜间是黑底白字。
- * 卡片底色用 background，系统会按当前深浅选用对应的一档。
+ * 桌面微件同步应用「纯净白卡 + 曜石墨色 + 香槟金」设计语言。
  */
 @Composable
 internal fun LedgerGlanceTheme(content: @Composable () -> Unit) {
     GlanceTheme(
-        colors = ColorProviders(
-            light = lightScheme(),
-            dark = darkScheme(),
-        ),
+        colors = ColorProviders(light = lightScheme(), dark = darkScheme()),
         content = content,
     )
 }
 
 private fun lightScheme() = lightColorScheme(
-    primary = Ink,
-    onPrimary = Paper,
-    primaryContainer = FillLight,
-    onPrimaryContainer = Ink,
-    secondary = FillLight,
-    onSecondary = Ink,
-    secondaryContainer = Paper,
-    onSecondaryContainer = Ink,
-    tertiary = MuteLight,
-    onTertiary = Paper,
-    tertiaryContainer = FillLight,
-    onTertiaryContainer = Ink,
-    background = Paper,
-    onBackground = Ink,
-    surface = Paper,
-    onSurface = Ink,
-    surfaceVariant = FillLight,
-    onSurfaceVariant = MuteLight,
-    outline = LineLight,
-    error = Ink,
-    onError = Paper,
-    errorContainer = FillLight,
-    onErrorContainer = Ink,
-    inverseSurface = Night,
-    inverseOnSurface = NightInk,
-    inversePrimary = NightInk,
+    primary = DayBrand,
+    onPrimary = DaySurface,
+    primaryContainer = DayBrandTint,
+    onPrimaryContainer = DayInk,
+    secondary = DayBrandTint,
+    onSecondary = DayInk,
+    secondaryContainer = DaySurface,
+    onSecondaryContainer = DayInk,
+    tertiary = DayMute,
+    onTertiary = DaySurface,
+    tertiaryContainer = DayBrandTint,
+    onTertiaryContainer = DayInk,
+    background = DaySurface,
+    onBackground = DayInk,
+    surface = DaySurface,
+    onSurface = DayInk,
+    surfaceVariant = DayBrandTint,
+    onSurfaceVariant = DayMute,
+    outline = DayLine,
+    error = DayInk,
+    onError = DaySurface,
+    errorContainer = DayBrandTint,
+    onErrorContainer = DayInk,
+    inverseSurface = DayInk,
+    inverseOnSurface = DaySurface,
+    inversePrimary = DayBrand,
 )
 
 private fun darkScheme() = darkColorScheme(
-    primary = NightInk,
-    onPrimary = Night,
-    primaryContainer = FillNight,
-    onPrimaryContainer = NightInk,
-    secondary = FillNight,
+    primary = NightBrand,
+    onPrimary = NightSurface,
+    primaryContainer = NightFill,
+    onPrimaryContainer = NightBrand,
+    secondary = NightFill,
     onSecondary = NightInk,
-    secondaryContainer = Night,
+    secondaryContainer = NightSurface,
     onSecondaryContainer = NightInk,
-    tertiary = MuteNight,
-    onTertiary = Night,
-    tertiaryContainer = FillNight,
+    tertiary = NightMute,
+    onTertiary = NightSurface,
+    tertiaryContainer = NightFill,
     onTertiaryContainer = NightInk,
-    background = Night,
+    background = NightSurface,
     onBackground = NightInk,
-    surface = Night,
+    surface = NightSurface,
     onSurface = NightInk,
-    surfaceVariant = FillNight,
-    onSurfaceVariant = MuteNight,
-    outline = LineNight,
+    surfaceVariant = NightFill,
+    onSurfaceVariant = NightMute,
+    outline = NightLine,
     error = NightInk,
-    onError = Night,
-    errorContainer = FillNight,
+    onError = NightSurface,
+    errorContainer = NightFill,
     onErrorContainer = NightInk,
-    inverseSurface = Paper,
-    inverseOnSurface = Ink,
-    inversePrimary = Ink,
+    inverseSurface = NightInk,
+    inverseOnSurface = NightSurface,
+    inversePrimary = NightSurface,
 )

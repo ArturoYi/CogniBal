@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import com.cyr.cognobal.screen.feature.bill.history.state.BillHistoryUiState
 import com.cyr.cognobal.screen.feature.bill.state.billsToRows
+import com.cyr.cognobal.time.TimeManager
 import kotlinx.coroutines.flow.stateIn
 
 /** 一个账户的全部账单，按时间从新到旧。 */
@@ -28,11 +29,13 @@ internal class BillHistoryViewModel(
         bills.observeByAccount(accountId),
         categories.observeAll(),
         preferences.preferences,
-    ) { rows, categoryRows, prefs ->
+        TimeManager.observeToday(),
+    ) { rows, categoryRows, prefs, today ->
         BillHistoryUiState(
             loading = false,
             currencySymbol = prefs.currency.symbol,
             bills = billsToRows(rows, categoryRows.associateBy { it.id }),
+            today = today,
         )
     }.stateIn(
         scope = viewModelScope,

@@ -2,57 +2,86 @@ package com.cyr.cognobal.ui.theme
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.util.lerp as lerpFloat
+import androidx.compose.ui.graphics.lerp
+import com.cyr.cognobal.screen.feature.bill.model.accountColorValue
 
-/**
- * 把账户/分类身份色锁进当前主色相。
- * 库存仍是用户选的那支；绘制时只保留明度和饱和度差，用来认出是哪一张卡。
- */
-internal fun seatIdentityColor(account: Color, theme: Color): Color {
-    val from = account.toHsv()
-    val toward = theme.toHsv()
-    val colorful = toward.saturation >= 0.18f
-    val saturation = if (colorful) {
-        lerpFloat(from.saturation, toward.saturation, 0.42f).coerceIn(0.22f, 0.82f)
-    } else if (from.saturation < 0.16f) {
-        from.saturation.coerceIn(0f, 0.14f)
-    } else {
-        lerpFloat(from.saturation, 0.08f, 0.82f).coerceIn(0f, 0.16f)
-    }
-    val value = lerpFloat(from.value, toward.value, 0.28f).coerceIn(0.28f, 0.90f)
-    return hsv(hue = toward.hue, saturation = saturation, value = value)
-}
+internal fun seatIdentityColor(account: Color, theme: Color): Color = theme
 
 @Composable
 @ReadOnlyComposable
-internal fun Color.asThemeIdentity(): Color = seatIdentityColor(this, MaterialTheme.appColors.hero)
+internal fun Color.asThemeIdentity(): Color = MaterialTheme.appColors.primary
 
-internal data class HsvColor(
-    val hue: Float,
-    val saturation: Float,
-    val value: Float,
+@Immutable
+internal data class SoftBadgeTone(
+    val container: Color,
+    val content: Color,
 )
 
-internal fun Color.toHsv(): HsvColor {
-    val max = maxOf(red, green, blue)
-    val min = minOf(red, green, blue)
-    val delta = max - min
-    val hue = when {
-        delta == 0f -> 0f
-        max == red -> 60f * (((green - blue) / delta) % 6f)
-        max == green -> 60f * (((blue - red) / delta) + 2f)
-        else -> 60f * (((red - green) / delta) + 4f)
-    }.let { if (it < 0f) it + 360f else it }
-    val saturation = if (max == 0f) 0f else delta / max
-    return HsvColor(hue = hue, saturation = saturation, value = max)
+/**
+ * 分类与账户圆角图标的柔和粉彩底色：
+ * 在彩色主题下根据条目色值生成低饱和清透圆角底 + 清晰线性图标色；
+ * 在黑白主题下自动收敛为纯净中性灰。
+ */
+@Composable
+@ReadOnlyComposable
+internal fun softBadgeTone(colorKey: String): SoftBadgeTone {
+    val colors = MaterialTheme.appColors
+    val style = LocalAppThemeStyle.current
+    if (style == AppThemeStyle.Monochrome) {
+        return SoftBadgeTone(
+            container = colors.tagBackground,
+            content = colors.textPrimary,
+        )
+    }
+    val base = if (colorKey.isBlank()) colors.primary else accountColorValue(colorKey)
+    return if (colors.isDark) {
+        SoftBadgeTone(
+            container = lerp(colors.cardBackground, base, 0.22f),
+            content = lerp(base, Color.White, 0.26f),
+        )
+    } else {
+        SoftBadgeTone(
+            container = lerp(Color.White, base, 0.13f),
+            content = lerp(base, Color(0xFF18191E), 0.08f),
+        )
+    }
 }
 
-internal fun hsv(hue: Float, saturation: Float, value: Float): Color {
-    return Color.hsv(
-        hue = ((hue % 360f) + 360f) % 360f,
-        saturation = saturation.coerceIn(0f, 1f),
-        value = value.coerceIn(0f, 1f),
-    )
+/**
+ * 统计图与分类排行条色彩：非黑白主题按分类独立柔和色值呈现，黑白主题回退同色阶明暗。
+ */
+internal fun categorySliceColor(
+    colorKey: String,
+    index: Int,
+    total: Int,
+    colors: AppColors,
+    monochrome: Boolean,
+): Color {
+    if (monochrome || colorKey.isBlank()) {
+        return monochromeSliceTone(
+            index = index,
+            total = total,
+            primary = colors.primary,
+            track = colors.tagBackground,
+        )
+    }
+    val raw = accountColorValue(colorKey)
+    return if (colors.isDark) lerp(raw, Color.White, 0.16f) else raw
+}
+
+/**
+ * 同一主色相下的多级明度色阶，供黑白主题环形图区分扇区。
+ */
+internal fun monochromeSliceTone(
+    index: Int,
+    total: Int,
+    primary: Color,
+    track: Color,
+): Color {
+    if (total <= 1 || index <= 0) return primary
+    val step = (index.toFloat() / total.coerceAtLeast(2).toFloat()) * 0.68f
+    return lerp(primary, track, step.coerceIn(0f, 0.68f))
 }

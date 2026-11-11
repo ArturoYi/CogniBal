@@ -88,7 +88,7 @@ internal fun StatisticsBillSheet(
         sheetState = sheetState,
         containerColor = colors.cardBackground,
         contentColor = colors.textPrimary,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
         tonalElevation = 0.dp,
     ) {
@@ -211,14 +211,14 @@ private fun DetailHeader(onBack: () -> Unit) {
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
+                .size(48.dp)
                 .interactiveClick(onClick = onBack),
-            contentAlignment = Alignment.Center,
+            contentAlignment = Alignment.CenterStart,
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Outlined.ArrowBack,
                 contentDescription = stringResource(R.string.navigate_back),
-                tint = colors.primary,
+                tint = colors.textPrimary,
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -308,9 +308,6 @@ private fun BillDetail(
 ) {
     val colors = MaterialTheme.appColors
     val amountColor = if (bill.kind == StatisticsKind.Income) colors.income else colors.textPrimary
-    val typeLabel = stringResource(
-        if (bill.kind == StatisticsKind.Income) R.string.bill_fab_income else R.string.bill_fab_expense,
-    )
     Text(
         text = moneyText(currencySymbol, bill.amount),
         color = amountColor,
@@ -318,22 +315,15 @@ private fun BillDetail(
         softWrap = false,
         overflow = TextOverflow.Ellipsis,
         textAlign = TextAlign.Center,
-        style = TextStyle(
-            fontWeight = FontWeight.Bold,
-            fontFeatureSettings = "tnum",
-        ),
+        style = MaterialTheme.typography.displayMedium,
         autoSize = TextAutoSize.StepBased(
-            minFontSize = 18.sp,
-            maxFontSize = 28.sp,
+            minFontSize = 20.sp,
+            maxFontSize = 32.sp,
             stepSize = 1.sp,
         ),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, bottom = 8.dp),
-    )
-    DetailField(
-        label = stringResource(R.string.bill_entry_type),
-        value = typeLabel,
+            .padding(vertical = 16.dp),
     )
     DetailField(
         label = stringResource(R.string.bill_entry_category),
@@ -387,26 +377,25 @@ private fun DetailField(
 @Composable
 internal fun StatisticsCategoryMark(
     iconKey: String,
-    colorKey: String,
+    colorKey: String = "",
     modifier: Modifier = Modifier,
-    tile: Dp = 32.dp,
-    icon: Dp = 16.dp,
+    tile: Dp = 36.dp,
+    icon: Dp = 18.dp,
 ) {
-    val colors = MaterialTheme.appColors
-    val tint = accountColorValue(colorKey).asThemeIdentity()
+    val tone = com.cyr.cognobal.ui.theme.softBadgeTone(colorKey)
     Box(
         modifier = modifier
             .size(tile)
             .background(
-                tint.copy(alpha = if (colors.isDark) 0.22f else 0.16f),
-                RoundedCornerShape(8.dp),
+                tone.container,
+                RoundedCornerShape(13.dp),
             ),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = categoryIcon(iconKey),
             contentDescription = null,
-            tint = tint,
+            tint = tone.content,
             modifier = Modifier.size(icon),
         )
     }

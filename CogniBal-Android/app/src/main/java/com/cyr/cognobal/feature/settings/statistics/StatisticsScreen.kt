@@ -1,20 +1,24 @@
 package com.cyr.cognobal.screen.feature.settings.statistics
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material3.Icon
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -42,11 +46,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyr.cognobal.R
 import com.cyr.cognobal.screen.feature.bill.PressFade
-import com.cyr.cognobal.screen.feature.bill.model.accountColorValue
 import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
+import com.cyr.cognobal.screen.feature.settings.component.HeaderCircleButton
 import com.cyr.cognobal.screen.feature.settings.component.InsightCard
 import com.cyr.cognobal.screen.feature.settings.component.InsightSegments
 import com.cyr.cognobal.screen.feature.settings.component.MonthStepper
+import com.cyr.cognobal.screen.feature.settings.component.YearMonthPickerDialog
 import com.cyr.cognobal.screen.feature.settings.component.formatYearMonth
 import com.cyr.cognobal.screen.feature.settings.component.moneyText
 import com.cyr.cognobal.screen.feature.settings.statistics.state.CategoryShareUi
@@ -57,20 +62,26 @@ import com.cyr.cognobal.screen.feature.settings.statistics.state.StatisticsUiEve
 import com.cyr.cognobal.screen.feature.settings.statistics.state.StatisticsUiState
 import com.cyr.cognobal.ui.background.PageBackgroundHost
 import com.cyr.cognobal.ui.preview.FormFactorPreviews
+import com.cyr.cognobal.ui.privacy.LocalAmountVisibility
+import com.cyr.cognobal.ui.privacy.maskIfHidden
 import com.cyr.cognobal.ui.theme.AppThemeStyle
-import com.cyr.cognobal.ui.theme.asThemeIdentity
 import com.cyr.cognobal.ui.theme.CogniBalTheme
+import com.cyr.cognobal.ui.theme.LocalAppThemeStyle
 import com.cyr.cognobal.ui.theme.appColors
+import com.cyr.cognobal.ui.theme.categorySliceColor
 import java.text.NumberFormat
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
 import java.util.Locale
 
-/** 统计入口。分类占比来自 ViewModel。 */
 @Composable
 internal fun StatisticsRoute(
     onBack: () -> Unit,
     onOpenBill: (Long) -> Unit,
+    showBack: Boolean = false,
+    onOpenReports: () -> Unit = {},
+    onOpenCalendar: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: StatisticsViewModel = viewModel(factory = StatisticsViewModel.Factory),
 ) {
@@ -79,7 +90,10 @@ internal fun StatisticsRoute(
         uiState = uiState,
         onEvent = viewModel::onEvent,
         onBack = onBack,
+        showBack = showBack,
         onOpenBill = onOpenBill,
+        onOpenReports = onOpenReports,
+        onOpenCalendar = onOpenCalendar,
         modifier = modifier,
     )
 }
@@ -89,9 +103,13 @@ internal fun StatisticsScreen(
     uiState: StatisticsUiState,
     onEvent: (StatisticsUiEvent) -> Unit,
     onBack: () -> Unit,
+    showBack: Boolean = false,
     onOpenBill: (Long) -> Unit = {},
+    onOpenReports: () -> Unit = {},
+    onOpenCalendar: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
+    var pickingMonth by rememberSaveable { mutableStateOf(false) }
     var openCategoryId by rememberSaveable { mutableLongStateOf(NoSelection) }
     var openKindName by rememberSaveable { mutableStateOf("") }
     var openBillId by rememberSaveable { mutableLongStateOf(NoSelection) }
@@ -120,14 +138,29 @@ internal fun StatisticsScreen(
             openBillId = NoSelection
         }
     }
+
     SettingsSubpage(
         title = stringResource(R.string.shortcut_statistics),
         onBack = onBack,
+        showBackOverride = showBack,
+        trailing = {
+            HeaderCircleButton(
+                icon = Icons.Outlined.CalendarMonth,
+                description = stringResource(R.string.shortcut_overview),
+                onClick = onOpenCalendar,
+            )
+            HeaderCircleButton(
+                icon = Icons.AutoMirrored.Outlined.TrendingUp,
+                description = stringResource(R.string.shortcut_reports),
+                onClick = onOpenReports,
+            )
+        },
         modifier = modifier,
     ) {
         StatisticsBody(
             uiState = uiState,
             onEvent = onEvent,
+            onPickMonth = { pickingMonth = true },
             onOpenCategory = { kind, id ->
                 openKindName = kind.name
                 openCategoryId = id
@@ -135,6 +168,18 @@ internal fun StatisticsScreen(
             },
         )
     }
+
+    if (pickingMonth) {
+        YearMonthPickerDialog(
+            month = uiState.month,
+            onConfirm = { month ->
+                pickingMonth = false
+                onEvent(StatisticsUiEvent.SelectMonth(month))
+            },
+            onDismiss = { pickingMonth = false },
+        )
+    }
+
     if (openShare != null && openKind != null) {
         StatisticsBillSheet(
             share = openShare,
@@ -156,6 +201,7 @@ internal fun StatisticsScreen(
 private fun StatisticsBody(
     uiState: StatisticsUiState,
     onEvent: (StatisticsUiEvent) -> Unit,
+    onPickMonth: () -> Unit,
     onOpenCategory: (StatisticsKind, Long) -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -163,13 +209,14 @@ private fun StatisticsBody(
         if (sideBySide) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.Top,
             ) {
                 ChartCard(
                     uiState = uiState,
                     onEvent = onEvent,
-                    modifier = Modifier.weight(1.2f),
+                    onPickMonth = onPickMonth,
+                    modifier = Modifier.weight(1.15f),
                 )
                 StatisticsSections(
                     uiState = uiState,
@@ -178,8 +225,12 @@ private fun StatisticsBody(
                 )
             }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                ChartCard(uiState = uiState, onEvent = onEvent)
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                ChartCard(
+                    uiState = uiState,
+                    onEvent = onEvent,
+                    onPickMonth = onPickMonth,
+                )
                 if (!uiState.loading && uiState.sections.isEmpty()) {
                     EmptyHint()
                 }
@@ -198,86 +249,103 @@ private fun StatisticsBody(
 private fun ChartCard(
     uiState: StatisticsUiState,
     onEvent: (StatisticsUiEvent) -> Unit,
+    onPickMonth: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
+    val hidden = LocalAmountVisibility.current.hidden
+    val expenseLabel = stringResource(R.string.bill_figure_expense)
+    val incomeLabel = stringResource(R.string.bill_figure_income)
     val allLabel = stringResource(R.string.overview_filter_all)
-    val expenseLabel = stringResource(R.string.bill_month_expense)
-    val incomeLabel = stringResource(R.string.bill_month_income)
-    val balanceLabel = stringResource(R.string.bill_month_balance)
-    val centerLabel = when (uiState.kind) {
-        StatisticsKind.All -> balanceLabel
-        StatisticsKind.Expense -> expenseLabel
-        StatisticsKind.Income -> incomeLabel
+
+    val summaryLabel = when (uiState.kind) {
+        StatisticsKind.Expense -> stringResource(R.string.bill_month_expense)
+        StatisticsKind.Income -> stringResource(R.string.bill_month_income)
+        StatisticsKind.All -> stringResource(R.string.bill_month_balance)
     }
     val centerColor = if (uiState.totalOverflow) colors.textSecondary else colors.textPrimary
-    val centerAmount = moneyText(uiState.currencySymbol, uiState.total, uiState.totalOverflow)
-    val chart = remember(uiState.slices, centerLabel, centerAmount, centerColor) {
+    val rawAmount = moneyText(uiState.currencySymbol, uiState.total, uiState.totalOverflow)
+    val centerAmount = maskIfHidden(rawAmount, hidden, uiState.currencySymbol)
+    val chart = remember(uiState.slices, summaryLabel, centerAmount, centerColor) {
         CategoryDonutChart(
             slices = uiState.slices,
-            centerLabel = centerLabel,
+            centerLabel = summaryLabel,
             centerAmount = centerAmount,
             centerColor = centerColor,
         )
     }
+    val monthLabel = formatYearMonth(uiState.month)
     val billCount = if (!uiState.loading && uiState.bills.isNotEmpty()) uiState.bills.size else null
-    InsightCard(
+    val dailyAvg = remember(uiState.total, uiState.month, uiState.kind, uiState.totalOverflow) {
+        if (uiState.totalOverflow || uiState.kind == StatisticsKind.All || uiState.total <= 0L) {
+            null
+        } else {
+            val today = LocalDate.now()
+            val currentYm = YearMonth.from(today)
+            val days = if (uiState.month == currentYm) {
+                today.dayOfMonth.coerceAtLeast(1)
+            } else {
+                uiState.month.lengthOfMonth()
+            }
+            uiState.total / days
+        }
+    }
+
+    Column(
         modifier = modifier,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-        itemSpacing = 8.dp,
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        MonthStepper(
-            label = formatYearMonth(uiState.month),
-            canGoNext = uiState.canGoNext,
-            onPrevious = { onEvent(StatisticsUiEvent.PreviousMonth) },
-            onNext = { onEvent(StatisticsUiEvent.NextMonth) },
-            compact = true,
-        )
         InsightSegments(
-            labels = listOf(allLabel, expenseLabel, incomeLabel),
+            labels = listOf(expenseLabel, incomeLabel, allLabel),
             selectedIndex = uiState.kind.segmentIndex(),
             onSelect = { index ->
                 onEvent(StatisticsUiEvent.SelectKind(index.toStatisticsKind()))
             },
         )
-        ChartSummary(chart = chart, billCount = billCount)
+        MonthStepper(
+            label = monthLabel,
+            canGoNext = uiState.canGoNext,
+            onPrevious = { onEvent(StatisticsUiEvent.PreviousMonth) },
+            onNext = { onEvent(StatisticsUiEvent.NextMonth) },
+            onLabelClick = onPickMonth,
+            labelDescription = stringResource(R.string.overview_pick_month_cd, monthLabel),
+        )
+        InsightCard(contentPadding = PaddingValues(horizontal = 20.dp, vertical = 20.dp)) {
+            ChartSummary(
+                chart = chart,
+                currencySymbol = uiState.currencySymbol,
+                dailyAvg = dailyAvg,
+                billCount = billCount,
+                hidden = hidden,
+            )
+        }
     }
 }
 
 @Composable
 private fun ChartSummary(
     chart: CategoryDonutChart,
+    currencySymbol: String,
+    dailyAvg: Long?,
     billCount: Int?,
+    hidden: Boolean,
 ) {
     val colors = MaterialTheme.appColors
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        BoxWithConstraints(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center,
-        ) {
-            val diameter = if (maxWidth < CHART_DIAMETER) maxWidth else CHART_DIAMETER
-            CategoryDonut(
-                chart = chart,
-                modifier = Modifier.size(diameter),
-            )
-        }
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
                 text = chart.centerLabel,
-                color = colors.textSecondary,
-                fontSize = 13.sp,
+                color = colors.textTertiary,
+                style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
             )
             Text(
                 text = chart.centerAmount,
@@ -285,34 +353,39 @@ private fun ChartSummary(
                 maxLines = 1,
                 softWrap = false,
                 overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontFeatureSettings = "tnum",
-                ),
+                style = MaterialTheme.typography.displaySmall.copy(fontSize = 27.sp),
                 autoSize = TextAutoSize.StepBased(
-                    minFontSize = 16.sp,
-                    maxFontSize = 22.sp,
+                    minFontSize = 18.sp,
+                    maxFontSize = 27.sp,
                     stepSize = 1.sp,
                 ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 2.dp),
+                modifier = Modifier.fillMaxWidth(),
             )
-            if (billCount != null) {
+            val footer = buildList {
+                if (dailyAvg != null) {
+                    val avgStr = maskIfHidden(moneyText(currencySymbol, dailyAvg), hidden, currencySymbol)
+                    add("$avgStr / ${stringResource(R.string.wheel_day)}")
+                }
+                if (billCount != null) {
+                    add(pluralStringResource(R.plurals.entry_count, billCount, billCount))
+                }
+            }.joinToString(" · ")
+            if (footer.isNotEmpty()) {
                 Text(
-                    text = pluralStringResource(R.plurals.entry_count, billCount, billCount),
+                    text = footer,
                     color = colors.textTertiary,
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.labelMedium.merge(
+                        TextStyle(fontFeatureSettings = "tnum"),
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
                 )
             }
         }
+        CategoryDonut(
+            chart = chart,
+            modifier = Modifier.size(CHART_DIAMETER),
+        )
     }
 }
 
@@ -324,12 +397,11 @@ private fun StatisticsSections(
 ) {
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         uiState.sections.forEach { section ->
             StatisticsSection(
                 section = section,
-                showTitle = uiState.kind == StatisticsKind.All,
                 currencySymbol = uiState.currencySymbol,
                 onOpen = { id -> onOpenCategory(section.kind, id) },
             )
@@ -339,18 +411,24 @@ private fun StatisticsSections(
 
 @Composable
 private fun EmptyHint() {
-    Text(
-        text = stringResource(R.string.insight_empty),
-        color = MaterialTheme.appColors.textTertiary,
-        fontSize = 14.sp,
-        modifier = Modifier.padding(horizontal = 4.dp),
-    )
+    SurfaceEmptyCard(text = stringResource(R.string.insight_empty))
+}
+
+@Composable
+private fun SurfaceEmptyCard(text: String) {
+    val colors = MaterialTheme.appColors
+    InsightCard {
+        Text(
+            text = text,
+            color = colors.textTertiary,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
 }
 
 @Composable
 private fun StatisticsSection(
     section: StatisticsSectionUi,
-    showTitle: Boolean,
     currencySymbol: String,
     onOpen: (Long) -> Unit,
 ) {
@@ -360,26 +438,34 @@ private fun StatisticsSection(
         StatisticsKind.Income -> R.string.statistics_section_income
         StatisticsKind.All -> return
     }
-    val title = stringResource(titleRes)
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        if (showTitle) {
-            Text(
-                text = title,
-                color = MaterialTheme.appColors.textSecondary,
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(horizontal = 4.dp),
-            )
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            text = stringResource(titleRes),
+            color = MaterialTheme.appColors.textPrimary,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
         InsightCard(
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
-            itemSpacing = 0.dp,
+            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+            itemSpacing = 2.dp,
         ) {
-            section.categories.forEach { share ->
+            val total = section.categories.size
+            section.categories.forEachIndexed { index, share ->
+                if (index > 0) {
+                    Box(
+                        Modifier
+                            .padding(start = 56.dp)
+                            .fillMaxWidth()
+                            .height(0.8.dp)
+                            .background(MaterialTheme.appColors.divider),
+                    )
+                }
                 CategoryShareRow(
                     share = share,
+                    index = index,
+                    total = total,
                     currencySymbol = currencySymbol,
                     onClick = { onOpen(share.id) },
                 )
@@ -389,21 +475,20 @@ private fun StatisticsSection(
 }
 
 private fun StatisticsKind.segmentIndex(): Int = when (this) {
-    StatisticsKind.All -> 0
-    StatisticsKind.Expense -> 1
-    StatisticsKind.Income -> 2
+    StatisticsKind.Expense -> 0
+    StatisticsKind.Income -> 1
+    StatisticsKind.All -> 2
 }
 
 private fun Int.toStatisticsKind(): StatisticsKind = when (this) {
-    0 -> StatisticsKind.All
-    1 -> StatisticsKind.Expense
-    else -> StatisticsKind.Income
+    0 -> StatisticsKind.Expense
+    1 -> StatisticsKind.Income
+    else -> StatisticsKind.All
 }
 
 private fun String.toStatisticsKindOrNull(): StatisticsKind? =
     StatisticsKind.entries.firstOrNull { kind -> kind.name == this }
 
-/** 还没点开分类或账单。不用可空 Long，旋转后才能写回状态。 */
 private const val NoSelection = -1L
 
 @Composable
@@ -416,82 +501,91 @@ internal fun CategoryShareUi.resolvedName(): String {
 @Composable
 private fun CategoryShareRow(
     share: CategoryShareUi,
+    index: Int,
+    total: Int,
     currencySymbol: String,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    val tint = accountColorValue(share.colorKey).asThemeIdentity()
+    val hidden = LocalAmountVisibility.current.hidden
+    val monochrome = LocalAppThemeStyle.current == AppThemeStyle.Monochrome
+    val barColor = categorySliceColor(
+        colorKey = share.colorKey,
+        index = index,
+        total = total,
+        colors = colors,
+        monochrome = monochrome,
+    )
     val title = share.resolvedName()
     PressFade(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 60.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp),
+                .padding(vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             StatisticsCategoryMark(
                 iconKey = share.iconKey,
                 colorKey = share.colorKey,
+                tile = 42.dp,
+                icon = 20.dp,
             )
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 10.dp),
+                    .padding(start = 14.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         text = title,
                         color = colors.textPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        ),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
-                        text = moneyText(currencySymbol, share.amount),
+                        text = maskIfHidden(moneyText(currencySymbol, share.amount), hidden, currencySymbol),
                         color = colors.textPrimary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall.merge(
+                            TextStyle(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
+                        ),
                         maxLines = 1,
                         textAlign = TextAlign.End,
-                        style = TextStyle(fontFeatureSettings = "tnum"),
-                        modifier = Modifier.widthIn(min = 72.dp),
                     )
                     Text(
                         text = percentText(share.ratio),
                         color = colors.textTertiary,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.labelMedium.merge(
+                            TextStyle(fontFeatureSettings = "tnum"),
+                        ),
                         maxLines = 1,
                         textAlign = TextAlign.End,
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .widthIn(min = 36.dp),
+                            .widthIn(min = 42.dp),
                     )
                 }
                 LinearProgressIndicator(
                     progress = { share.ratio },
                     modifier = Modifier
-                        .padding(top = 6.dp)
+                        .padding(top = 8.dp)
                         .fillMaxWidth()
                         .height(5.dp)
-                        .clip(RoundedCornerShape(99.dp)),
-                    color = tint,
+                        .clip(CircleShape),
+                    color = barColor,
                     trackColor = colors.tagBackground,
                     drawStopIndicator = {},
                 )
             }
-            Icon(
-                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                contentDescription = null,
-                tint = colors.textTertiary,
-                modifier = Modifier
-                    .padding(start = 4.dp)
-                    .size(18.dp),
-            )
         }
     }
 }
@@ -500,13 +594,12 @@ private fun CategoryShareRow(
 internal fun percentText(ratio: Float): String {
     val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
     val format = remember(locale) {
-        NumberFormat.getPercentInstance(locale).apply { maximumFractionDigits = 0 }
+        NumberFormat.getPercentInstance(locale).apply { maximumFractionDigits = 1 }
     }
     return format.format(ratio.toDouble())
 }
 
-/** 内容够宽时，图和分类左右并排，避免环两侧空出一大块。 */
-private val SideBySideWidth = 520.dp
+private val SideBySideWidth = 560.dp
 
 @FormFactorPreviews
 @Composable
@@ -517,7 +610,7 @@ private fun StatisticsScreenPreview() {
             StatisticsScreen(
                 uiState = StatisticsUiState(
                     loading = false,
-                    month = YearMonth.of(2026, 10),
+                    month = YearMonth.of(2026, 5),
                     kind = StatisticsKind.Expense,
                     total = categories.sumOf { share -> share.amount },
                     slices = chartSlices(categories),
@@ -531,65 +624,12 @@ private fun StatisticsScreenPreview() {
     }
 }
 
-@FormFactorPreviews
-@Composable
-private fun StatisticsEmptyPreview() {
-    CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
-        PageBackgroundHost {
-            StatisticsScreen(
-                uiState = StatisticsUiState(
-                    loading = false,
-                    month = YearMonth.of(2026, 10),
-                    kind = StatisticsKind.Expense,
-                ),
-                onEvent = {},
-                onBack = {},
-            )
-        }
-    }
-}
-
-@FormFactorPreviews
-@Composable
-private fun StatisticsAllPreview() {
-    CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
-        PageBackgroundHost {
-            val expense = previewExpenseShares().take(3)
-            val income = listOf(
-                CategoryShareUi(11, "Salary", false, "payments", "#FF0CA678", 32_000L, 0.8f),
-                CategoryShareUi(12, "Refund", false, "replay", "#FFFD7E14", 8_000L, 0.2f),
-            )
-            StatisticsScreen(
-                uiState = StatisticsUiState(
-                    loading = false,
-                    month = YearMonth.of(2026, 10),
-                    kind = StatisticsKind.All,
-                    total = 40_000L - expense.sumOf { share -> share.amount },
-                    slices = comparisonSlices(expense = expense.sumOf { share -> share.amount }, income = 40_000L),
-                    sections = listOf(
-                        StatisticsSectionUi(StatisticsKind.Expense, expense),
-                        StatisticsSectionUi(StatisticsKind.Income, income),
-                    ),
-                    bills = previewBills(StatisticsKind.Expense, expense) +
-                        previewBills(StatisticsKind.Income, income),
-                ),
-                onEvent = {},
-                onBack = {},
-            )
-        }
-    }
-}
-
-/** 八个分类，用来看图上合并成七块之后，列表仍然逐条显示。 */
 private fun previewExpenseShares(): List<CategoryShareUi> = listOf(
-    CategoryShareUi(1, "Food", false, "restaurant", "#FFF03E3E", 12_800L, 0.30f),
-    CategoryShareUi(2, "Transit", false, "directions_bus", "#FF0CA678", 8_450L, 0.20f),
-    CategoryShareUi(3, "Shopping", false, "shopping_bag", "#FFFD7E14", 6_400L, 0.15f),
-    CategoryShareUi(4, "Rent", false, "home", "#FF228BE6", 5_200L, 0.12f),
-    CategoryShareUi(5, "Fun", false, "movie", "#FFBE4BDB", 3_100L, 0.07f),
-    CategoryShareUi(6, "Health", false, "medication", "#FF37B24D", 2_400L, 0.06f),
-    CategoryShareUi(7, "Pets", false, "pets", "#FFF59F00", 1_800L, 0.05f),
-    CategoryShareUi(8, "Gifts", false, "redeem", "#FFE64980", 1_500L, 0.04f),
+    CategoryShareUi(1, "购物", false, "shopping_bag", "#FFFD7E14", 245_600L, 0.362f),
+    CategoryShareUi(2, "餐饮", false, "restaurant", "#FFF03E3E", 163_550L, 0.241f),
+    CategoryShareUi(3, "交通", false, "directions_bus", "#FF228BE6", 89_620L, 0.132f),
+    CategoryShareUi(4, "居住", false, "home", "#FF7950F2", 84_500L, 0.125f),
+    CategoryShareUi(5, "娱乐", false, "movie", "#FFE64980", 48_960L, 0.072f),
 )
 
 private fun previewBills(
@@ -601,8 +641,8 @@ private fun previewBills(
         categoryId = share.id,
         kind = kind,
         amount = share.amount,
-        time = LocalDateTime.of(2026, 10, 28 - index, 12, 30),
-        remark = if (index == 0) "Lunch" else null,
-        accountName = "Cash",
+        time = LocalDateTime.of(2026, 5, 28 - index, 12, 30),
+        remark = if (index == 0) "超市采购" else null,
+        accountName = "储蓄卡",
     )
 }

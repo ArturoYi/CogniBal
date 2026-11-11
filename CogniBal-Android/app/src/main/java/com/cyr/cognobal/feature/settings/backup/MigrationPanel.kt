@@ -101,17 +101,16 @@ private fun MigrationBody(
 ) {
     when (migration) {
         MigrationUi.Role -> {
-            MigrationHint(stringResource(R.string.backup_migrate_file_hint))
             SettingsSectionCard {
                 RoleSummary(
                     title = stringResource(R.string.backup_migrate_send),
-                    body = stringResource(R.string.backup_migrate_send_body),
+                    body = "",
                     onClick = { onEvent(BackupSettingsUiEvent.ChooseSend) },
                 )
                 SettingsDivider()
                 RoleSummary(
                     title = stringResource(R.string.backup_migrate_receive),
-                    body = stringResource(R.string.backup_migrate_receive_body),
+                    body = "",
                     onClick = { onEvent(BackupSettingsUiEvent.ChooseReceive) },
                 )
             }
@@ -594,35 +593,12 @@ private fun RoleSummary(
     body: String,
     onClick: () -> Unit,
 ) {
-    val colors = MaterialTheme.appColors
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .interactiveClick(onClick = onClick)
-            .padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.PhoneAndroid,
-            contentDescription = null,
-            tint = colors.primary,
-            modifier = Modifier.size(22.dp),
-        )
-        Column(modifier = Modifier.padding(start = 12.dp)) {
-            Text(
-                text = title,
-                color = colors.textPrimary,
-                fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
-            )
-            Text(
-                text = body,
-                color = colors.textSecondary,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-            )
-        }
-    }
+    SettingActionItem(
+        icon = Icons.Outlined.PhoneAndroid,
+        title = title,
+        subtitle = body,
+        onClick = onClick,
+    )
 }
 
 @Composable

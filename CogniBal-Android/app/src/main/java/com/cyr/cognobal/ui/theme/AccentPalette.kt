@@ -5,40 +5,46 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 
 /**
- * 可切换的主色。每一套只保留一个色相：按钮、选中、图表、结余卡都从这一支衍生。
- * 页面底仍是中性灰。浅色用压深后仍能读的一档，夜间用更亮的一档。
- * 账户色仍按用户选的那支写入库存，绘制时再锁进当前主色相。
+ * 黑曜石主卡 + 可选主题强调色体系：
+ * 默认 [AppThemeStyle.WarmCream] 使用温润香槟金搭配曜石深灰主卡，复刻极简高质感记账视觉；
+ * 其余主题只切换焦点强调色，页面与白卡保持通透干净。
  */
 internal data class AccentInk(
     val primary: Color,
     val onPrimary: Color,
     val secondary: Color,
     val onSecondary: Color,
+    val heroAccent: Color,
 )
 
 internal fun AppThemeStyle.accentInk(isDark: Boolean): AccentInk = when (this) {
-    AppThemeStyle.WarmCream,
-    AppThemeStyle.Monochrome,
-    -> if (isDark) MonoDark else MonoLight
-    AppThemeStyle.Vitality -> if (isDark) VitalityDark else VitalityLight
-    AppThemeStyle.Neon -> if (isDark) NeonDark else NeonLight
+    AppThemeStyle.WarmCream -> if (isDark) ChampagneDark else ChampagneLight
+    AppThemeStyle.Cream -> if (isDark) MintDark else MintLight
+    AppThemeStyle.Neon -> if (isDark) IndigoDark else IndigoLight
+    AppThemeStyle.Vitality -> if (isDark) CoralDark else CoralLight
     AppThemeStyle.Lime -> if (isDark) LimeDark else LimeLight
-    AppThemeStyle.Cream -> if (isDark) CreamDark else CreamLight
+    AppThemeStyle.Monochrome -> if (isDark) MonoDark else MonoLight
 }
 
 internal fun AppColors.withAccent(style: AppThemeStyle): AppColors {
     val ink = style.accentInk(isDark)
-    val container = lerp(background, ink.primary, if (isDark) 0.22f else 0.12f)
+    val softTint = when {
+        style == AppThemeStyle.Monochrome -> tagBackground
+        isDark -> lerp(cardBackground, ink.primary, 0.20f)
+        else -> lerp(cardBackground, ink.primary, 0.14f)
+    }
+    val incomeTone = when {
+        style == AppThemeStyle.Monochrome -> textPrimary
+        isDark -> Color(0xFF34D399)
+        else -> Color(0xFF0F9D76)
+    }
     return copy(
         primary = ink.primary,
         onPrimary = ink.onPrimary,
-        primaryContainer = container,
-        onPrimaryContainer = textPrimary,
-        tagBackground = container,
-        onTag = textPrimary,
-        income = ink.primary,
-        hero = ink.primary,
-        onHero = ink.onPrimary,
+        primaryContainer = softTint,
+        onPrimaryContainer = if (style == AppThemeStyle.Monochrome) textPrimary else ink.primary,
+        income = incomeTone,
+        heroAccent = ink.heroAccent,
         chartIncome = ink.secondary,
         chartExpense = ink.primary,
     )
@@ -46,100 +52,124 @@ internal fun AppColors.withAccent(style: AppThemeStyle): AppColors {
 
 internal fun ColorScheme.withAccent(style: AppThemeStyle, isDark: Boolean, onSurface: Color): ColorScheme {
     val ink = style.accentInk(isDark)
-    val container = lerp(background, ink.primary, if (isDark) 0.22f else 0.12f)
+    val baseSurface = if (isDark) Color(0xFF181B22) else Color(0xFFFFFFFF)
+    val softTint = lerp(baseSurface, ink.primary, if (isDark) 0.20f else 0.14f)
     return copy(
         primary = ink.primary,
         onPrimary = ink.onPrimary,
-        primaryContainer = container,
+        primaryContainer = softTint,
         onPrimaryContainer = onSurface,
         secondary = ink.primary,
         onSecondary = ink.onPrimary,
-        secondaryContainer = container,
-        onSecondaryContainer = onSurface,
         tertiary = ink.secondary,
         onTertiary = ink.onSecondary,
-        tertiaryContainer = container,
-        onTertiaryContainer = onSurface,
     )
 }
 
-/** 同一色相的浅档，给图表收入柱和主题预览第二点用。 */
 private fun Color.sameHueLift(amount: Float): Color = lerp(this, Color.White, amount)
 
-private val MonoLight = AccentInk(
-    primary = Color(0xFF1A1A1A),
-    onPrimary = Color(0xFFFAFAFA),
-    secondary = Color(0xFF52525B),
-    onSecondary = Color(0xFFFAFAFA),
-)
-
-private val MonoDark = AccentInk(
-    primary = Color(0xFFF5F5F5),
-    onPrimary = Color(0xFF141414),
-    secondary = Color(0xFFA1A1AA),
-    onSecondary = Color(0xFF141414),
-)
-
-private val VitalityPrimaryLight = Color(0xFFC2410C)
-private val VitalityLight = AccentInk(
-    primary = VitalityPrimaryLight,
+private val ChampagnePrimaryLight = Color(0xFFB88040)
+private val ChampagneLight = AccentInk(
+    primary = ChampagnePrimaryLight,
     onPrimary = Color(0xFFFFFFFF),
-    secondary = VitalityPrimaryLight.sameHueLift(0.42f),
+    secondary = Color(0xFFE0B47D),
     onSecondary = Color(0xFFFFFFFF),
+    heroAccent = Color(0xFFD6A66C),
 )
 
-private val VitalityPrimaryDark = Color(0xFFFF6B35)
-private val VitalityDark = AccentInk(
-    primary = VitalityPrimaryDark,
-    onPrimary = Color(0xFF1A1A1A),
-    secondary = VitalityPrimaryDark.sameHueLift(0.28f),
-    onSecondary = Color(0xFF1A1A1A),
+private val ChampagnePrimaryDark = Color(0xFFE0B47D)
+private val ChampagneDark = AccentInk(
+    primary = ChampagnePrimaryDark,
+    onPrimary = Color(0xFF101216),
+    secondary = ChampagnePrimaryDark.sameHueLift(0.28f),
+    onSecondary = Color(0xFF101216),
+    heroAccent = Color(0xFFE6BE8A),
 )
 
-private val NeonPrimaryLight = Color(0xFF7E22CE)
-private val NeonLight = AccentInk(
-    primary = NeonPrimaryLight,
+private val MintPrimaryLight = Color(0xFF0D9488)
+private val MintLight = AccentInk(
+    primary = MintPrimaryLight,
     onPrimary = Color(0xFFFFFFFF),
-    secondary = NeonPrimaryLight.sameHueLift(0.42f),
+    secondary = MintPrimaryLight.sameHueLift(0.45f),
     onSecondary = Color(0xFFFFFFFF),
+    heroAccent = Color(0xFF5EEAD4),
 )
 
-private val NeonPrimaryDark = Color(0xFFA855F7)
-private val NeonDark = AccentInk(
-    primary = NeonPrimaryDark,
-    onPrimary = Color(0xFF1A1A1A),
-    secondary = NeonPrimaryDark.sameHueLift(0.28f),
-    onSecondary = Color(0xFF1A1A1A),
+private val MintPrimaryDark = Color(0xFF34D399)
+private val MintDark = AccentInk(
+    primary = MintPrimaryDark,
+    onPrimary = Color(0xFF101216),
+    secondary = MintPrimaryDark.sameHueLift(0.30f),
+    onSecondary = Color(0xFF101216),
+    heroAccent = Color(0xFF6EE7B7),
 )
 
-private val LimePrimaryLight = Color(0xFF4D7C0F)
+private val IndigoPrimaryLight = Color(0xFF5B50EC)
+private val IndigoLight = AccentInk(
+    primary = IndigoPrimaryLight,
+    onPrimary = Color(0xFFFFFFFF),
+    secondary = IndigoPrimaryLight.sameHueLift(0.46f),
+    onSecondary = Color(0xFFFFFFFF),
+    heroAccent = Color(0xFFA5B4FC),
+)
+
+private val IndigoPrimaryDark = Color(0xFF818CF8)
+private val IndigoDark = AccentInk(
+    primary = IndigoPrimaryDark,
+    onPrimary = Color(0xFF101216),
+    secondary = IndigoPrimaryDark.sameHueLift(0.30f),
+    onSecondary = Color(0xFF101216),
+    heroAccent = Color(0xFFA5B4FC),
+)
+
+private val CoralPrimaryLight = Color(0xFFEA580C)
+private val CoralLight = AccentInk(
+    primary = CoralPrimaryLight,
+    onPrimary = Color(0xFFFFFFFF),
+    secondary = CoralPrimaryLight.sameHueLift(0.46f),
+    onSecondary = Color(0xFFFFFFFF),
+    heroAccent = Color(0xFFFDBA74),
+)
+
+private val CoralPrimaryDark = Color(0xFFFB923C)
+private val CoralDark = AccentInk(
+    primary = CoralPrimaryDark,
+    onPrimary = Color(0xFF101216),
+    secondary = CoralPrimaryDark.sameHueLift(0.30f),
+    onSecondary = Color(0xFF101216),
+    heroAccent = Color(0xFFFDBA74),
+)
+
+private val LimePrimaryLight = Color(0xFF65A30D)
 private val LimeLight = AccentInk(
     primary = LimePrimaryLight,
     onPrimary = Color(0xFFFFFFFF),
-    secondary = LimePrimaryLight.sameHueLift(0.42f),
+    secondary = LimePrimaryLight.sameHueLift(0.46f),
     onSecondary = Color(0xFFFFFFFF),
+    heroAccent = Color(0xFFBEF264),
 )
 
-private val LimePrimaryDark = Color(0xFF84CC16)
+private val LimePrimaryDark = Color(0xFFA3E635)
 private val LimeDark = AccentInk(
     primary = LimePrimaryDark,
     onPrimary = Color(0xFF1A2E05),
-    secondary = LimePrimaryDark.sameHueLift(0.28f),
-    onSecondary = Color(0xFF1A1A1A),
+    secondary = LimePrimaryDark.sameHueLift(0.30f),
+    onSecondary = Color(0xFF101216),
+    heroAccent = Color(0xFFBEF264),
 )
 
-private val CreamPrimaryLight = Color(0xFF3D6B5A)
-private val CreamLight = AccentInk(
-    primary = CreamPrimaryLight,
+private val MonoLight = AccentInk(
+    primary = Color(0xFF1F2026),
     onPrimary = Color(0xFFFFFFFF),
-    secondary = CreamPrimaryLight.sameHueLift(0.42f),
+    secondary = Color(0xFF98A2B3),
     onSecondary = Color(0xFFFFFFFF),
+    heroAccent = Color(0xFFD0D5DD),
 )
 
-private val CreamPrimaryDark = Color(0xFF7D9A86)
-private val CreamDark = AccentInk(
-    primary = CreamPrimaryDark,
-    onPrimary = Color(0xFF1A1A1A),
-    secondary = CreamPrimaryDark.sameHueLift(0.28f),
-    onSecondary = Color(0xFF1A1A1A),
+private val MonoDark = AccentInk(
+    primary = Color(0xFFF4F6FA),
+    onPrimary = Color(0xFF101216),
+    secondary = Color(0xFF98A2B3),
+    onSecondary = Color(0xFF101216),
+    heroAccent = Color(0xFF98A2B3),
 )

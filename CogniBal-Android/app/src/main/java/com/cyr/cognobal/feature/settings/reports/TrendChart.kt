@@ -23,11 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -43,13 +40,13 @@ import com.cyr.cognobal.screen.feature.settings.component.formatYearMonth
 import com.cyr.cognobal.screen.feature.settings.reports.state.ReportMonthUi
 import com.cyr.cognobal.ui.theme.appColors
 import java.time.YearMonth
-import kotlin.math.min
 
-private val PlotHeight = 168.dp
-private val BarRadius = 3.dp
-private val MinBar = 2.5.dp
+private val PlotHeight = 148.dp
 
-/** 各月收入和支出。整段铺开，近 12 个月也不用横滑。 */
+/**
+ * 参考设计稿重构的月份竖向胶囊轨道图：
+ * 全高柔和浅灰胶囊轨道 + 收支圆润胶囊柱 + 当月空心圆环标记，彻底去除虚线网格干扰。
+ */
 @Composable
 internal fun TrendChart(
     months: List<ReportMonthUi>,
@@ -73,24 +70,95 @@ internal fun TrendChart(
     }
     Column(modifier) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            LegendItem(color = colors.chartIncome, label = stringResource(R.string.bill_month_income))
-            LegendItem(color = colors.chartExpense, label = stringResource(R.string.bill_month_expense))
+            LegendItem(color = colors.chartIncome, label = stringResource(R.string.bill_figure_income))
+            LegendItem(color = colors.chartExpense, label = stringResource(R.string.bill_figure_expense))
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(16.dp))
         val progress = reveal.value
+        val now = YearMonth.now()
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(PlotHeight)
                 .semantics { contentDescription = chartDescription },
         ) {
-            drawTrend(
-                months = months,
-                incomeColor = colors.chartIncome,
-                expenseColor = colors.chartExpense,
-                guideColor = colors.divider,
-                reveal = progress,
-            )
+            if (size.width <= 0f || size.height <= 0f || months.isEmpty()) return@Canvas
+            val count = months.size
+            val slot = size.width / count
+            val trackWidth = if (count > 6) {
+                (slot * 0.34f).coerceIn(5.dp.toPx(), 8.dp.toPx())
+            } else {
+                8.dp.toPx()
+            }
+            val radius = CornerRadius(trackWidth / 2f, trackWidth / 2f)
+            val trackHeight = size.height
+            var maxTotal = 1L
+            for (m in months) {
+                val sum = (m.income + m.expense).coerceAtLeast(0L)
+                if (sum > maxTotal) maxTotal = sum
+            }
+
+            for (index in months.indices) {
+                val month = months[index]
+                val centerX = slot * index + slot / 2f
+                val left = centerX - trackWidth / 2f
+
+                // 全高柔和胶囊轨道
+                drawRoundRect(
+                    color = colors.tagBackground,
+                    topLeft = Offset(left, 0f),
+                    size = Size(trackWidth, trackHeight),
+                    cornerRadius = radius,
+                )
+
+                val total = (month.income + month.expense).coerceAtLeast(0L)
+                val fraction = if (total <= 0L) {
+                    0f
+                } else {
+                    (total.toFloat() / maxTotal.toFloat()).coerceIn(0.10f, 1f) * progress
+                }
+                val activeHeight = trackHeight * fraction
+                val activeTop = trackHeight - activeHeight
+
+                if (total > 0L && activeHeight > 1f) {
+                    drawRoundRect(
+                        color = if (month.expense > 0L) colors.chartExpense else colors.chartIncome,
+                        topLeft = Offset(left, activeTop),
+                        size = Size(trackWidth, activeHeight),
+                        cornerRadius = radius,
+                    )
+                    if (month.income > 0L && month.expense > 0L) {
+                        val incomeHeight = (activeHeight * (month.income.toFloat() / total.toFloat()))
+                            .coerceAtLeast(trackWidth)
+                        drawRoundRect(
+                            color = colors.chartIncome,
+                            topLeft = Offset(left, trackHeight - incomeHeight),
+                            size = Size(trackWidth, incomeHeight),
+                            cornerRadius = radius,
+                        )
+                    }
+                }
+
+                // 当前月份空心圆环标记
+                if (month.month == now) {
+                    val ringY = if (total > 0L) {
+                        activeTop.coerceIn(8.dp.toPx(), trackHeight - 10.dp.toPx())
+                    } else {
+                        trackHeight - 12.dp.toPx()
+                    }
+                    val ringCenter = Offset(centerX, ringY)
+                    drawCircle(
+                        color = colors.primary,
+                        radius = 6.dp.toPx(),
+                        center = ringCenter,
+                    )
+                    drawCircle(
+                        color = colors.cardBackground,
+                        radius = 3.2.dp.toPx(),
+                        center = ringCenter,
+                    )
+                }
+            }
         }
         MonthTicks(months = months)
     }
@@ -107,7 +175,7 @@ private fun LegendItem(color: Color, label: String) {
         Text(
             text = label,
             color = MaterialTheme.appColors.textSecondary,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.padding(start = 6.dp),
@@ -123,7 +191,7 @@ private fun MonthTicks(months: List<ReportMonthUi>) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 2.dp),
+            .padding(top = 10.dp),
     ) {
         for (month in months) {
             val tick = if (compact) month.month.monthValue.toString() else formatMonthShort(month.month)
@@ -131,9 +199,9 @@ private fun MonthTicks(months: List<ReportMonthUi>) {
             val current = month.month == today
             Text(
                 text = tick,
-                color = if (current) colors.textSecondary else colors.textTertiary,
-                fontSize = if (compact) 10.sp else 11.sp,
-                fontWeight = if (current) FontWeight.Medium else FontWeight.Normal,
+                color = if (current) colors.textPrimary else colors.textTertiary,
+                fontSize = if (compact) 11.sp else 12.sp,
+                fontWeight = if (current) FontWeight.Bold else FontWeight.Normal,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center,
@@ -143,121 +211,4 @@ private fun MonthTicks(months: List<ReportMonthUi>) {
             )
         }
     }
-}
-
-private fun DrawScope.drawTrend(
-    months: List<ReportMonthUi>,
-    incomeColor: Color,
-    expenseColor: Color,
-    guideColor: Color,
-    reveal: Float,
-) {
-    if (size.width <= 0f || size.height <= 0f || months.isEmpty()) return
-    val count = months.size
-    val topPad = 4.dp.toPx()
-    val baseline = size.height - 1.dp.toPx()
-    val plotHeight = (baseline - topPad).coerceAtLeast(0f)
-    val slot = size.width / count
-    val (barWidth, gap) = barMetrics(slot)
-    val radius = BarRadius.toPx()
-    val minRise = MinBar.toPx().coerceAtMost(plotHeight)
-    var maxAmount = 0L
-    for (month in months) {
-        if (month.income > maxAmount) maxAmount = month.income
-        if (month.expense > maxAmount) maxAmount = month.expense
-    }
-
-    drawGuide(y = topPad, color = guideColor, dashed = true)
-    drawGuide(y = topPad + plotHeight / 2f, color = guideColor, dashed = true)
-    drawGuide(y = baseline, color = guideColor, dashed = false)
-
-    val groupWidth = barWidth * 2f + gap
-    for (index in months.indices) {
-        val month = months[index]
-        val incomeLeft = slot * index + (slot - groupWidth) / 2f
-        val expenseLeft = incomeLeft + barWidth + gap
-        drawTopRoundedBar(
-            color = incomeColor,
-            left = incomeLeft,
-            top = seriesTop(month.income, maxAmount, baseline, plotHeight, minRise, reveal),
-            width = barWidth,
-            bottom = baseline,
-            radius = radius,
-        )
-        drawTopRoundedBar(
-            color = expenseColor,
-            left = expenseLeft,
-            top = seriesTop(month.expense, maxAmount, baseline, plotHeight, minRise, reveal),
-            width = barWidth,
-            bottom = baseline,
-            radius = radius,
-        )
-    }
-}
-
-/** 窄屏上两组柱不能超出自己的月份格子，否则相邻月份会叠在一起。 */
-private fun DrawScope.barMetrics(slot: Float): Pair<Float, Float> {
-    val maxGroup = slot * 0.86f
-    var barWidth = (slot * 0.2f).coerceIn(3.dp.toPx(), 12.dp.toPx())
-    var gap = (barWidth * 0.38f).coerceIn(1.5.dp.toPx(), 4.dp.toPx())
-    if (barWidth * 2f + gap > maxGroup && maxGroup > 0f) {
-        gap = (maxGroup * 0.16f).coerceAtLeast(1.dp.toPx())
-        barWidth = ((maxGroup - gap) / 2f).coerceAtLeast(1.dp.toPx())
-    }
-    return barWidth to gap
-}
-
-private fun seriesTop(
-    amount: Long,
-    maxAmount: Long,
-    baseline: Float,
-    plotHeight: Float,
-    minRise: Float,
-    reveal: Float,
-): Float {
-    if (amount <= 0L || maxAmount <= 0L || plotHeight <= 0f) return baseline
-    val fraction = amount.toFloat() / maxAmount.toFloat()
-    val rise = (plotHeight * fraction).coerceAtLeast(minRise)
-    return baseline - rise * reveal.coerceIn(0f, 1f)
-}
-
-private fun DrawScope.drawGuide(y: Float, color: Color, dashed: Boolean) {
-    drawLine(
-        color = color,
-        start = Offset(0f, y),
-        end = Offset(size.width, y),
-        strokeWidth = 1.dp.toPx(),
-        pathEffect = if (dashed) {
-            PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 4.dp.toPx()), 0f)
-        } else {
-            null
-        },
-    )
-}
-
-private fun DrawScope.drawTopRoundedBar(
-    color: Color,
-    left: Float,
-    top: Float,
-    width: Float,
-    bottom: Float,
-    radius: Float,
-) {
-    val height = bottom - top
-    if (width <= 0f || height <= 0.5f) return
-    val corner = min(radius, min(width / 2f, height))
-    val curve = CornerRadius(corner, corner)
-    val path = Path().apply {
-        addRoundRect(
-            RoundRect(
-                left = left,
-                top = top,
-                right = left + width,
-                bottom = bottom,
-                topLeftCornerRadius = curve,
-                topRightCornerRadius = curve,
-            ),
-        )
-    }
-    drawPath(path, color)
 }

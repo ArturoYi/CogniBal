@@ -33,8 +33,8 @@ android {
         // 运行时按此版本检查行为变更，与 compileSdk 对齐。
         targetSdk = 37
         // versionCode 给系统比较新旧，versionName 给人看。
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.0.1"
     }
 
     // 正式签名只在本机 keystore.properties 存在时启用。密钥不进仓库。

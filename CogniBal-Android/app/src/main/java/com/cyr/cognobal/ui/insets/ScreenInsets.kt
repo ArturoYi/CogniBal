@@ -159,23 +159,12 @@ fun StatusBarProtection(
 ) {
     val density = LocalDensity.current
     val statusBarHeight: Dp = with(density) {
-        (WindowInsets.statusBars.getTop(this) * StatusBarScrimOverscan).toDp()
+        WindowInsets.statusBars.getTop(this).toDp()
     }
     Spacer(
         modifier
             .fillMaxWidth()
             .height(statusBarHeight)
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        color.copy(alpha = 1f),
-                        color.copy(alpha = 0.8f),
-                        Color.Transparent,
-                    ),
-                ),
-            ),
+            .background(color.copy(alpha = 0.96f)),
     )
 }
-
-/** 渐变伸进内容区的比例，避免状态栏下沿被硬切一刀。 */
-private const val StatusBarScrimOverscan = 1.2f

@@ -91,23 +91,6 @@ fun CogniBalWheelDateTimePicker(
     val textAppearance = WheelPickerDefaults.textAppearance()
 
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 8.dp),
-        ) {
-            fields.forEach { field ->
-                Text(
-                    text = stringResource(field.labelRes),
-                    modifier = Modifier
-                        .weight(1f)
-                        .clearAndSetSemantics {},
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.appColors.textSecondary,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
         Box(
             modifier = Modifier
                 .fillMaxWidth()

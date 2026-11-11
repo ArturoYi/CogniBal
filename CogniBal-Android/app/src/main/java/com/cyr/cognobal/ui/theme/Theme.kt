@@ -42,28 +42,26 @@ enum class AppThemeStyle(
     @StringRes val nameRes: Int,
     @StringRes val descriptionRes: Int,
 ) {
-    /** 黑白。枚举名沿用旧偏好键，避免已保存的选择被重置。 */
-    WarmCream(R.string.theme_scheme_mono, R.string.theme_scheme_mono_desc),
-    Monochrome(R.string.theme_scheme_mono, R.string.theme_scheme_mono_desc),
-    Vitality(R.string.theme_scheme_vitality, R.string.theme_scheme_vitality_desc),
-    Neon(R.string.theme_scheme_neon, R.string.theme_scheme_neon_desc),
-    Lime(R.string.theme_scheme_lime, R.string.theme_scheme_lime_desc),
+    /** 默认品牌柔和蓝。枚举名沿用旧偏好键，避免已保存的选择被重置。 */
+    WarmCream(R.string.theme_warm_cream, R.string.theme_warm_cream_desc),
     Cream(R.string.theme_scheme_cream, R.string.theme_scheme_cream_desc),
+    Neon(R.string.theme_scheme_neon, R.string.theme_scheme_neon_desc),
+    Vitality(R.string.theme_scheme_vitality, R.string.theme_scheme_vitality_desc),
+    Lime(R.string.theme_scheme_lime, R.string.theme_scheme_lime_desc),
+    Monochrome(R.string.theme_scheme_mono, R.string.theme_scheme_mono_desc),
 }
 
-/** 设置里展示的主色。旧的墨色和黑白算同一种。 */
+/** 外观设置里可选的品牌主色。 */
 internal val SelectableAccentStyles = listOf(
     AppThemeStyle.WarmCream,
-    AppThemeStyle.Vitality,
-    AppThemeStyle.Neon,
-    AppThemeStyle.Lime,
     AppThemeStyle.Cream,
+    AppThemeStyle.Neon,
+    AppThemeStyle.Vitality,
+    AppThemeStyle.Lime,
+    AppThemeStyle.Monochrome,
 )
 
-internal fun AppThemeStyle.sameAccent(other: AppThemeStyle): Boolean {
-    fun AppThemeStyle.fold() = if (this == AppThemeStyle.Monochrome) AppThemeStyle.WarmCream else this
-    return fold() == other.fold()
-}
+internal fun AppThemeStyle.sameAccent(other: AppThemeStyle): Boolean = this == other
 
 /** 提供当前应用所选主题风格的 CompositionLocal */
 val LocalAppThemeStyle = staticCompositionLocalOf { AppThemeStyle.WarmCream }

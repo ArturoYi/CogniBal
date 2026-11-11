@@ -35,7 +35,7 @@ enum class DarkModePreference(
 
     companion object {
         fun fromId(id: String?): DarkModePreference {
-            return entries.firstOrNull { it.id == id } ?: DARK
+            return entries.firstOrNull { it.id == id } ?: LIGHT
         }
     }
 }

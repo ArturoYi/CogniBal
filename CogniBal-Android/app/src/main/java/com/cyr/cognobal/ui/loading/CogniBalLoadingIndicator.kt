@@ -188,20 +188,22 @@ private fun rememberPencilPalette(): PencilPalette {
 
 private fun pencilPalette(colors: AppColors): PencilPalette {
     val primary = colors.primary
-    val ferrule = if (colors.isDark) 0.72f else 0.92f
+    val neutralLight = if (colors.isDark) Color(0xFFD4D4D8) else Color(0xFFE4E4E7)
+    val neutralMid = if (colors.isDark) Color(0xFFA1A1AA) else Color(0xFFA1A1AA)
+    val neutralDark = if (colors.isDark) Color(0xFF52525B) else Color(0xFF52525B)
     return PencilPalette(
         body = primary,
-        bodyLight = lerpColor(primary, Color.White, 0.24f),
-        bodyDark = lerpColor(primary, Color.Black, 0.20f),
-        eraser = lerpColor(primary, Color.White, 0.42f),
-        eraserShade = lerpColor(primary, Color.Black, 0.12f),
-        ferrule = Color.hsl(220f, 0.08f, ferrule),
-        ferruleShade = Color.hsl(220f, 0.08f, (ferrule - 0.18f).coerceAtLeast(0.45f)),
-        ferruleEdge = Color.hsl(220f, 0.08f, (ferrule - 0.10f).coerceIn(0.5f, 0.98f)),
-        ferruleLine = Color.hsl(220f, 0.10f, 0.12f).copy(alpha = 0.22f),
-        wood = Color.hsl(33f, 0.90f, 0.70f),
-        woodShade = Color.hsl(33f, 0.90f, 0.50f),
-        lead = Color.hsl(220f, 0.10f, 0.12f),
+        bodyLight = lerpColor(primary, Color.White, 0.22f),
+        bodyDark = lerpColor(primary, Color.Black, 0.18f),
+        eraser = lerpColor(primary, neutralLight, 0.48f),
+        eraserShade = lerpColor(primary, neutralDark, 0.32f),
+        ferrule = neutralLight,
+        ferruleShade = neutralMid,
+        ferruleEdge = lerpColor(neutralLight, Color.White, 0.25f),
+        ferruleLine = neutralDark.copy(alpha = 0.28f),
+        wood = lerpColor(neutralLight, primary, 0.20f),
+        woodShade = lerpColor(neutralMid, primary, 0.28f),
+        lead = primary,
         stroke = colors.textSecondary,
     )
 }

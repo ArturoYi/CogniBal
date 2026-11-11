@@ -28,7 +28,7 @@ import com.cyr.cognobal.ui.theme.appColors
 data class WheelPickerConfig(
     val visibleCount: Int = 5,
     val itemHeight: Dp = 48.dp,
-    val selectionStyle: WheelSelectionStyle = WheelSelectionStyle.DividerLines,
+    val selectionStyle: WheelSelectionStyle = WheelSelectionStyle.HighlightBackground,
     val fadeEnabled: Boolean = true,
     val fadeHeight: Dp = 48.dp,
     val hapticEnabled: Boolean = true,
@@ -136,10 +136,11 @@ object WheelPickerDefaults {
         disabled: TextStyle = MaterialTheme.typography.titleLarge,
     ): WheelTextAppearance {
         val colors = MaterialTheme.appColors
+        val tabular = TextStyle(fontFeatureSettings = "tnum")
         return WheelTextAppearance(
-            selected = selected.copy(color = colors.textPrimary, fontWeight = FontWeight.Medium),
-            unselected = unselected.copy(color = colors.textSecondary, fontWeight = FontWeight.Normal),
-            disabled = disabled.copy(color = colors.textTertiary, fontWeight = FontWeight.Normal),
+            selected = selected.merge(tabular).copy(color = colors.textPrimary, fontWeight = FontWeight.Bold),
+            unselected = unselected.merge(tabular).copy(color = colors.textSecondary, fontWeight = FontWeight.Normal),
+            disabled = disabled.merge(tabular).copy(color = colors.textTertiary, fontWeight = FontWeight.Normal),
         )
     }
 

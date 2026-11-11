@@ -25,6 +25,7 @@ import com.cyr.cognobal.di.LedgerEntryPoint
 import com.cyr.cognobal.screen.feature.bill.tool.minorToInput
 import com.cyr.cognobal.screen.feature.bill.tool.parseMajorAmount
 import com.cyr.cognobal.screen.feature.expense.model.AddBillIssue
+import com.cyr.cognobal.screen.feature.expense.model.NewCategoryColorHex
 import com.cyr.cognobal.screen.feature.expense.tool.resolveAccountId
 import com.cyr.cognobal.screen.feature.expense.tool.resolveCounterpartyId
 import com.cyr.cognobal.screen.feature.expense.tool.sanitizeAmountInput
@@ -111,11 +112,7 @@ internal class AddExpenseViewModel(
         val orderedAccounts = visibleAccounts.sortedWith(
             compareByDescending<Account> { it.isDefault }.thenBy { it.id },
         )
-        val accountId = if (draft.type == BillType.Transfer || draft.editing) {
-            resolveAccountId(draft.accountId, orderedAccounts)
-        } else {
-            resolveAccountId(null, orderedAccounts)
-        }
+        val accountId = resolveAccountId(draft.accountId, orderedAccounts)
         val categoryType = draft.type.categoryType()
         val matching = if (categoryType == null) {
             emptyList()
@@ -124,6 +121,15 @@ internal class AddExpenseViewModel(
                 category.type == categoryType &&
                     (category.isEnable || (draft.editing && category.id == draft.categoryId))
             }
+        }
+        val resolvedCategoryId = categoryType?.let { type ->
+            draft.categoryId?.takeIf { id ->
+                categoriesRows.any { category ->
+                    category.id == id &&
+                        category.type == type &&
+                        (category.isEnable || draft.editing)
+                }
+            } ?: if (!draft.editing) matching.firstOrNull()?.id else null
         }
         AddExpenseUiState(
             ready = isLoaded,
@@ -137,15 +143,7 @@ internal class AddExpenseViewModel(
                     colorKey = category.color,
                 )
             },
-            categoryId = categoryType?.let { type ->
-                draft.categoryId?.takeIf { id ->
-                    categoriesRows.any { category ->
-                        category.id == id &&
-                            category.type == type &&
-                            (category.isEnable || draft.editing)
-                    }
-                }
-            },
+            categoryId = resolvedCategoryId,
             accounts = orderedAccounts.map { account ->
                 AccountChoice(
                     id = account.id,
@@ -284,7 +282,7 @@ internal class AddExpenseViewModel(
                 val id = categories.insertInFront(
                     name = name,
                     icon = event.iconKey,
-                    color = event.colorHex,
+                    color = NewCategoryColorHex,
                     type = type,
                 )
                 edit { it.copy(categoryId = id) }

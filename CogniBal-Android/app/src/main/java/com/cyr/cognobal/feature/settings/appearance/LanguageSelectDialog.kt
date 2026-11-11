@@ -146,12 +146,12 @@ private fun LanguageOptionRow(
     val colors = MaterialTheme.appColors
     val shape = RoundedCornerShape(8.dp)
     val background by animateColorAsState(
-        targetValue = if (selected) colors.primary else Color.Transparent,
+        targetValue = if (selected) colors.inkStrong else Color.Transparent,
         animationSpec = tween(durationMillis = 180),
         label = "languageRowBackground",
     )
     val textColor by animateColorAsState(
-        targetValue = if (selected) colors.onPrimary else colors.textPrimary,
+        targetValue = if (selected) colors.onInkStrong else colors.textPrimary,
         animationSpec = tween(durationMillis = 180),
         label = "languageRowText",
     )

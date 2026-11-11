@@ -8,6 +8,7 @@ import com.cyr.cognobal.screen.feature.settings.model.CurrencyPreference
 import com.cyr.cognobal.data.repository.BudgetLevel
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 
 internal data class AccountBarState(
     val loading: Boolean = true,
@@ -35,6 +36,8 @@ internal data class BillRowUi(
     val signedAmount: Long,
     val categoryIconKey: String? = null,
     val categoryColorKey: String? = null,
+    /** 去掉首尾空白后仍有内容才保留。首页只给写了备注的行展示。 */
+    val remark: String? = null,
 )
 
 internal data class BudgetProgressUi(
@@ -73,6 +76,40 @@ internal sealed interface BillHomeUiEvent {
     data object HideBudget : BillHomeUiEvent
 }
 
+/** 按自然日归组，日期和组内账单都从新到旧。 */
+internal fun groupBillsByDay(bills: List<BillRowUi>): List<Pair<LocalDate, List<BillRowUi>>> =
+    bills.groupBy { it.time.toLocalDate() }
+        .entries
+        .sortedByDescending { it.key }
+        .map { (day, rows) ->
+            day to rows.sortedWith(
+                compareByDescending<BillRowUi> { it.time }.thenByDescending { it.id },
+            )
+        }
+
+internal data class BillDayGroup(
+    val day: LocalDate,
+    val bills: List<BillRowUi>,
+)
+
+internal data class BillMonthGroup(
+    val month: YearMonth,
+    val days: List<BillDayGroup>,
+)
+
+/** 先按月、再按日归组。月份、日期和当天账单都从新到旧。 */
+internal fun groupBillsByMonth(bills: List<BillRowUi>): List<BillMonthGroup> =
+    groupBillsByDay(bills)
+        .groupBy { (day, _) -> YearMonth.from(day) }
+        .entries
+        .sortedByDescending { it.key }
+        .map { (month, days) ->
+            BillMonthGroup(
+                month = month,
+                days = days.map { (day, rows) -> BillDayGroup(day, rows) },
+            )
+        }
+
 internal fun billsToRows(bills: List<Bill>, categories: Map<Long, Category>): List<BillRowUi> {
     return bills.map { bill ->
         val category = bill.categoryId?.let { categories[it] }
@@ -88,6 +125,7 @@ internal fun billsToRows(bills: List<Bill>, categories: Map<Long, Category>): Li
             },
             categoryIconKey = category?.icon,
             categoryColorKey = category?.color,
+            remark = bill.remark?.trim()?.takeIf { it.isNotEmpty() },
         )
     }
 }

@@ -59,6 +59,12 @@ class MainActivity : AppCompatActivity() {
     private var shortcutTypeCode by mutableStateOf<Int?>(null)
 
     /**
+     * 桌面卡片要求打开记账页。用递增记号而不是布尔值，这样应用已在前台时再次点按也能收到。
+     * 页面处理完某一记号后只清掉这一次，避免把中途新到的点按清掉。
+     */
+    private var openBillToken by mutableStateOf(0)
+
+    /**
      * 退到后台时盖住账本。默认打开，和偏好缺省一致。
      * 磁盘读回来之后由组合里的 [SideEffect] 改成用户的选择。
      * 盖层要等 [onCreate] 里窗口就绪再创建，不能放在字段初始化里。
@@ -75,7 +81,10 @@ class MainActivity : AppCompatActivity() {
         // 默认打开。偏好还没读到时也先禁止最近任务截到账本，读到关闭再改回来。
         privacy.syncOverview(this, enabled = true, backgroundColor = getColor(R.color.icon_black))
         val fromShortcut = AppShortcuts.typeCode(intent) != null
+        val fromWidget = AppShortcuts.opensBill(intent)
+        val opensDirectly = fromShortcut || fromWidget
         shortcutTypeCode = AppShortcuts.typeCode(intent)
+        if (fromWidget) openBillToken = 1
         // 内容延伸到状态栏和导航栏后面，启动页才能铺满系统图标所在的整窗。
         // ComponentActivity.enableEdgeToEdge 会按系统主题设置状态栏/导航栏图标颜色。
         enableEdgeToEdge()
@@ -91,9 +100,9 @@ class MainActivity : AppCompatActivity() {
         //
         // androidx 会在这个回调的开头按浅色主题重刷系统栏（深色图标、导航栏对比度遮罩）。
         // 回调返回前就会画到屏幕上，所以要在 handoff 之前改回启动页的浅色图标。
-        // 从桌面快捷方式进来时不要挂住系统启动页。挂住后图标对不齐，黑底会一直盖着，要点一下才进记一笔。
+        // 从桌面快捷方式或卡片进来时不要挂住系统启动页。挂住后图标对不齐，黑底会一直盖着，要点一下才进记账。
         splashScreen.setOnExitAnimationListener { provider ->
-            if (fromShortcut) {
+            if (opensDirectly) {
                 provider.remove()
             } else {
                 keepSplashSystemBars()
@@ -126,9 +135,9 @@ class MainActivity : AppCompatActivity() {
                 }
                 // rememberSaveable 把“是否还在播启动动画”写进 SavedState。
                 // 旋转、分屏、深色模式等配置变更会重建 Activity，但不能从头再播一遍。
-                var showSplash by rememberSaveable { mutableStateOf(!fromShortcut) }
-                LaunchedEffect(shortcutTypeCode) {
-                    if (shortcutTypeCode != null) showSplash = false
+                var showSplash by rememberSaveable { mutableStateOf(!opensDirectly) }
+                LaunchedEffect(shortcutTypeCode, openBillToken) {
+                    if (shortcutTypeCode != null || openBillToken != 0) showSplash = false
                 }
                 // 系统图标的窗口坐标；布局完成前为 null，StartupSplash 会等它再对齐。
                 val iconBounds by splashExit.iconBounds
@@ -187,6 +196,13 @@ class MainActivity : AppCompatActivity() {
                                 onShortcutConsumed = {
                                     shortcutTypeCode = null
                                     setIntent(Intent(this@MainActivity, MainActivity::class.java))
+                                },
+                                openBillToken = openBillToken,
+                                onBillOpened = { token ->
+                                    if (openBillToken == token) {
+                                        openBillToken = 0
+                                        setIntent(Intent(this@MainActivity, MainActivity::class.java))
+                                    }
                                 },
                                 modifier = Modifier.fillMaxSize(),
                             )
@@ -264,6 +280,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         shortcutTypeCode = AppShortcuts.typeCode(intent)
+        if (AppShortcuts.opensBill(intent)) openBillToken += 1
     }
 
     override fun onDestroy() {

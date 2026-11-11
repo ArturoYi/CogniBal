@@ -95,8 +95,9 @@ class CategoryRepository @Inject constructor(
     /**
      * 准备默认收支分类。
      *
-     * 表是空的就写入整套。已经有数据时，只在还没见过这一版新增项时补上缺的，
-     * 并把旧的收入「理财」改名为「金融」。用户删掉的默认项不会再填回来。
+     * 表是空的就写入整套。已经有数据时，先把旧的收入「理财」改名为「金融」，
+     * 再按 [DefaultCategories.missingFrom] 补上还没见过的默认项。
+     * 用户删掉的默认项不会再填回来。
      * 自建分类留在同类型默认项前面，默认项之间按 [DefaultCategories] 的顺序排。
      */
     suspend fun seedDefaultsIfEmpty() = onIo {
@@ -108,13 +109,11 @@ class CategoryRepository @Inject constructor(
             var rows = categoryDao.getAll()
             if (rows.none(DefaultCategories::isIntroduced)) {
                 rows = renameLegacyIncomeFinance(rows)
-                val missing = DefaultCategories.all.filter { template ->
-                    rows.none { it.type == template.type && it.name == template.name }
-                }
-                if (missing.isNotEmpty()) {
-                    categoryDao.insertAll(missing)
-                    rows = categoryDao.getAll()
-                }
+            }
+            val missing = DefaultCategories.missingFrom(rows)
+            if (missing.isNotEmpty()) {
+                categoryDao.insertAll(missing)
+                rows = categoryDao.getAll()
             }
             alignCategoryOrder(rows)
         }

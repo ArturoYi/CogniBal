@@ -229,7 +229,7 @@ internal fun BackupSettingsScreen(
                     val subtitle = if (row.action == BackupSettingsAction.Backup && savedAt != null) {
                         stringResource(R.string.backup_last_time, formatBackupTime(savedAt))
                     } else {
-                        stringResource(row.subtitleRes)
+                        ""
                     }
                     SettingsAction(
                         icon = row.action.icon,

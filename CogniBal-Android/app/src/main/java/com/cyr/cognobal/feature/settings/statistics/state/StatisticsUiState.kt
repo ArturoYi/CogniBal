@@ -76,5 +76,6 @@ internal data class StatisticsUiState(
 internal sealed interface StatisticsUiEvent {
     data object PreviousMonth : StatisticsUiEvent
     data object NextMonth : StatisticsUiEvent
+    data class SelectMonth(val month: YearMonth) : StatisticsUiEvent
     data class SelectKind(val kind: StatisticsKind) : StatisticsUiEvent
 }

@@ -191,8 +191,8 @@ private fun CurrencyRateDialog(
                         errorLabelColor = colors.expense,
                         errorBorderColor = colors.expense,
                         errorSupportingTextColor = colors.expense,
-                        focusedContainerColor = colors.cardBackground,
-                        unfocusedContainerColor = colors.cardBackground,
+                        focusedContainerColor = colors.background,
+                        unfocusedContainerColor = colors.background,
                     ),
                 )
             }

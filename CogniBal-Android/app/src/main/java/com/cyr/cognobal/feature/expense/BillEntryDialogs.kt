@@ -1,12 +1,9 @@
 package com.cyr.cognobal.screen.feature.expense
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -14,7 +11,6 @@ import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.ime
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -22,7 +18,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,8 +28,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -46,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -53,27 +47,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.cyr.cognobal.R
-import com.cyr.cognobal.data.repository.LedgerLimits
-import com.cyr.cognobal.screen.feature.bill.model.AccountColor
-import com.cyr.cognobal.screen.feature.bill.model.accountColorValue
 import com.cyr.cognobal.screen.feature.bill.model.accountIconImage
-import com.cyr.cognobal.screen.feature.expense.model.AddBillIssue
-import com.cyr.cognobal.screen.feature.expense.model.categoryIcon
-import com.cyr.cognobal.screen.feature.expense.model.newCategoryIconKeys
 import com.cyr.cognobal.screen.feature.expense.state.AccountChoice
+import com.cyr.cognobal.ui.interaction.interactiveClick
 import com.cyr.cognobal.ui.picker.CogniBalWheelDateTimePicker
 import com.cyr.cognobal.ui.picker.WheelDateTime
 import com.cyr.cognobal.ui.picker.WheelDateTimeMode
-import com.cyr.cognobal.ui.interaction.interactiveClick
 import com.cyr.cognobal.ui.theme.appColors
-import com.cyr.cognobal.ui.theme.asThemeIdentity
+import com.cyr.cognobal.ui.theme.softBadgeTone
 import java.time.LocalDate
-import com.cyr.cognobal.screen.feature.expense.model.toHexArgb
-import com.cyr.cognobal.screen.feature.expense.model.onCategory
-import com.cyr.cognobal.screen.feature.expense.model.messageRes
 
 @Composable
 internal fun BillDateDialog(
@@ -97,12 +81,6 @@ internal fun BillDateDialog(
     }
 }
 
-/**
- * 时间从底部弹出。
- *
- * 弹层窗口自己会跟着输入法上移。这里只补导航栏露出输入法的那一截，
- * 键盘升起时不再垫出第二段空白，收起后按钮仍停在系统栏上方。
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun BillTimeSheet(
@@ -121,7 +99,7 @@ internal fun BillTimeSheet(
         sheetState = sheetState,
         containerColor = colors.cardBackground,
         contentColor = colors.textPrimary,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
         tonalElevation = 0.dp,
         contentWindowInsets = {
@@ -138,8 +116,7 @@ internal fun BillTimeSheet(
             Text(
                 text = stringResource(R.string.bill_entry_time),
                 color = colors.textPrimary,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.padding(horizontal = 24.dp),
             )
             Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
@@ -152,7 +129,7 @@ internal fun BillTimeSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 12.dp)
+                    .padding(horizontal = 16.dp)
                     .padding(bottom = 8.dp),
                 horizontalArrangement = Arrangement.End,
             ) {
@@ -180,16 +157,15 @@ private fun WheelConfirmDialog(
 ) {
     val colors = MaterialTheme.appColors
     Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(28.dp), color = colors.cardBackground) {
+        Surface(shape = MaterialTheme.shapes.extraLarge, color = colors.cardBackground) {
             Column(
-                modifier = Modifier.padding(top = 20.dp, bottom = 12.dp),
+                modifier = Modifier.padding(top = 24.dp, bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
                     text = title,
                     color = colors.textPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )
                 Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
@@ -198,7 +174,7 @@ private fun WheelConfirmDialog(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
+                        .padding(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) {
@@ -230,50 +206,59 @@ internal fun AccountPickDialog(
         onDismissRequest = onDismiss,
         confirmButton = {},
         title = {
-            Text(text = title, color = colors.textPrimary, fontWeight = FontWeight.Bold)
+            Text(
+                text = title,
+                color = colors.textPrimary,
+                style = MaterialTheme.typography.headlineSmall,
+            )
         },
         text = {
             Column(
                 modifier = Modifier
                     .heightIn(max = 360.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 if (accounts.isEmpty()) {
                     Text(
                         text = stringResource(R.string.bill_entry_no_account),
                         color = colors.textTertiary,
-                        fontSize = 14.sp,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
                 accounts.forEach { account ->
                     val selected = account.id == selectedId
-                    val tint = accountColorValue(account.colorKey).asThemeIdentity()
+                    val tone = softBadgeTone(account.colorKey)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 54.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(if (selected) colors.primaryContainer else colors.background)
                             .semantics { this.selected = selected }
                             .interactiveClick(role = Role.RadioButton, onClick = { onSelect(account.id) })
-                            .padding(vertical = 6.dp),
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(32.dp)
-                                .background(tint, CircleShape),
+                                .size(36.dp)
+                                .background(tone.container, RoundedCornerShape(11.dp)),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector = accountIconImage(account.iconKey),
                                 contentDescription = null,
-                                tint = tint.onCategory(),
+                                tint = tone.content,
                                 modifier = Modifier.size(18.dp),
                             )
                         }
                         Text(
                             text = account.name,
                             color = colors.textPrimary,
-                            fontSize = 16.sp,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
+                            ),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier
@@ -292,134 +277,6 @@ internal fun AccountPickDialog(
             }
         },
         containerColor = colors.cardBackground,
-        shape = RoundedCornerShape(28.dp),
-    )
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-internal fun CreateCategoryDialog(
-    error: AddBillIssue?,
-    onConfirm: (name: String, iconKey: String, colorHex: String) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val colors = MaterialTheme.appColors
-    var name by remember { mutableStateOf("") }
-    var iconKey by remember { mutableStateOf(newCategoryIconKeys.first()) }
-    var colorKey by remember { mutableStateOf(AccountColor.Clay.storageKey) }
-    val colorHex = AccountColor.fromKey(colorKey)?.color?.toHexArgb()
-        ?: AccountColor.Clay.color.toHexArgb()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = stringResource(R.string.bill_entry_create_category),
-                color = colors.textPrimary,
-                fontWeight = FontWeight.Bold,
-            )
-        },
-        text = {
-            Column(
-                modifier = Modifier
-                    .heightIn(max = 420.dp)
-                    .imePadding()
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it.take(LedgerLimits.NAME) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(stringResource(R.string.bill_entry_category_name)) },
-                    placeholder = { Text(stringResource(R.string.bill_entry_category_name_hint)) },
-                    singleLine = true,
-                    shape = RoundedCornerShape(16.dp),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = colors.textPrimary,
-                        unfocusedTextColor = colors.textPrimary,
-                        focusedBorderColor = colors.primary.copy(alpha = 0.45f),
-                        unfocusedBorderColor = colors.cardBackground,
-                        focusedLabelColor = colors.primary,
-                        unfocusedLabelColor = colors.textSecondary,
-                        cursorColor = colors.primary,
-                        focusedContainerColor = colors.background,
-                        unfocusedContainerColor = colors.background,
-                    ),
-                )
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    newCategoryIconKeys.forEach { key ->
-                        val selected = key == iconKey
-                        val tint = accountColorValue(colorHex).asThemeIdentity()
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .semantics { this.selected = selected }
-                                .background(
-                                    if (selected) tint else colors.tagBackground,
-                                    MaterialTheme.shapes.small,
-                                )
-                                .interactiveClick(role = Role.RadioButton, onClick = { iconKey = key }),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector = categoryIcon(key),
-                                contentDescription = null,
-                                tint = if (selected) tint.onCategory() else colors.textPrimary,
-                                modifier = Modifier.size(20.dp),
-                            )
-                        }
-                    }
-                }
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    AccountColor.entries.forEach { color ->
-                        val selected = color.storageKey == colorKey
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .semantics { this.selected = selected }
-                                .then(
-                                    if (selected) {
-                                        Modifier.border(2.dp, colors.primary, CircleShape)
-                                    } else {
-                                        Modifier
-                                    },
-                                )
-                                .padding(4.dp)
-                                .background(color.color, CircleShape)
-                                .interactiveClick(role = Role.RadioButton, onClick = { colorKey = color.storageKey }),
-                        )
-                    }
-                }
-                if (error != null) {
-                    Text(
-                        text = stringResource(error.messageRes()),
-                        color = colors.expense,
-                        fontSize = 13.sp,
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onConfirm(name, iconKey, colorHex) }) {
-                Text(
-                    text = stringResource(R.string.done),
-                    color = colors.primary,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
-            }
-        },
-        containerColor = colors.cardBackground,
-        shape = RoundedCornerShape(28.dp),
+        shape = MaterialTheme.shapes.extraLarge,
     )
 }

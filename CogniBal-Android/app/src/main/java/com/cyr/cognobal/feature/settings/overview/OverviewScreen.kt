@@ -10,15 +10,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -36,12 +36,10 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -72,22 +70,34 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyr.cognobal.R
 import com.cyr.cognobal.data.database.model.BillType
 import com.cyr.cognobal.screen.feature.bill.BillEntryRow
 import com.cyr.cognobal.screen.feature.bill.state.BillRowUi
+import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
+import com.cyr.cognobal.screen.feature.settings.component.HeaderCircleButton
+import com.cyr.cognobal.screen.feature.settings.component.InsightCard
+import com.cyr.cognobal.screen.feature.settings.component.InsightSegments
+import com.cyr.cognobal.screen.feature.settings.component.MoneySummary
+import com.cyr.cognobal.screen.feature.settings.component.MonthStepper
+import com.cyr.cognobal.screen.feature.settings.component.YearMonthPickerDialog
+import com.cyr.cognobal.screen.feature.settings.component.formatMonthDay
+import com.cyr.cognobal.screen.feature.settings.component.formatYearMonth
+import com.cyr.cognobal.screen.feature.settings.component.moneyText
 import com.cyr.cognobal.screen.feature.settings.overview.state.OverviewCategoryOption
 import com.cyr.cognobal.screen.feature.settings.overview.state.OverviewDayAmount
 import com.cyr.cognobal.screen.feature.settings.overview.state.OverviewKind
 import com.cyr.cognobal.screen.feature.settings.overview.state.OverviewUiEvent
 import com.cyr.cognobal.screen.feature.settings.overview.state.OverviewUiState
 import com.cyr.cognobal.screen.feature.settings.overview.state.matches
-import com.cyr.cognobal.ui.loading.LoadingIndicatorAppearDelayMillis
 import com.cyr.cognobal.ui.background.PageBackgroundHost
+import com.cyr.cognobal.ui.interaction.interactiveClick
+import com.cyr.cognobal.ui.loading.LoadingIndicatorAppearDelayMillis
 import com.cyr.cognobal.ui.preview.FormFactorPreviews
+import com.cyr.cognobal.ui.privacy.LocalAmountVisibility
+import com.cyr.cognobal.ui.privacy.maskIfHidden
 import com.cyr.cognobal.ui.theme.AppThemeStyle
 import com.cyr.cognobal.ui.theme.CogniBalTheme
 import com.cyr.cognobal.ui.theme.appColors
@@ -98,21 +108,7 @@ import java.time.format.TextStyle
 import java.time.temporal.WeekFields
 import java.util.Locale
 import kotlinx.coroutines.delay
-import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
-import com.cyr.cognobal.screen.feature.settings.component.InsightCard
-import com.cyr.cognobal.screen.feature.settings.component.InsightSegments
-import com.cyr.cognobal.screen.feature.settings.component.MoneySummary
-import com.cyr.cognobal.screen.feature.settings.component.MonthStepper
-import com.cyr.cognobal.screen.feature.settings.component.formatMonthDay
-import com.cyr.cognobal.screen.feature.settings.component.formatYearMonth
-import com.cyr.cognobal.screen.feature.settings.component.moneyText
-import com.cyr.cognobal.ui.interaction.interactiveClick
-import com.cyr.cognobal.ui.picker.CogniBalWheelDateTimePicker
-import com.cyr.cognobal.ui.picker.WheelDateTime
-import com.cyr.cognobal.ui.picker.WheelDateTimeMode
-import com.cyr.cognobal.ui.picker.WheelDateTimeRules
 
-/** 总览入口。日历和当天账单来自 ViewModel。 */
 @Composable
 internal fun OverviewRoute(
     onBack: () -> Unit,
@@ -139,19 +135,31 @@ internal fun OverviewScreen(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
+    val hidden = LocalAmountVisibility.current.hidden
     val today = LocalDate.now()
     val amounts = uiState.days.associateBy { day -> day.day }
     var pickingMonth by rememberSaveable { mutableStateOf(false) }
     var filtering by rememberSaveable { mutableStateOf(false) }
     val monthLabel = formatYearMonth(uiState.month)
+    val locale = LocalConfiguration.current.locales[0] ?: Locale.getDefault()
+
     SettingsSubpage(
         title = stringResource(R.string.shortcut_overview),
         onBack = onBack,
+        onTitleClick = { pickingMonth = true },
+        trailing = {
+            HeaderCircleButton(
+                icon = Icons.Outlined.FilterList,
+                description = stringResource(R.string.overview_filter),
+                active = uiState.filterActive,
+                onClick = { filtering = true },
+            )
+        },
         modifier = modifier,
     ) {
         InsightCard(
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
-            itemSpacing = 2.dp,
+            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 16.dp),
+            itemSpacing = 14.dp,
         ) {
             MonthStepper(
                 label = monthLabel,
@@ -160,18 +168,7 @@ internal fun OverviewScreen(
                 onNext = { onEvent(OverviewUiEvent.NextMonth) },
                 onLabelClick = { pickingMonth = true },
                 labelDescription = stringResource(R.string.overview_pick_month_cd, monthLabel),
-                compact = true,
             )
-            MoneySummary(
-                income = uiState.income,
-                expense = uiState.expense,
-                balance = uiState.balance,
-                balanceOverflow = uiState.balanceOverflow,
-                currencySymbol = uiState.currencySymbol,
-                compact = true,
-            )
-        }
-        InsightCard {
             MonthCalendar(
                 month = uiState.month,
                 selectedDay = uiState.selectedDay,
@@ -180,17 +177,49 @@ internal fun OverviewScreen(
                 currencySymbol = uiState.currencySymbol,
                 onSelect = { day -> onEvent(OverviewUiEvent.SelectDay(day)) },
             )
+            Box(
+                Modifier
+                    .padding(horizontal = 4.dp)
+                    .fillMaxWidth()
+                    .height(0.8.dp)
+                    .background(colors.divider),
+            )
+            MoneySummary(
+                income = uiState.income,
+                expense = uiState.expense,
+                balance = uiState.balance,
+                balanceOverflow = uiState.balanceOverflow,
+                currencySymbol = uiState.currencySymbol,
+                modifier = Modifier.padding(horizontal = 4.dp),
+            )
         }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+        val dayAmount = amounts[uiState.selectedDay]
+        val daySummary = buildList {
+            val exp = dayAmount?.expense ?: 0L
+            val inc = dayAmount?.income ?: 0L
+            if (exp > 0L) {
+                val str = maskIfHidden(moneyText(uiState.currencySymbol, exp), hidden, uiState.currencySymbol)
+                add("${stringResource(R.string.bill_figure_expense)} $str")
+            }
+            if (inc > 0L) {
+                val str = maskIfHidden(moneyText(uiState.currencySymbol, inc), hidden, uiState.currencySymbol)
+                add("${stringResource(R.string.bill_figure_income)} $str")
+            }
+        }.joinToString(" · ")
+
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                val weekday = uiState.selectedDay.dayOfWeek.getDisplayName(TextStyle.FULL, locale)
                 Text(
-                    text = formatMonthDay(uiState.selectedDay),
-                    color = colors.textPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                    text = "${formatMonthDay(uiState.selectedDay)} $weekday",
+                    color = colors.textSecondary,
+                    style = MaterialTheme.typography.labelLarge,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
@@ -201,40 +230,63 @@ internal fun OverviewScreen(
                         color = colors.primary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(start = 8.dp),
+                        modifier = Modifier.padding(start = 6.dp),
                     )
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                DayFilterButton(
-                    active = uiState.filterActive,
-                    onClick = { filtering = true },
-                )
-            }
-            if (!uiState.loading && uiState.bills.isEmpty()) {
-                Text(
-                    text = stringResource(
-                        if (uiState.dayHasBills) {
-                            R.string.overview_empty_filter
-                        } else {
-                            R.string.overview_empty_day
-                        },
-                    ),
-                    color = colors.textTertiary,
-                    fontSize = 14.sp,
-                )
-            } else {
-                uiState.bills.forEach { bill ->
-                    BillEntryRow(
-                        bill = bill,
-                        currencySymbol = uiState.currencySymbol,
-                        onClick = { onOpenBill(bill.id) },
+                if (daySummary.isNotEmpty()) {
+                    Text(
+                        text = daySummary,
+                        color = colors.textTertiary,
+                        style = MaterialTheme.typography.labelMedium.merge(
+                            androidx.compose.ui.text.TextStyle(fontFeatureSettings = "tnum"),
+                        ),
+                        maxLines = 1,
                     )
+                }
+            }
+
+            InsightCard(
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                itemSpacing = 0.dp,
+            ) {
+                if (!uiState.loading && uiState.bills.isEmpty()) {
+                    Text(
+                        text = stringResource(
+                            if (uiState.dayHasBills) {
+                                R.string.overview_empty_filter
+                            } else {
+                                R.string.overview_empty_day
+                            },
+                        ),
+                        color = colors.textTertiary,
+                        fontSize = 14.sp,
+                        modifier = Modifier.padding(vertical = 16.dp),
+                    )
+                } else {
+                    uiState.bills.forEachIndexed { index, bill ->
+                        if (index > 0) {
+                            Box(
+                                Modifier
+                                    .padding(start = 56.dp)
+                                    .fillMaxWidth()
+                                    .height(0.8.dp)
+                                    .background(colors.divider),
+                            )
+                        }
+                        BillEntryRow(
+                            bill = bill,
+                            currencySymbol = uiState.currencySymbol,
+                            onClick = { onOpenBill(bill.id) },
+                        )
+                    }
                 }
             }
         }
     }
+
     if (pickingMonth) {
-        YearMonthDialog(
+        YearMonthPickerDialog(
             month = uiState.month,
             onConfirm = { month ->
                 pickingMonth = false
@@ -243,6 +295,7 @@ internal fun OverviewScreen(
             onDismiss = { pickingMonth = false },
         )
     }
+
     if (filtering) {
         DayFilterSheet(
             kind = uiState.kind,
@@ -258,94 +311,6 @@ internal fun OverviewScreen(
     }
 }
 
-@Composable
-private fun DayFilterButton(
-    active: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = MaterialTheme.appColors
-    Box(
-        modifier = Modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (active) colors.primary.copy(alpha = if (colors.isDark) 0.22f else 0.12f) else Color.Transparent)
-            .interactiveClick(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        Icon(
-            imageVector = Icons.Outlined.FilterList,
-            contentDescription = stringResource(R.string.overview_filter),
-            tint = if (active) colors.primary else colors.textSecondary,
-            modifier = Modifier.size(22.dp),
-        )
-    }
-}
-
-@Composable
-private fun YearMonthDialog(
-    month: YearMonth,
-    onConfirm: (YearMonth) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var value by remember(month) {
-        mutableStateOf(WheelDateTime.of(month.year, month.monthValue, 1))
-    }
-    val now = YearMonth.now()
-    val colors = MaterialTheme.appColors
-    Dialog(onDismissRequest = onDismiss) {
-        Surface(shape = RoundedCornerShape(28.dp), color = colors.cardBackground) {
-            Column(
-                modifier = Modifier.padding(top = 20.dp, bottom = 12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(R.string.overview_pick_month),
-                    color = colors.textPrimary,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(horizontal = 24.dp),
-                )
-                Box(modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)) {
-                    CogniBalWheelDateTimePicker(
-                        value = value,
-                        onValueChange = { value = it },
-                        mode = WheelDateTimeMode.YearMonth,
-                        minTime = WheelDateTime.of(WheelDateTimeRules.DefaultMinYear, 1, 1),
-                        maxTime = WheelDateTime.of(now.year, now.monthValue, 1),
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 12.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    TextButton(onClick = onDismiss) {
-                        Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
-                    }
-                    TextButton(
-                        onClick = { onConfirm(YearMonth.of(value.year, value.month)) },
-                    ) {
-                        Text(
-                            text = stringResource(R.string.done),
-                            color = colors.primary,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-/**
- * 筛选从底部弹出。改动先留在这里，点完成才交给外面。
- * 划掉或点外面关掉时，草稿丢掉，已经生效的筛选不动。
- * 清除会清掉生效的筛选再收起。当天流水还在整理时，被点的那个按钮转圈。
- *
- * 全部、支出、收入本身就是选项，不再加小标题。
- * 分类固定两行横滑。支出在前，收入在后，中间留一道分隔。
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DayFilterSheet(
@@ -395,7 +360,7 @@ private fun DayFilterSheet(
         sheetState = sheetState,
         containerColor = colors.cardBackground,
         contentColor = colors.textPrimary,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
         tonalElevation = 0.dp,
         properties = ModalBottomSheetProperties(
@@ -506,10 +471,6 @@ private fun DayFilterSheet(
     }
 }
 
-/**
- * 支出、收入排在同一条横滑列表里。三个以上固定两行，一两个仍排成一行。
- * 两类都在时，中间一道细线把它们分开，不再写小标题。
- */
 @Composable
 private fun CategoryStrip(
     expense: List<OverviewCategoryOption>,
@@ -597,17 +558,17 @@ private fun CategoryFilterChip(
     val colors = MaterialTheme.appColors
     Text(
         text = name,
-        color = if (selected) colors.onPrimary else colors.textPrimary,
+        color = if (selected) colors.onInkStrong else colors.textPrimary,
         fontSize = 13.sp,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier
             .widthIn(max = 168.dp)
             .clip(RoundedCornerShape(99.dp))
-            .background(if (selected) colors.primary else colors.tagBackground)
+            .background(if (selected) colors.inkStrong else colors.tagBackground)
             .semantics { this.selected = selected }
             .interactiveClick(enabled = enabled, role = Role.Checkbox, onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 8.dp),
     )
 }
 
@@ -649,7 +610,6 @@ private fun FilterSheetButton(
     }
 }
 
-/** 几十毫秒的整理不闪圈，拖久了再出现，跟全页等待同一档。 */
 @Composable
 private fun rememberDelayedLoading(active: Boolean): Boolean {
     var visible by remember { mutableStateOf(false) }
@@ -681,7 +641,6 @@ private fun committedCategoryIds(
 
 private fun Set<Long>.toggle(id: Long): Set<Long> = if (id in this) this - id else this + id
 
-/** 三个以上固定两行。一两个仍排成一行，避免叠成一列。 */
 private fun categoryRows(categories: List<OverviewCategoryOption>): List<List<OverviewCategoryOption>> {
     if (categories.isEmpty()) return emptyList()
     val rowCount = if (categories.size <= 2) 1 else FilterCategoryRows
@@ -711,7 +670,7 @@ private fun MonthCalendar(
     val weeks = remember(month, locale) { calendarWeeks(month, locale) }
     val labels = remember(locale) { weekdayLabels(locale) }
     val colors = MaterialTheme.appColors
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(modifier = Modifier.fillMaxWidth()) {
             labels.forEach { label ->
                 Text(
@@ -730,7 +689,7 @@ private fun MonthCalendar(
             ) {
                 week.forEach { day ->
                     if (day == null) {
-                        Spacer(modifier = Modifier.weight(1f).heightIn(min = 48.dp))
+                        Spacer(modifier = Modifier.weight(1f).heightIn(min = 44.dp))
                     } else {
                         val amount = amounts[day]
                         DayCell(
@@ -773,53 +732,56 @@ private fun DayCell(
             moneyText(currencySymbol, expense),
         )
     }
-    val shape = RoundedCornerShape(8.dp)
-    val background = if (selected) {
-        colors.primary.copy(alpha = if (colors.isDark) 0.22f else 0.14f)
-    } else {
-        Color.Transparent
+    val circleColor = when {
+        selected -> colors.inkStrong
+        today -> colors.primaryContainer
+        else -> Color.Transparent
     }
-    Column(
+    val numberColor = when {
+        selected -> colors.onInkStrong
+        today -> colors.primary
+        else -> colors.textPrimary
+    }
+
+    Box(
         modifier = modifier
-            .heightIn(min = 48.dp)
-            .padding(1.dp)
-            .then(
-                if (today && !selected) {
-                    Modifier.border(1.dp, colors.primary.copy(alpha = 0.7f), shape)
-                } else {
-                    Modifier
-                },
-            )
-            .dayClick(description = description, selected = selected, onClick = onClick)
-            .clip(shape)
-            .background(background),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
+            .heightIn(min = 44.dp)
+            .dayClick(description = description, selected = selected, onClick = onClick),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = day.dayOfMonth.toString(),
-            color = if (selected || today) colors.primary else colors.textPrimary,
-            fontSize = 13.sp,
-            fontWeight = if (selected || today) FontWeight.Bold else FontWeight.Medium,
-            textAlign = TextAlign.Center,
-        )
-        Row(
+        Column(
             modifier = Modifier
-                .padding(top = 2.dp)
-                .height(5.dp),
-            horizontalArrangement = Arrangement.spacedBy(3.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .size(38.dp)
+                .clip(CircleShape)
+                .background(circleColor),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
         ) {
-            if (income > 0L) Dot(colors.chartIncome)
-            if (expense > 0L) Dot(colors.chartExpense)
+            Text(
+                text = day.dayOfMonth.toString(),
+                color = numberColor,
+                fontSize = 13.5.sp,
+                fontWeight = if (selected || today) FontWeight.Bold else FontWeight.Medium,
+                textAlign = TextAlign.Center,
+            )
+            if (income > 0L || expense > 0L) {
+                Row(
+                    modifier = Modifier.padding(top = 1.dp),
+                    horizontalArrangement = Arrangement.spacedBy(2.5.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (expense > 0L) {
+                        Dot(if (selected) colors.onInkStrong.copy(alpha = 0.85f) else colors.textTertiary)
+                    }
+                    if (income > 0L) {
+                        Dot(if (selected) colors.heroAccent else colors.income)
+                    }
+                }
+            }
         }
     }
 }
 
-/**
- * 一天一格，七列排不下 48.dp 的最小点击宽度，所以这里不套 [com.cyr.cognobal.ui.interaction.interactiveClick]。
- * 键盘焦点仍描一圈。
- */
 @Composable
 private fun Modifier.dayClick(
     description: String,
@@ -828,9 +790,8 @@ private fun Modifier.dayClick(
 ): Modifier {
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
-    val shape = RoundedCornerShape(8.dp)
     val outlined = if (focused) {
-        border(2.dp, MaterialTheme.colorScheme.secondary, shape)
+        border(2.dp, MaterialTheme.colorScheme.secondary, CircleShape)
     } else {
         this
     }
@@ -852,7 +813,7 @@ private fun Modifier.dayClick(
 private fun Dot(color: Color) {
     Box(
         modifier = Modifier
-            .size(5.dp)
+            .size(4.dp)
             .background(color, CircleShape),
     )
 }
@@ -886,23 +847,34 @@ private fun OverviewScreenPreview() {
             OverviewScreen(
                 uiState = OverviewUiState(
                     loading = false,
-                    month = YearMonth.of(2026, 10),
-                    selectedDay = LocalDate.of(2026, 10, 13),
+                    month = YearMonth.of(2026, 5),
+                    selectedDay = LocalDate.of(2026, 5, 20),
                     income = 18_000_00L,
                     expense = 6_420_00L,
                     balance = 11_580_00L,
                     days = listOf(
-                        OverviewDayAmount(LocalDate.of(2026, 10, 3), expense = 2_800L, income = 0L),
-                        OverviewDayAmount(LocalDate.of(2026, 10, 13), expense = 4_200L, income = 18_000_00L),
-                        OverviewDayAmount(LocalDate.of(2026, 10, 20), expense = 1_600L, income = 0L),
+                        OverviewDayAmount(LocalDate.of(2026, 5, 3), expense = 2_800L, income = 0L),
+                        OverviewDayAmount(LocalDate.of(2026, 5, 20), expense = 18_480L, income = 0L),
+                        OverviewDayAmount(LocalDate.of(2026, 5, 24), expense = 1_600L, income = 0L),
                     ),
                     bills = listOf(
                         BillRowUi(
                             id = 1,
-                            categoryName = "Food",
+                            categoryName = "咖啡",
                             type = BillType.Expense,
-                            time = LocalDateTime.of(2026, 10, 13, 12, 30),
-                            signedAmount = -4_200L,
+                            time = LocalDateTime.of(2026, 5, 20, 8, 30),
+                            signedAmount = -2_800L,
+                            categoryIconKey = "coffee",
+                            categoryColorKey = "#FF0CA678",
+                        ),
+                        BillRowUi(
+                            id = 2,
+                            categoryName = "超市购物",
+                            type = BillType.Expense,
+                            time = LocalDateTime.of(2026, 5, 20, 19, 16),
+                            signedAmount = -15_680L,
+                            categoryIconKey = "shopping_bag",
+                            categoryColorKey = "#FFFD7E14",
                         ),
                     ),
                 ),

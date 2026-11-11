@@ -26,6 +26,8 @@ internal object DefaultCategories {
             Spec("债务", "credit_card", "#FFD9480F"),
             Spec("借款", "account_balance_wallet", "#FFF59F00"),
             Spec("金融", "account_balance", "#FF7950F2"),
+            Spec("孩子", "child_care", "#FF74C0FC"),
+            Spec("长辈", "elderly", "#FF862E9C"),
             Spec("其他", "more_horiz", "#FF868E96"),
         ),
     )
@@ -39,6 +41,8 @@ internal object DefaultCategories {
             Spec("副业", "work", "#FF228BE6"),
             Spec("补贴", "volunteer_activism", "#FF15AABF"),
             Spec("红包", "redeem", "#FFE64980"),
+            Spec("孩子", "child_care", "#FF74C0FC"),
+            Spec("长辈", "elderly", "#FF862E9C"),
             Spec("其他", "more_horiz", "#FF868E96"),
         ),
     )
@@ -49,9 +53,9 @@ internal object DefaultCategories {
     const val legacyIncomeFinance: String = "理财"
 
     /**
-     * 这一版才加进默认表的名字。
-     * 旧库里一个都还没有时，说明用户没见过这套，缺的可以补上。
-     * 已经有其中任意一个，就不再补，避免把用户删掉的默认项填回来。
+     * 上一版才加进默认表的名字，用来判断旧库有没有见过那一套。
+     * 一个都还没有时，缺的可以补上。已经有其中任意一个，就不再补，避免把用户删掉的默认项填回来。
+     * 孩子和长辈不在这里，见 [family]。
      */
     val introduced: List<Category> = listOf(
         expense.first { it.name == "社交" },
@@ -68,6 +72,39 @@ internal object DefaultCategories {
 
     fun isIntroduced(category: Category): Boolean {
         return introduced.any { it.type == category.type && it.name == category.name }
+    }
+
+    /**
+     * 这一版补上的家人分类。支出和收入各有孩子、长辈，图标和颜色两边相同。
+     * 不放进 [introduced]：那一组是上一版的标记，混进去会让旧库漏补更早的默认项。
+     */
+    val family: List<Category> = listOf(
+        expense.first { it.name == "孩子" },
+        expense.first { it.name == "长辈" },
+        income.first { it.name == "孩子" },
+        income.first { it.name == "长辈" },
+    )
+
+    fun isFamily(category: Category): Boolean {
+        return family.any { it.type == category.type && it.name == category.name }
+    }
+
+    /**
+     * 旧库还缺的默认分类。空表由调用方整套写入，这里返回空。
+     * 上一版新增项一个都没有时，补上所有缺的，其中已经包含 [family]。
+     * 已经见过上一版、但家人分类一个都没有时，只补这一对。
+     * 家人分类里已经有任意一个，就不再补，避免把用户删掉的填回来。
+     */
+    fun missingFrom(existing: List<Category>): List<Category> {
+        if (existing.isEmpty()) return emptyList()
+        val templates = when {
+            existing.none(::isIntroduced) -> all
+            existing.none(::isFamily) -> family
+            else -> return emptyList()
+        }
+        return templates.filter { template ->
+            existing.none { it.type == template.type && it.name == template.name }
+        }
     }
 
     private fun typed(type: CategoryType, specs: List<Spec>): List<Category> {

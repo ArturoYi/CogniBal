@@ -1,9 +1,12 @@
 package com.cyr.cognobal.screen.feature.settings.backup
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -22,7 +25,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.cyr.cognobal.R
 import com.cyr.cognobal.ui.interaction.interactiveClick
 import com.cyr.cognobal.ui.theme.appColors
@@ -42,13 +44,14 @@ internal fun BackupConfirmDialog(
             Text(
                 text = stringResource(titleRes),
                 color = colors.textPrimary,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
             )
         },
         text = {
             Text(
                 text = stringResource(messageRes),
                 color = colors.textSecondary,
+                style = MaterialTheme.typography.bodyMedium,
             )
         },
         confirmButton = {
@@ -66,6 +69,7 @@ internal fun BackupConfirmDialog(
             }
         },
         containerColor = colors.cardBackground,
+        shape = MaterialTheme.shapes.extraLarge,
     )
 }
 
@@ -84,17 +88,11 @@ internal fun BackupImportSourceDialog(
             Text(
                 text = stringResource(R.string.backup_import_source_title),
                 color = colors.textPrimary,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
             )
         },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    text = stringResource(R.string.backup_import_source_message),
-                    color = colors.textSecondary,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
-                )
                 ImportSourceRow(
                     icon = Icons.Outlined.History,
                     title = stringResource(R.string.backup_import_from_local),
@@ -105,7 +103,7 @@ internal fun BackupImportSourceDialog(
                 ImportSourceRow(
                     icon = Icons.Outlined.FolderOpen,
                     title = stringResource(R.string.backup_import_from_file),
-                    subtitle = stringResource(R.string.backup_import_from_file_subtitle),
+                    subtitle = "",
                     enabled = true,
                     onClick = onChooseFile,
                 )
@@ -117,6 +115,7 @@ internal fun BackupImportSourceDialog(
             }
         },
         containerColor = colors.cardBackground,
+        shape = MaterialTheme.shapes.extraLarge,
     )
 }
 
@@ -132,30 +131,32 @@ private fun ImportSourceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
+            .heightIn(min = 56.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .background(colors.background)
             .interactiveClick(enabled = enabled, onClick = onClick)
-            .padding(vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
             tint = if (enabled) colors.primary else colors.textTertiary,
-            modifier = Modifier.size(24.dp),
+            modifier = Modifier.size(22.dp),
         )
-        Column(modifier = Modifier.padding(start = 12.dp)) {
+        Column(modifier = Modifier.padding(start = 16.dp)) {
             Text(
                 text = title,
                 color = if (enabled) colors.textPrimary else colors.textTertiary,
-                fontWeight = FontWeight.Medium,
-                fontSize = 16.sp,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
             )
-            Text(
-                text = subtitle,
-                color = colors.textSecondary,
-                fontSize = 13.sp,
-                lineHeight = 18.sp,
-            )
+            if (subtitle.isNotEmpty()) {
+                Text(
+                    text = subtitle,
+                    color = colors.textTertiary,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
         }
     }
 }

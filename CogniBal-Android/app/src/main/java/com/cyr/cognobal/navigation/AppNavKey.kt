@@ -7,44 +7,32 @@ import kotlinx.serialization.Serializable
 
 /**
  * 应用路由表里的目的地。
- *
- * 新增页面时在这里加一个可序列化的键，再在 [appRoutes] 里登记对应界面。
- * 键必须直接实现 [NavKey]，返回栈才能在旋转后按类型还原。
  */
 
-/** 账单。账单栈的起点，也是首页标签。 */
+/** 首页账单栈起点。 */
 @Serializable
 internal data object Bill : NavKey
 
-/**
- * 记一笔。从首页中间的加号或右下角菜单进入，不占首页标签。
- *
- * [typeCode] 用 [BillType.code]。默认是支出，和底栏中间的加号一致。
- */
+/** 记一笔。从底栏中央加号或快捷方式进入。 */
 @Serializable
 internal data class AddExpense(
     val typeCode: Int = BillType.Expense.code,
-    /** 0 是新记一笔。大于 0 时打开这笔账的编辑。 */
     val billId: Long = 0L,
 ) : NavKey
 
-/** 一笔账的详情。编辑和删除都从这里进入。 */
+/** 单笔账单详情。 */
 @Serializable
 internal data class BillDetail(val billId: Long) : NavKey
 
-/** 当前账户的全部账单。从首页「查看全部」进入，不占首页标签。 */
+/** 当前账户全部账单。 */
 @Serializable
 internal data class BillHistory(val accountId: Long) : NavKey
 
-/**
- * 新建或编辑账户。
- *
- * [accountId] 为空是新建。宽屏时作为账单页的详情窗格，窄屏单独占一页。
- */
+/** 新建或编辑资产账户。 */
 @Serializable
 internal data class AccountEditor(val accountId: Long? = null) : NavKey
 
-/** 设置列表。设置栈的起点，也是首页标签。 */
+/** 设置页起点。 */
 @Serializable
 internal data object SettingsList : NavKey
 
@@ -60,71 +48,62 @@ internal data object BackupSettings : NavKey
 @Serializable
 internal data object SecuritySettings : NavKey
 
-/**
- * 用户协议、隐私协议或软件许可。
- *
- * 不放进 [settingsDetailKeys]，宽屏时整页盖住列表和详情，返回再回到原来的二级页。
- */
+/** 用户协议、隐私协议或软件许可。 */
 @Serializable
 internal data class LegalPage(val kind: LegalDocumentKind) : NavKey
 
-/** 更多设置。默认货币。 */
+/** 更多设置（默认货币）。 */
 @Serializable
 internal data object MoreSettings : NavKey
 
-/** 统计。按分类看一个月的支出或收入。 */
+/** 统计页起点。 */
 @Serializable
 internal data object Statistics : NavKey
 
-/** 总览。一个月的日历，点开某一天的账单。 */
+/** 日历总览。 */
 @Serializable
 internal data object Overview : NavKey
 
-/** 报表。近几个月的收支趋势。 */
+/** 收支趋势报表。 */
 @Serializable
 internal data object Reports : NavKey
 
-/** 预算。本月支出上限，以及以往周期。 */
+/** 预算管理。 */
 @Serializable
 internal data object Budget : NavKey
 
-/** 资产。全部账户余额拆成净资产、资产和负债。 */
+/** 资产页起点。 */
 @Serializable
 internal data object Assets : NavKey
 
 /**
- * 首页两个标签。各自有一条返回栈。
- *
- * 底栏和侧栏只在当前场景里还能看到其中一个时出现。
+ * 底部导航四个主标签，各自维护独立返回栈。
  */
 internal enum class HomeTab {
     Bill,
+    Statistics,
+    Assets,
     Settings,
 }
 
 internal fun HomeTab.route(): NavKey = when (this) {
     HomeTab.Bill -> Bill
+    HomeTab.Statistics -> Statistics
+    HomeTab.Assets -> Assets
     HomeTab.Settings -> SettingsList
 }
 
-/**
- * 写进首页目的地的 metadata。场景算完之后靠它判断标签条该不该留。
- *
- * 不拿返回栈顶来判断：宽屏列表-详情并排时，栈顶是二级页，列表窗格仍是首页。
- */
 internal const val HomeTabMetadata: String = "cognibal.homeTab"
 
 internal fun homeTabMetadata(): Map<String, Any> = mapOf(HomeTabMetadata to true)
 
-/** 从设置列表打开的二级页。再点另一项时替换当前页，不叠一层。 */
+/** 设置列表打开的二级详情页集合。宽屏列表-详情并排时替换右侧详情窗格。 */
 internal val settingsDetailKeys: Set<NavKey> = setOf(
     AppearanceSettings,
     BackupSettings,
     SecuritySettings,
     MoreSettings,
-    Statistics,
     Overview,
     Reports,
     Budget,
-    Assets,
 )

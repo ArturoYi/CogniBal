@@ -67,6 +67,7 @@ internal class StatisticsViewModel(
         when (event) {
             StatisticsUiEvent.PreviousMonth -> month.update { it.minusMonths(1) }
             StatisticsUiEvent.NextMonth -> month.update { it.plusMonths(1).cappedToCurrent() }
+            is StatisticsUiEvent.SelectMonth -> month.value = event.month.cappedToCurrent()
             is StatisticsUiEvent.SelectKind -> kind.value = event.kind
         }
     }

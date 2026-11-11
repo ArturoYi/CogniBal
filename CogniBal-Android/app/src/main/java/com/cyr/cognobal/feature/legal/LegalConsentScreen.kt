@@ -17,7 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Article
-import androidx.compose.material.icons.outlined.MenuBook
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -130,7 +130,6 @@ private fun LegalConsentContent(
                         SettingsAction(
                             icon = kind.icon(),
                             title = stringResource(kind.titleRes()),
-                            subtitle = stringResource(kind.readHintRes()),
                         )
                     },
                     onAction = { index ->
@@ -150,13 +149,13 @@ private fun LegalConsentContent(
                 Button(
                     onClick = onAgree,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.primary,
-                        contentColor = colors.onPrimary,
+                        containerColor = colors.inkStrong,
+                        contentColor = colors.onInkStrong,
                     ),
-                    shape = MaterialTheme.shapes.medium,
+                    shape = androidx.compose.foundation.shape.CircleShape,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(min = 48.dp),
+                        .heightIn(min = 52.dp),
                 ) {
                     Text(
                         text = stringResource(R.string.legal_agree),
@@ -184,7 +183,7 @@ private fun LegalConsentContent(
 private fun LegalDocumentKind.icon(): ImageVector = when (this) {
     LegalDocumentKind.Terms -> Icons.AutoMirrored.Outlined.Article
     LegalDocumentKind.Privacy -> Icons.Outlined.PrivacyTip
-    LegalDocumentKind.License -> Icons.Outlined.MenuBook
+    LegalDocumentKind.License -> Icons.AutoMirrored.Outlined.MenuBook
 }
 
 @FormFactorPreviews

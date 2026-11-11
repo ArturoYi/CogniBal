@@ -6,17 +6,23 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
@@ -27,8 +33,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -38,19 +42,29 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,6 +74,7 @@ import com.cyr.cognobal.data.database.model.BudgetPeriodType
 import com.cyr.cognobal.data.repository.BudgetLevel
 import com.cyr.cognobal.screen.feature.bill.BudgetStatusBanner
 import com.cyr.cognobal.screen.feature.bill.tool.formatMoney
+import com.cyr.cognobal.screen.feature.settings.SettingsSectionCard
 import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
 import com.cyr.cognobal.screen.feature.settings.budget.state.BudgetEditorState
 import com.cyr.cognobal.screen.feature.settings.budget.state.BudgetIssue
@@ -111,6 +126,9 @@ internal fun BudgetRoute(
     )
 }
 
+/**
+ * 预算设置：移除顶部说明句、添加提示语与开关下的重复解释，只保留进度数据卡、历史周期与干净的双开关组。
+ */
 @Composable
 internal fun BudgetScreen(
     uiState: BudgetUiState,
@@ -130,12 +148,6 @@ internal fun BudgetScreen(
         onBack = onBack,
         modifier = modifier,
     ) {
-        Text(
-            text = stringResource(R.string.budget_scope_note),
-            color = colors.textSecondary,
-            fontSize = 13.sp,
-            lineHeight = 18.sp,
-        )
         val budget = uiState.current.firstOrNull()
         val banner = budgetBanner(listOfNotNull(budget).filter { it.enabled })
         if (banner != null) {
@@ -144,35 +156,30 @@ internal fun BudgetScreen(
         InsightCard {
             if (uiState.loading && budget == null) {
                 Text(
-                    text = stringResource(R.string.loading_indicator_cd),
+                    text = "—",
                     color = colors.textTertiary,
-                    fontSize = 14.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             } else if (budget == null) {
                 Text(
                     text = stringResource(R.string.budget_empty),
                     color = colors.textPrimary,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = stringResource(R.string.budget_add_hint),
-                    color = colors.textSecondary,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
+                    style = MaterialTheme.typography.titleMedium,
                 )
                 Button(
                     onClick = { onEvent(BudgetUiEvent.Add) },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
+                    shape = androidx.compose.foundation.shape.CircleShape,
                     colors = ButtonDefaults.buttonColors(
-                        containerColor = colors.primary,
-                        contentColor = colors.onPrimary,
+                        containerColor = colors.inkStrong,
+                        contentColor = colors.onInkStrong,
                     ),
                 ) {
                     Text(
                         text = stringResource(R.string.budget_add),
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
             } else {
@@ -180,15 +187,13 @@ internal fun BudgetScreen(
                     Text(
                         text = stringResource(R.string.bill_budget_global),
                         color = colors.textPrimary,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                     )
                     Text(
                         text = stringResource(R.string.budget_edit),
                         color = colors.primary,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                         modifier = Modifier.interactiveClick {
                             onEvent(BudgetUiEvent.Edit(budget.id))
                         },
@@ -204,9 +209,9 @@ internal fun BudgetScreen(
         if (uiState.history.isNotEmpty()) {
             Text(
                 text = stringResource(R.string.budget_history),
-                color = colors.textPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
+                color = colors.textSecondary,
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
             InsightCard {
                 uiState.history.forEach { line ->
@@ -218,53 +223,26 @@ internal fun BudgetScreen(
                 }
             }
         }
-        InsightCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.budget_home_visible),
-                        color = colors.textPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = stringResource(R.string.budget_home_visible_subtitle),
-                        color = colors.textTertiary,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                Switch(
-                    checked = uiState.homeVisible,
-                    onCheckedChange = { visible ->
-                        onEvent(BudgetUiEvent.HomeVisibleChanged(visible))
-                    },
-                )
-            }
-        }
-        InsightCard {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.budget_notify),
-                        color = colors.textPrimary,
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.Medium,
-                    )
-                    Text(
-                        text = stringResource(R.string.budget_notify_subtitle),
-                        color = colors.textTertiary,
-                        fontSize = 12.sp,
-                        lineHeight = 16.sp,
-                        modifier = Modifier.padding(top = 2.dp),
-                    )
-                }
-                Switch(
-                    checked = uiState.notify && notificationsAllowed,
-                    onCheckedChange = onNotifyChange,
-                )
-            }
+        SettingsSectionCard {
+            BudgetToggleRow(
+                title = stringResource(R.string.budget_home_visible),
+                checked = uiState.homeVisible,
+                onCheckedChange = { visible ->
+                    onEvent(BudgetUiEvent.HomeVisibleChanged(visible))
+                },
+            )
+            Box(
+                Modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(colors.divider),
+            )
+            BudgetToggleRow(
+                title = stringResource(R.string.budget_notify),
+                checked = uiState.notify && notificationsAllowed,
+                onCheckedChange = onNotifyChange,
+            )
         }
     }
     val editor = uiState.editor
@@ -293,13 +271,14 @@ internal fun BudgetScreen(
                 Text(
                     text = stringResource(R.string.budget_delete_title),
                     color = colors.textPrimary,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall,
                 )
             },
             text = {
                 Text(
                     text = stringResource(R.string.budget_delete_message),
                     color = colors.textSecondary,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
@@ -322,7 +301,55 @@ internal fun BudgetScreen(
                 }
             },
             containerColor = colors.cardBackground,
-            shape = RoundedCornerShape(24.dp),
+            shape = MaterialTheme.shapes.large,
+        )
+    }
+}
+
+@Composable
+private fun BudgetToggleRow(
+    title: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val interactionSource = remember { MutableInteractionSource() }
+    val focused by interactionSource.collectIsFocusedAsState()
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .then(
+                if (focused) {
+                    Modifier.border(2.dp, MaterialTheme.colorScheme.secondary, MaterialTheme.shapes.medium)
+                } else {
+                    Modifier
+                },
+            )
+            .pointerHoverIcon(PointerIcon.Hand)
+            .toggleable(
+                value = checked,
+                interactionSource = interactionSource,
+                indication = null,
+                role = Role.Switch,
+                onValueChange = onCheckedChange,
+            )
+            .padding(horizontal = 8.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = title,
+            color = colors.textPrimary,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            modifier = Modifier.weight(1f),
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = null,
+            modifier = Modifier
+                .focusProperties { canFocus = false }
+                .clearAndSetSemantics {},
         )
     }
 }
@@ -334,7 +361,6 @@ private fun BudgetLine(
     onClick: (() -> Unit)?,
 ) {
     val colors = MaterialTheme.appColors
-    val title = budgetTitle(line.global, line.categoryName, line.missingCategory)
     val monthLabel = if (line.periodType == BudgetPeriodType.Month) {
         formatYearMonth(YearMonth.from(line.periodStart))
     } else {
@@ -351,10 +377,9 @@ private fun BudgetLine(
     }
     val tint = when (line.level) {
         BudgetLevel.Over -> colors.expense
-        BudgetLevel.Near -> budgetNearColor(colors.isDark)
+        BudgetLevel.Near -> budgetNearColor(colors)
         BudgetLevel.Normal -> colors.primary
     }
-    val amountColor = if (line.level == BudgetLevel.Normal) colors.textSecondary else tint
     val remaining = line.limit - line.spent
     val status = if (remaining < 0) {
         stringResource(R.string.budget_over_amount, formatMoney(currencySymbol, -remaining))
@@ -371,13 +396,13 @@ private fun BudgetLine(
                     Modifier.interactiveClick(enabled = line.editable, onClick = onClick)
                 },
             ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = title,
-                color = if (line.enabled) colors.textPrimary else colors.textTertiary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                text = if (line.enabled) "$period · $status" else "$period · " + stringResource(R.string.budget_disabled),
+                color = if (line.enabled) colors.textSecondary else colors.textTertiary,
+                style = MaterialTheme.typography.labelMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
@@ -385,24 +410,19 @@ private fun BudgetLine(
             Text(
                 text = formatMoney(currencySymbol, line.spent) +
                     " / " + formatMoney(currencySymbol, line.limit),
-                color = amountColor,
-                fontSize = 12.sp,
+                color = if (line.level == BudgetLevel.Over) colors.expense else colors.textPrimary,
+                style = MaterialTheme.typography.labelLarge.merge(
+                    TextStyle(fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum"),
+                ),
                 maxLines = 1,
             )
         }
-        Text(
-            text = if (line.enabled) "$period · $status" else "$period · " + stringResource(R.string.budget_disabled),
-            color = colors.textTertiary,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 2.dp),
-        )
         LinearProgressIndicator(
             progress = { line.progress },
             modifier = Modifier
-                .padding(top = 8.dp)
                 .fillMaxWidth()
-                .height(6.dp)
-                .clip(RoundedCornerShape(99.dp)),
+                .height(8.dp)
+                .clip(RoundedCornerShape(8.dp)),
             color = tint,
             trackColor = colors.tagBackground,
             drawStopIndicator = {},
@@ -420,7 +440,7 @@ private fun AddBudgetSheet(
 ) {
     BudgetFormSheet(
         title = stringResource(R.string.budget_add),
-        subtitle = stringResource(R.string.budget_add_hint),
+        subtitle = null,
         editor = editor,
         currencySymbol = currencySymbol,
         issue = issue,
@@ -476,7 +496,7 @@ private fun BudgetFormSheet(
         sheetState = sheetState,
         containerColor = colors.cardBackground,
         contentColor = colors.textPrimary,
-        shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
         tonalElevation = 0.dp,
     ) {
@@ -486,21 +506,25 @@ private fun BudgetFormSheet(
                 .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, end = 16.dp, bottom = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(
-                text = title,
-                color = colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
-            if (subtitle != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
                 Text(
-                    text = subtitle,
-                    color = colors.textSecondary,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
+                    text = title,
+                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.headlineSmall,
                 )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle,
+                        color = colors.textTertiary,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
             }
             BudgetAmountField(
                 amountText = editor.amountText,
@@ -508,58 +532,93 @@ private fun BudgetFormSheet(
                 enabled = !editor.saving,
                 onAmount = { onEvent(BudgetUiEvent.AmountChanged(it)) },
             )
-            Text(
-                text = stringResource(R.string.budget_alert) + " " +
-                    stringResource(R.string.budget_alert_value, editor.alertPercent),
-                color = colors.textPrimary,
-                fontSize = 14.sp,
-            )
-            Slider(
-                value = editor.alertPercent.toFloat(),
-                onValueChange = { value ->
-                    onEvent(BudgetUiEvent.AlertChanged(value.roundToInt()))
-                },
-                enabled = !editor.saving,
-                valueRange = BudgetMathMin..BudgetMathMax,
-                steps = 49,
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        text = stringResource(R.string.budget_alert),
+                        color = colors.textSecondary,
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Text(
+                        text = stringResource(R.string.budget_alert_value, editor.alertPercent),
+                        color = colors.textPrimary,
+                        style = MaterialTheme.typography.labelLarge.merge(
+                            TextStyle(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
+                        ),
+                    )
+                }
+                Slider(
+                    value = editor.alertPercent.toFloat(),
+                    onValueChange = { value ->
+                        onEvent(BudgetUiEvent.AlertChanged(value.roundToInt()))
+                    },
+                    enabled = !editor.saving,
+                    valueRange = BudgetMathMin..BudgetMathMax,
+                    steps = 49,
+                )
+            }
             if (issue != null && issue != BudgetIssue.NoScope) {
                 Text(
                     text = stringResource(issue.messageRes()),
                     color = colors.expense,
-                    fontSize = 13.sp,
+                    style = MaterialTheme.typography.bodySmall,
                 )
             }
-            Button(
-                onClick = { onEvent(BudgetUiEvent.Save) },
-                enabled = !editor.saving,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = colors.primary,
-                    contentColor = colors.onPrimary,
-                ),
-            ) {
-                Text(
-                    text = stringResource(R.string.bill_entry_save),
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            TextButton(
-                onClick = ::close,
-                enabled = !editor.saving,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(text = stringResource(R.string.cancel), color = colors.textTertiary)
+                Button(
+                    onClick = ::close,
+                    enabled = !editor.saving,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.tagBackground,
+                        contentColor = colors.textPrimary,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(R.string.cancel),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
+                    )
+                }
+                Button(
+                    onClick = { onEvent(BudgetUiEvent.Save) },
+                    enabled = !editor.saving,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = MaterialTheme.shapes.medium,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = colors.inkStrong,
+                        contentColor = colors.onInkStrong,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(R.string.bill_entry_save),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    )
+                }
             }
             if (onDelete != null) {
-                Spacer(Modifier.height(4.dp))
                 TextButton(
                     onClick = onDelete,
                     enabled = !editor.saving,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp),
                 ) {
-                    Text(text = stringResource(R.string.budget_delete), color = colors.expense)
+                    Text(
+                        text = stringResource(R.string.budget_delete),
+                        color = colors.expense,
+                        fontWeight = FontWeight.Bold,
+                    )
                 }
             }
         }
@@ -574,27 +633,55 @@ private fun BudgetAmountField(
     onAmount: (String) -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    OutlinedTextField(
+    var focused by remember { mutableStateOf(false) }
+    val label = stringResource(R.string.budget_amount)
+    BasicTextField(
         value = amountText,
         onValueChange = onAmount,
-        modifier = Modifier.fillMaxWidth(),
         enabled = enabled,
         singleLine = true,
-        prefix = { Text(text = currencySymbol, color = colors.textSecondary) },
-        label = { Text(text = stringResource(R.string.budget_amount)) },
+        textStyle = MaterialTheme.typography.displaySmall.copy(color = colors.textPrimary),
+        cursorBrush = SolidColor(colors.primary),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        shape = RoundedCornerShape(16.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = colors.textPrimary,
-            unfocusedTextColor = colors.textPrimary,
-            focusedBorderColor = colors.primary,
-            unfocusedBorderColor = colors.divider,
-            cursorColor = colors.primary,
-            focusedLabelColor = colors.primary,
-            unfocusedLabelColor = colors.textTertiary,
-            focusedContainerColor = colors.cardBackground,
-            unfocusedContainerColor = colors.cardBackground,
-        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .onFocusChanged { focused = it.isFocused }
+            .then(
+                if (focused) {
+                    Modifier.border(
+                        1.dp,
+                        colors.primary.copy(alpha = 0.35f),
+                        MaterialTheme.shapes.medium,
+                    )
+                } else {
+                    Modifier
+                },
+            )
+            .background(colors.background, MaterialTheme.shapes.medium)
+            .semantics { contentDescription = label }
+            .padding(horizontal = 16.dp, vertical = 16.dp),
+        decorationBox = { inner ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    text = currencySymbol,
+                    color = colors.textSecondary,
+                    style = MaterialTheme.typography.headlineMedium,
+                )
+                Box(modifier = Modifier.weight(1f)) {
+                    if (amountText.isEmpty()) {
+                        Text(
+                            text = "0.00",
+                            color = colors.textTertiary,
+                            style = MaterialTheme.typography.displaySmall,
+                        )
+                    }
+                    inner()
+                }
+            }
+        },
     )
 }
 
@@ -620,13 +707,6 @@ private fun budgetBanner(lines: List<BudgetLineUi>): BannerText? {
         over = over,
         text = stringResource(if (over) R.string.budget_banner_over else R.string.budget_banner_near, names),
     )
-}
-
-@Composable
-private fun budgetTitle(global: Boolean, categoryName: String?, missing: Boolean): String = when {
-    global -> stringResource(R.string.bill_budget_global)
-    missing || categoryName == null -> stringResource(R.string.bill_budget_missing)
-    else -> categoryName
 }
 
 private fun BudgetIssue.messageRes(): Int = when (this) {

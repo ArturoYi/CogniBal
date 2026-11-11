@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="widget_surface">#FF111111</color>
-    <color name="widget_text_primary">#FFFFFFFF</color>
-    <color name="widget_text_secondary">#FFA3A3A3</color>
+    <color name="widget_surface">#FF181B22</color>
+    <color name="widget_text_primary">#FFF4F6FA</color>
+    <color name="widget_text_secondary">#FFB4BCCB</color>
 </resources>

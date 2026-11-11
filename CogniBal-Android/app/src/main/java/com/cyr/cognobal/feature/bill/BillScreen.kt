@@ -2,17 +2,19 @@ package com.cyr.cognobal.screen.feature.bill
 
 import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -40,7 +42,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -51,14 +52,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyr.cognobal.R
 import com.cyr.cognobal.data.database.model.AccountType
 import com.cyr.cognobal.data.database.model.BillType
 import com.cyr.cognobal.data.repository.BudgetLevel
-import com.cyr.cognobal.screen.feature.bill.model.labelRes
 import com.cyr.cognobal.screen.feature.bill.state.AccountBarState
 import com.cyr.cognobal.screen.feature.bill.state.AccountItemUi
 import com.cyr.cognobal.screen.feature.bill.state.BillHomeUiEvent
@@ -71,6 +70,8 @@ import com.cyr.cognobal.screen.feature.splash.LedgerStartup
 import com.cyr.cognobal.ui.background.PageBackgroundHost
 import com.cyr.cognobal.ui.background.RequestPageBackground
 import com.cyr.cognobal.ui.preview.FormFactorPreviews
+import com.cyr.cognobal.ui.privacy.LocalAmountVisibility
+import com.cyr.cognobal.ui.privacy.maskIfHidden
 import com.cyr.cognobal.ui.theme.AppThemeStyle
 import com.cyr.cognobal.ui.theme.CogniBalTheme
 import com.cyr.cognobal.ui.theme.appColors
@@ -78,12 +79,8 @@ import java.time.LocalDate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** 默认账户准备好之后，首页查询最多再等这么久。超时就揭开，避免开屏停住。 */
 private const val BILL_HOME_REVEAL_TIMEOUT_MILLIS = 2_000L
 
-/**
- * 账单页入口。当前账户在顶部卡片上，点右上角可以切换、新建或编辑。
- */
 @Composable
 internal fun BillRoute(
     onCreateAccount: () -> Unit,
@@ -91,10 +88,10 @@ internal fun BillRoute(
     onViewAll: (Long) -> Unit,
     onOpenBill: (Long) -> Unit,
     onOpenBudget: () -> Unit,
+    onOpenCalendar: () -> Unit = {},
     modifier: Modifier = Modifier,
     homeViewModel: BillHomeViewModel = viewModel(factory = BillHomeViewModel.Factory),
 ) {
-    // 和记一笔页共用同一个 ViewModel。首页先把它订上，打开记一笔时分类和账本已经在状态里。
     viewModel<AddExpenseViewModel>(
         key = AddExpenseViewModel.key(BillType.Expense.code),
         factory = AddExpenseViewModel.factory(BillType.Expense.code),
@@ -114,32 +111,19 @@ internal fun BillRoute(
         onOpenBill = onOpenBill,
         onHideBudget = { homeViewModel.onEvent(BillHomeUiEvent.HideBudget) },
         onOpenBudget = onOpenBudget,
+        onOpenCalendar = onOpenCalendar,
         modifier = modifier,
     )
 }
 
-/**
- * 同意之后，首页数据准备到哪一步。
- *
- * [contentReady] 为真表示默认账户已经写完，总资产、本月收支、预算和最近 7 天都已进状态。
- * 这之前不把首页放进组合，避免先读到空库。
- */
 internal data class BillHomeWarmup(
     val contentReady: Boolean,
 ) {
     companion object {
-        /** 协议还没同意。不要建账本，也不要订阅首页。 */
         val Shown = BillHomeWarmup(contentReady = true)
     }
 }
 
-/**
- * 同意协议之后、进入账本之前，把账单首页整份数据准备好。
- *
- * 快捷方式和开屏已经收起再点同意，也走这里。先等默认账户写完再订阅，
- * 避免读到插入前的空库，进来后又刷成真正的账户和金额。
- * 查询一直不回来时到点也把 [BillHomeWarmup.contentReady] 设为真，不能一直停在空白页。
- */
 @Composable
 internal fun rememberBillHomeWarmup(): BillHomeWarmup {
     val context = LocalContext.current
@@ -159,10 +143,6 @@ internal fun rememberBillHomeWarmup(): BillHomeWarmup {
     return BillHomeWarmup(contentReady = !uiState.loading || timedOut)
 }
 
-/**
- * 卡片上的账户跟账户条走，切换时名字立刻换。
- * 本月金额仍用正文。两边账户还不一致时，卡片上先显示破折号。
- */
 private fun headerWhileHomeLoads(
     home: BillHomeUiState,
     bar: AccountBarState,
@@ -176,10 +156,6 @@ private fun headerWhileHomeLoads(
     )
 }
 
-/**
- * 记账首页。账户卡片、预算、最近 7 天同一列往下排。
- * 页面背景铺到屏幕边缘，列表自己躲开系统栏。
- */
 @Composable
 internal fun BillScreen(
     uiState: BillHomeUiState,
@@ -189,6 +165,7 @@ internal fun BillScreen(
     onViewAll: () -> Unit,
     onOpenBill: (Long) -> Unit = {},
     onOpenBudget: () -> Unit,
+    onOpenCalendar: () -> Unit = {},
     onHideBudget: () -> Unit = {},
     modifier: Modifier = Modifier,
     headerState: BillHomeUiState = uiState,
@@ -207,7 +184,9 @@ internal fun BillScreen(
             onCreateAccount = onCreateAccount,
             onViewAll = onViewAll,
             onOpenBill = onOpenBill,
+            onOpenBudget = onOpenBudget,
             onManageBudget = { budgetSheetOpen = true },
+            onOpenCalendar = onOpenCalendar,
         )
     }
     val current = headerState.accounts.firstOrNull { it.id == headerState.currentId }
@@ -230,9 +209,6 @@ internal fun BillScreen(
     }
 }
 
-/**
- * 切换、新建、编辑放在同一层。点完先收起再跳，避免弹层盖住下一页。
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AccountSheet(
@@ -244,6 +220,7 @@ private fun AccountSheet(
     onEdit: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
+    val hidden = LocalAmountVisibility.current.hidden
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     fun close(after: () -> Unit = {}) {
@@ -258,7 +235,7 @@ private fun AccountSheet(
         sheetState = sheetState,
         containerColor = colors.cardBackground,
         contentColor = colors.textPrimary,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
         tonalElevation = 0.dp,
     ) {
@@ -266,45 +243,51 @@ private fun AccountSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 12.dp),
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
         ) {
             Text(
                 text = stringResource(R.string.bill_account_switch),
                 color = colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 12.dp),
             )
-            Text(
-                text = stringResource(R.string.bill_account_switch_hint),
-                color = colors.textSecondary,
-                fontSize = 13.sp,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 12.dp),
-            )
-            accounts.forEach { account ->
-                key(account.id) {
-                    AccountSheetRow(
-                        account = account,
-                        currencySymbol = currencySymbol,
-                        onClick = {
-                            close {
-                                if (!account.selected) onSelect(account.id)
-                            }
-                        },
-                    )
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                accounts.forEach { account ->
+                    key(account.id) {
+                        AccountSheetRow(
+                            account = account,
+                            currencySymbol = currencySymbol,
+                            hidden = hidden,
+                            onClick = {
+                                close {
+                                    if (!account.selected) onSelect(account.id)
+                                }
+                            },
+                        )
+                    }
                 }
             }
-            Spacer(Modifier.height(8.dp))
-            SheetAction(
-                icon = Icons.Outlined.Add,
-                label = stringResource(R.string.bill_account_create),
-                onClick = { close(onCreate) },
-            )
-            SheetAction(
-                icon = Icons.Outlined.Edit,
-                label = stringResource(R.string.account_edit_current),
-                onClick = { close(onEdit) },
-            )
+            Spacer(Modifier.height(16.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                SheetPillAction(
+                    icon = Icons.Outlined.Add,
+                    label = stringResource(R.string.bill_account_create),
+                    primary = true,
+                    onClick = { close(onCreate) },
+                    modifier = Modifier.weight(1f),
+                )
+                SheetPillAction(
+                    icon = Icons.Outlined.Edit,
+                    label = stringResource(R.string.account_edit_current),
+                    primary = false,
+                    onClick = { close(onEdit) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
         }
     }
 }
@@ -313,43 +296,32 @@ private fun AccountSheet(
 private fun AccountSheetRow(
     account: AccountItemUi,
     currencySymbol: String,
+    hidden: Boolean,
     onClick: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    val typeName = stringResource(account.type.labelRes())
-    val detail = if (account.enabled) {
-        typeName
-    } else {
-        stringResource(R.string.account_disabled_balance, typeName)
-    }
-    val amountColor = when {
-        !account.enabled -> colors.textTertiary
-        account.balance < 0L -> colors.textPrimary
-        else -> colors.textPrimary
-    }
-    val selectedColor = if (account.selected) {
-        colors.primary.copy(alpha = if (colors.isDark) 0.18f else 0.08f)
-    } else {
-        Color.Transparent
-    }
+    val amountColor = if (account.enabled) colors.textPrimary else colors.textTertiary
+    val container = if (account.selected) colors.primaryContainer else colors.background
     PressFade(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .background(selectedColor)
+            .heightIn(min = 60.dp)
+            .clip(MaterialTheme.shapes.large)
+            .background(container)
             .semantics { selected = account.selected },
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = 14.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             AccountMark(
                 iconKey = account.iconKey,
                 colorKey = account.colorKey,
+                emphasized = account.selected,
             )
             Column(
                 modifier = Modifier
@@ -359,27 +331,29 @@ private fun AccountSheetRow(
                 Text(
                     text = account.name,
                     color = if (account.enabled) colors.textPrimary else colors.textTertiary,
-                    fontSize = 15.sp,
-                    fontWeight = if (account.selected) FontWeight.SemiBold else FontWeight.Medium,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = if (account.selected) FontWeight.SemiBold else FontWeight.Medium,
+                    ),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                Text(
-                    text = detail,
-                    color = colors.textTertiary,
-                    fontSize = 12.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
+                if (!account.enabled) {
+                    Text(
+                        text = stringResource(R.string.account_status_disabled),
+                        color = colors.textTertiary,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             Text(
-                text = formatMoney(currencySymbol, account.balance),
+                text = maskIfHidden(formatMoney(currencySymbol, account.balance), hidden, currencySymbol),
                 color = amountColor,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleMedium.merge(
+                    TextStyle(fontWeight = FontWeight.SemiBold, fontFeatureSettings = "tnum"),
+                ),
                 maxLines = 1,
-                style = TextStyle(fontFeatureSettings = "tnum"),
             )
             if (account.selected) {
                 Icon(
@@ -396,6 +370,47 @@ private fun AccountSheetRow(
 }
 
 @Composable
+private fun SheetPillAction(
+    icon: ImageVector,
+    label: String,
+    primary: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.appColors
+    val bg = if (primary) colors.inkStrong else colors.background
+    val fg = if (primary) colors.onInkStrong else colors.textPrimary
+    PressFade(
+        onClick = onClick,
+        modifier = modifier
+            .heightIn(min = 50.dp)
+            .clip(CircleShape)
+            .background(bg),
+        contentAlignment = Alignment.Center,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = fg,
+                modifier = Modifier.size(18.dp),
+            )
+            Text(
+                text = label,
+                color = fg,
+                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
+    }
+}
+
+@Composable
 private fun SheetAction(
     icon: ImageVector,
     label: String,
@@ -406,7 +421,9 @@ private fun SheetAction(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp),
+            .heightIn(min = 58.dp)
+            .clip(MaterialTheme.shapes.large)
+            .background(colors.background),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
@@ -417,32 +434,28 @@ private fun SheetAction(
         ) {
             Box(
                 modifier = Modifier
-                    .size(36.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(colors.tagBackground),
+                    .size(38.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(colors.cardBackground),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = colors.textPrimary,
-                    modifier = Modifier.size(18.dp),
+                    modifier = Modifier.size(20.dp),
                 )
             }
             Text(
                 text = label,
                 color = colors.textPrimary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.padding(start = 12.dp),
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                modifier = Modifier.padding(start = 14.dp),
             )
         }
     }
 }
 
-/**
- * 首页预算的入口。先调整预算，再选隐藏。不直接打开预算页。
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BudgetHomeSheet(
@@ -467,7 +480,7 @@ private fun BudgetHomeSheet(
         sheetState = sheetState,
         containerColor = colors.cardBackground,
         contentColor = colors.textPrimary,
-        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
         dragHandle = { BottomSheetDefaults.DragHandle(color = colors.divider) },
         tonalElevation = 0.dp,
     ) {
@@ -475,14 +488,15 @@ private fun BudgetHomeSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(bottom = 12.dp),
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 20.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
                 text = stringResource(R.string.bill_budget_title),
                 color = colors.textPrimary,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.padding(bottom = 4.dp),
             )
             SheetAction(
                 icon = Icons.Outlined.Settings,
@@ -520,7 +534,7 @@ private fun BillScreenPreview() {
     }
 }
 
-@Preview(name = "Dark", showBackground = true, backgroundColor = 0xFF212529)
+@Preview(name = "Dark", showBackground = true, backgroundColor = 0xFF101216)
 @Composable
 private fun BillScreenDarkPreview() {
     CogniBalTheme(darkTheme = true) {
@@ -537,27 +551,10 @@ private fun BillScreenDarkPreview() {
     }
 }
 
-@Preview(name = "Vitality", showBackground = true)
+@Preview(name = "Mint", showBackground = true)
 @Composable
-private fun BillScreenVitalityPreview() {
-    CogniBalTheme(themeStyle = AppThemeStyle.Vitality, darkTheme = false) {
-        PageBackgroundHost {
-            BillScreen(
-                uiState = previewHome,
-                onSelect = {},
-                onCreateAccount = {},
-                onEditAccount = {},
-                onViewAll = {},
-                onOpenBudget = {},
-            )
-        }
-    }
-}
-
-@Preview(name = "Neon", showBackground = true)
-@Composable
-private fun BillScreenNeonPreview() {
-    CogniBalTheme(themeStyle = AppThemeStyle.Neon, darkTheme = false) {
+private fun BillScreenMintPreview() {
+    CogniBalTheme(themeStyle = AppThemeStyle.Cream, darkTheme = false) {
         PageBackgroundHost {
             BillScreen(
                 uiState = previewHome,
@@ -593,86 +590,68 @@ private val previewHome = BillHomeUiState(
     currencySymbol = "¥",
     currentId = 1L,
     totalAssets = 1_285_000L,
-    monthIncome = 860_000L,
-    monthExpense = 246_000L,
-    monthBalance = 614_000L,
+    monthIncome = 882_000L,
+    monthExpense = 678_230L,
+    monthBalance = 203_770L,
     budgets = listOf(
         BudgetProgressUi(
             id = 1L,
             categoryName = null,
             missingCategory = false,
-            spent = 246_000L,
-            limit = 500_000L,
-            ratio = 0.49f,
+            spent = 678_230L,
+            limit = 882_000L,
+            ratio = 0.77f,
             level = BudgetLevel.Normal,
-        ),
-        BudgetProgressUi(
-            id = 2L,
-            categoryName = "餐饮",
-            missingCategory = false,
-            spent = 180_000L,
-            limit = 200_000L,
-            ratio = 0.9f,
-            level = BudgetLevel.Near,
         ),
     ),
     recent = listOf(
         BillRowUi(
             id = 1L,
-            categoryName = "餐饮",
+            categoryName = "咖啡",
             type = BillType.Expense,
-            time = LocalDate.now().atTime(12, 30),
-            signedAmount = -3_500L,
-            categoryIconKey = "restaurant",
-            categoryColorKey = "#FFF03E3E",
+            time = LocalDate.now().atTime(8, 30),
+            signedAmount = -2_800L,
+            categoryIconKey = "coffee",
+            categoryColorKey = "#FF0CA678",
         ),
         BillRowUi(
             id = 2L,
-            categoryName = "交通",
+            categoryName = "购物",
             type = BillType.Expense,
-            time = LocalDate.now().atTime(8, 15),
-            signedAmount = -1_200L,
-            categoryIconKey = "directions_bus",
-            categoryColorKey = "#FF0CA678",
+            time = LocalDate.now().minusDays(1).atTime(19, 16),
+            signedAmount = -15_680L,
+            categoryIconKey = "shopping_bag",
+            categoryColorKey = "#FFFD7E14",
+            remark = "超市采购",
         ),
         BillRowUi(
             id = 3L,
-            categoryName = "工资",
-            type = BillType.Income,
-            time = LocalDate.now().minusDays(1).atTime(9, 0),
-            signedAmount = 860_000L,
-            categoryIconKey = "payments",
-            categoryColorKey = "#FF0CA678",
+            categoryName = "交通",
+            type = BillType.Expense,
+            time = LocalDate.now().minusDays(1).atTime(8, 15),
+            signedAmount = -600L,
+            categoryIconKey = "directions_bus",
+            categoryColorKey = "#FF228BE6",
         ),
     ),
     accounts = listOf(
         AccountItemUi(
             id = 1L,
-            name = "现金",
-            type = AccountType.Cash,
-            iconKey = "wallet",
-            colorKey = "teal",
-            balance = 320_000L,
+            name = "储蓄卡",
+            type = AccountType.DebitCard,
+            iconKey = "bank",
+            colorKey = "blue",
+            balance = 1_085_000L,
             enabled = true,
             selected = true,
         ),
         AccountItemUi(
             id = 2L,
-            name = "工资卡",
-            type = AccountType.DebitCard,
-            iconKey = "card",
-            colorKey = "blue",
-            balance = 1_085_000L,
-            enabled = true,
-            selected = false,
-        ),
-        AccountItemUi(
-            id = 3L,
-            name = "信用卡",
-            type = AccountType.CreditCard,
-            iconKey = "card",
-            colorKey = "clay",
-            balance = -120_000L,
+            name = "现金",
+            type = AccountType.Cash,
+            iconKey = "wallet",
+            colorKey = "teal",
+            balance = 320_000L,
             enabled = true,
             selected = false,
         ),

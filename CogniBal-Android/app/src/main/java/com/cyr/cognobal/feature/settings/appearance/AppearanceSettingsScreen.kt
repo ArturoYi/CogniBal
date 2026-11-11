@@ -14,20 +14,21 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyr.cognobal.R
 import com.cyr.cognobal.locale.AppLanguage
+import com.cyr.cognobal.screen.feature.settings.SettingActionItem
+import com.cyr.cognobal.screen.feature.settings.SettingsSectionCard
+import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
+import com.cyr.cognobal.screen.feature.settings.ThemeModeSelector
+import com.cyr.cognobal.screen.feature.settings.ThemeStyleSelector
 import com.cyr.cognobal.screen.feature.settings.appearance.state.AppearanceSettingsUiEvent
 import com.cyr.cognobal.screen.feature.settings.appearance.state.AppearanceSettingsUiState
 import com.cyr.cognobal.ui.background.PageBackgroundHost
 import com.cyr.cognobal.ui.preview.FormFactorPreviews
 import com.cyr.cognobal.ui.theme.AppThemeStyle
 import com.cyr.cognobal.ui.theme.CogniBalTheme
-import com.cyr.cognobal.screen.feature.settings.SettingActionItem
-import com.cyr.cognobal.screen.feature.settings.SettingsDivider
-import com.cyr.cognobal.screen.feature.settings.SettingsSectionCard
-import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
-import com.cyr.cognobal.screen.feature.settings.ThemeModeSelector
-import com.cyr.cognobal.screen.feature.settings.ThemeStyleSelector
 
-/** 外观设置入口。状态在 ViewModel，语言写入应用内区域。 */
+/**
+ * 外观设置：语言、深浅模式分段器、单色相主题盘各自独立成卡，依靠控件形态直观表达，去除多余说明。
+ */
 @Composable
 internal fun AppearanceSettingsRoute(
     onBack: () -> Unit,
@@ -67,12 +68,14 @@ internal fun AppearanceSettingsScreen(
                 valueText = languageLabel(languageTag),
                 onClick = { onEvent(AppearanceSettingsUiEvent.LanguageClicked) },
             )
-            SettingsDivider()
+        }
+        SettingsSectionCard {
             ThemeModeSelector(
                 currentPreference = uiState.darkMode,
                 onSelectPreference = { onEvent(AppearanceSettingsUiEvent.DarkModeChanged(it)) },
             )
-            SettingsDivider()
+        }
+        SettingsSectionCard {
             ThemeStyleSelector(
                 onSelectStyle = { onEvent(AppearanceSettingsUiEvent.ThemeStyleChanged(it)) },
             )

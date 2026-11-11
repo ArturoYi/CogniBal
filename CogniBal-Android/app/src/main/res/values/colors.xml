@@ -7,6 +7,6 @@
     <color name="icon_card_mid">#FFE6E6E6</color>
     <color name="icon_card_front">#FFFFFFFF</color>
     <color name="widget_surface">#FFFFFFFF</color>
-    <color name="widget_text_primary">#FF111111</color>
-    <color name="widget_text_secondary">#FF666666</color>
+    <color name="widget_text_primary">#FF18191E</color>
+    <color name="widget_text_secondary">#FF5A6070</color>
 </resources>

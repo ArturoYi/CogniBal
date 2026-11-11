@@ -10,12 +10,12 @@ import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 
 /**
- * 首页两个标签各自一条返回栈，当前标签记在 [homeTab]。
- *
- * 记一笔和设置二级页都压在当前标签的栈上。界面调用 [selectHome]、[navigate]、[openEntry] 和 [back]。
+ * 四个一级标签（首页、统计、资产、设置）各自一条返回栈，当前标签记在 [homeTab]。
  */
 internal class AppNavigator(
     val billStack: NavBackStack<NavKey>,
+    val statisticsStack: NavBackStack<NavKey>,
+    val assetsStack: NavBackStack<NavKey>,
     val settingsStack: NavBackStack<NavKey>,
     private val homeTabState: MutableState<HomeTab>,
 ) {
@@ -28,18 +28,33 @@ internal class AppNavigator(
     val activeStack: NavBackStack<NavKey>
         get() = when (homeTab) {
             HomeTab.Bill -> billStack
+            HomeTab.Statistics -> statisticsStack
+            HomeTab.Assets -> assetsStack
             HomeTab.Settings -> settingsStack
         }
 
     fun selectHome(tab: HomeTab) {
-        homeTab = tab
+        if (homeTab == tab) {
+            val stack = activeStack
+            while (stack.size > 1) {
+                stack.removeLastOrNull()
+            }
+        } else {
+            homeTab = tab
+        }
     }
 
-    /**
-     * 从桌面快捷方式记一笔。先回到账单栈的首页，再打开对应类型，避免叠在设置页或上一张表单上。
-     */
+    /** 从桌面小组件打开首页账本。 */
+    fun showBill() {
+        homeTab = HomeTab.Bill
+        while (billStack.size > 1) {
+            billStack.removeLastOrNull()
+        }
+    }
+
+    /** 从桌面快捷方式记一笔。 */
     fun openEntry(typeCode: Int) {
-        selectHome(HomeTab.Bill)
+        homeTab = HomeTab.Bill
         val entry = AddExpense(typeCode)
         if (billStack.lastOrNull() == entry) return
         while (billStack.size > 1) {
@@ -49,11 +64,30 @@ internal class AppNavigator(
     }
 
     fun navigate(key: NavKey) {
+        when (key) {
+            Statistics -> {
+                homeTab = HomeTab.Statistics
+                return
+            }
+            Assets -> {
+                homeTab = HomeTab.Assets
+                return
+            }
+            Bill -> {
+                homeTab = HomeTab.Bill
+                return
+            }
+            SettingsList -> {
+                homeTab = HomeTab.Settings
+                return
+            }
+        }
         val stack = activeStack
         val top = stack.lastOrNull()
         if (top == key) return
-        val replacesDetail = (key in settingsDetailKeys && top in settingsDetailKeys) ||
-            (key is AccountEditor && top is AccountEditor)
+        val replacesDetail =
+            (homeTab == HomeTab.Settings && key in settingsDetailKeys && top in settingsDetailKeys) ||
+                (key is AccountEditor && top is AccountEditor)
         if (replacesDetail) {
             stack[stack.lastIndex] = key
         } else {
@@ -71,7 +105,6 @@ internal class AppNavigator(
 
 @Composable
 internal fun rememberAppNavigator(initialEntryTypeCode: Int? = null): AppNavigator {
-    // 只取第一次的快捷方式。消费掉之后不要重建返回栈，否则记一笔页会被拆掉。
     val entryCode = remember { initialEntryTypeCode }
     val billStack = rememberNavBackStack(
         *if (entryCode == null) {
@@ -80,11 +113,15 @@ internal fun rememberAppNavigator(initialEntryTypeCode: Int? = null): AppNavigat
             arrayOf<NavKey>(Bill, AddExpense(entryCode))
         },
     )
+    val statisticsStack = rememberNavBackStack(Statistics)
+    val assetsStack = rememberNavBackStack(Assets)
     val settingsStack = rememberNavBackStack(SettingsList)
     val homeTab = rememberSaveable { mutableStateOf(HomeTab.Bill) }
-    return remember(billStack, settingsStack, homeTab) {
+    return remember(billStack, statisticsStack, assetsStack, settingsStack, homeTab) {
         AppNavigator(
             billStack = billStack,
+            statisticsStack = statisticsStack,
+            assetsStack = assetsStack,
             settingsStack = settingsStack,
             homeTabState = homeTab,
         )

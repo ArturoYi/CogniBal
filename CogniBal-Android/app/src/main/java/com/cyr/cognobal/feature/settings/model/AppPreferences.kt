@@ -10,7 +10,7 @@ import com.cyr.cognobal.ui.theme.AppThemeStyle
  */
 data class AppPreferences(
     val themeStyle: AppThemeStyle = AppThemeStyle.WarmCream,
-    val darkMode: DarkModePreference = DarkModePreference.DARK,
+    val darkMode: DarkModePreference = DarkModePreference.LIGHT,
     val currency: CurrencyPreference = CurrencyPreference.CNY,
     /** 接近或超过预算时是否推送通知。默认关闭。 */
     val budgetNotify: Boolean = false,

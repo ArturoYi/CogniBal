@@ -1,8 +1,7 @@
 package com.cyr.cognobal.screen.feature.settings.reports
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -13,7 +12,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyr.cognobal.R
@@ -33,7 +31,6 @@ import com.cyr.cognobal.ui.theme.CogniBalTheme
 import com.cyr.cognobal.ui.theme.appColors
 import java.time.YearMonth
 
-/** 报表入口。月份趋势来自 ViewModel。 */
 @Composable
 internal fun ReportsRoute(
     onBack: () -> Unit,
@@ -61,64 +58,57 @@ internal fun ReportsScreen(
         onBack = onBack,
         modifier = modifier,
     ) {
-        InsightCard {
-            InsightSegments(
-                labels = listOf(
-                    stringResource(R.string.reports_span_six),
-                    stringResource(R.string.reports_span_twelve),
-                ),
-                selectedIndex = if (uiState.span == ReportSpan.SixMonths) 0 else 1,
-                onSelect = { index ->
-                    onEvent(
-                        ReportsUiEvent.SelectSpan(
-                            if (index == 0) ReportSpan.SixMonths else ReportSpan.TwelveMonths,
-                        ),
-                    )
-                },
-            )
-            if (uiState.months.isNotEmpty()) {
-                TrendChart(months = uiState.months)
-            }
-        }
+        InsightSegments(
+            labels = listOf(
+                stringResource(R.string.reports_span_six),
+                stringResource(R.string.reports_span_twelve),
+            ),
+            selectedIndex = if (uiState.span == ReportSpan.SixMonths) 0 else 1,
+            onSelect = { index ->
+                onEvent(
+                    ReportsUiEvent.SelectSpan(
+                        if (index == 0) ReportSpan.SixMonths else ReportSpan.TwelveMonths,
+                    ),
+                )
+            },
+        )
         if (uiState.months.isNotEmpty()) {
             InsightCard {
-                ReportTable(
-                    months = uiState.months.asReversed(),
-                    currencySymbol = uiState.currencySymbol,
-                )
+                TrendChart(months = uiState.months)
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                uiState.months.asReversed().forEach { month ->
+                    ReportMonthCard(
+                        month = month,
+                        currencySymbol = uiState.currencySymbol,
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
-private fun ReportTable(
-    months: List<ReportMonthUi>,
+private fun ReportMonthCard(
+    month: ReportMonthUi,
     currencySymbol: String,
 ) {
     val colors = MaterialTheme.appColors
-    Column {
-        months.forEachIndexed { index, month ->
-            if (index > 0) {
-                Spacer(Modifier.height(16.dp))
-            }
-            Text(
-                text = formatYearMonth(month.month),
-                color = colors.textPrimary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            MoneySummary(
-                income = month.income,
-                expense = month.expense,
-                balance = month.balance,
-                balanceOverflow = month.balanceOverflow,
-                currencySymbol = currencySymbol,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        }
+    InsightCard(itemSpacing = 12.dp) {
+        Text(
+            text = formatYearMonth(month.month),
+            color = colors.textPrimary,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        MoneySummary(
+            income = month.income,
+            expense = month.expense,
+            balance = month.balance,
+            balanceOverflow = month.balanceOverflow,
+            currencySymbol = currencySymbol,
+        )
     }
 }
 

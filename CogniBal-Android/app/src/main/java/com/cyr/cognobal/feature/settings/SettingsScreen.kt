@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -17,18 +18,22 @@ import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.Backup
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.Savings
 import androidx.compose.material.icons.outlined.Security
-import androidx.compose.material.icons.outlined.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -37,17 +42,15 @@ import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.annotation.StringRes
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,6 +71,7 @@ import com.cyr.cognobal.navigation.Reports
 import com.cyr.cognobal.navigation.SecuritySettings
 import com.cyr.cognobal.navigation.Statistics
 import com.cyr.cognobal.screen.feature.legal.LegalDocumentKind
+import com.cyr.cognobal.screen.feature.settings.component.HeaderCircleButton
 import com.cyr.cognobal.screen.feature.settings.state.SettingsUiEvent
 import com.cyr.cognobal.screen.feature.settings.state.SettingsUiState
 import com.cyr.cognobal.ui.background.PageBackgroundHost
@@ -79,9 +83,6 @@ import com.cyr.cognobal.ui.theme.AppThemeStyle
 import com.cyr.cognobal.ui.theme.CogniBalTheme
 import com.cyr.cognobal.ui.theme.appColors
 
-/**
- * 设置列表。跳转由全局路由表处理，这里只把目的地交出去。
- */
 @Composable
 internal fun SettingsListRoute(
     onNavigate: (NavKey) -> Unit,
@@ -125,13 +126,10 @@ internal fun SettingsListRoute(
 }
 
 /**
- * 设置页主界面。
- *
- * 核心视觉与结构：
- * 1. 柔和主色+中性灰打底，无刺眼高饱和，无突兀边框；
- * 2. 统一圆角 (20.dp) 与轻阴影，模块按意图分层分组，富有律动与呼吸感；
- * 3. 窄屏自上而下：使用统计 -> 总览、统计、报表、预算、资产横跨整行 -> 备份、安全、外观 -> 通用与支持，反馈在最底；
- * 4. 宽屏（折叠屏展开/平板/桌面）：快捷入口仍横跨整行，下面偏好与系统设置并排。
+ * 设置页（无账号本地账本极简重构）：
+ * 1. 顶部标题「设置」 + 右上角外观快捷入口
+ * 2. 曜石深灰伴随卡（陪伴天数 · 累计笔数 + 香槟金备份快捷按钮，无虚假头像与 VIP）
+ * 3. 纯白分组菜单列表（账本工具 / 偏好与数据 / 支持与版本，零次要废话描述）
  */
 @Composable
 internal fun SettingsScreen(
@@ -148,8 +146,8 @@ internal fun SettingsScreen(
     SettingsHome(
         uiState = uiState,
         onEvent = onEvent,
-        onOpenShortcut = onOpenShortcut,
         onNavigate = onNavigate,
+        versionName = versionName,
         modifier = modifier,
     )
 
@@ -211,98 +209,116 @@ internal fun SettingsScreen(
 private fun SettingsHome(
     uiState: SettingsUiState,
     onEvent: (SettingsUiEvent) -> Unit,
-    onOpenShortcut: (SettingsShortcut) -> Unit,
     onNavigate: (NavKey) -> Unit,
+    versionName: String,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
     val contentPadding = listContentPadding()
     val layoutDirection = LocalLayoutDirection.current
-    val versionName = appVersionName()
     val scrollState = rememberScrollState()
 
     BoxWithConstraints(modifier = modifier.fillMaxSize()) {
-    val layout = settingsLayoutSpec(maxWidth, maxHeight)
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = layout.maxContentWidth)
-                .fillMaxWidth()
-                .verticalScroll(scrollState)
-                .padding(
-                    start = contentPadding.calculateLeftPadding(layoutDirection),
-                    end = contentPadding.calculateRightPadding(layoutDirection),
-                    top = contentPadding.calculateTopPadding(),
-                    bottom = contentPadding.calculateBottomPadding(),
-                )
-                .consumeWindowInsets(contentPadding)
-                .padding(
-                    horizontal = layout.horizontalPadding,
-                    vertical = if (layout.compactHeight) 10.dp else 14.dp,
-                ),
-            verticalArrangement = Arrangement.spacedBy(if (layout.compactHeight) 12.dp else 16.dp),
+        val layout = settingsLayoutSpec(maxWidth, maxHeight)
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter,
         ) {
-            UserStatsHeader(
-                daysInUse = uiState.daysInUse,
-                totalRecords = uiState.totalRecordsCount,
-            )
-            SettingsShortcutBar(onShortcutClick = onOpenShortcut)
-            if (layout.isWide) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = layout.maxContentWidth)
+                    .fillMaxWidth()
+                    .verticalScroll(scrollState)
+                    .padding(
+                        start = contentPadding.calculateLeftPadding(layoutDirection),
+                        end = contentPadding.calculateRightPadding(layoutDirection),
+                        top = contentPadding.calculateTopPadding(),
+                        bottom = contentPadding.calculateBottomPadding(),
+                    )
+                    .consumeWindowInsets(contentPadding)
+                    .padding(
+                        horizontal = layout.horizontalPadding,
+                        vertical = if (layout.compactHeight) 10.dp else 14.dp,
+                    ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
+                    Text(
+                        text = stringResource(R.string.tab_settings),
+                        color = colors.textPrimary,
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    )
+                    HeaderCircleButton(
+                        icon = Icons.Outlined.Palette,
+                        description = stringResource(R.string.settings_appearance),
+                        onClick = dropUnlessResumed { onNavigate(AppearanceSettings) },
+                    )
+                }
+
+                UserStatsHeader(
+                    daysInUse = uiState.daysInUse,
+                    totalRecords = uiState.totalRecordsCount,
+                    onBackupClick = dropUnlessResumed { onNavigate(BackupSettings) },
+                )
+
+                if (layout.isWide) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            SettingsPageGroup(
+                                entries = ledgerFeatureEntries,
+                                onNavigate = onNavigate,
+                            )
+                        }
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            SettingsPageGroup(
+                                entries = preferenceAndSecurityEntries,
+                                onNavigate = onNavigate,
+                            )
+                            SettingsCardGroup(
+                                entries = systemAndSupportEntries,
+                                versionName = versionName,
+                                onEvent = onEvent,
+                                onNavigate = onNavigate,
+                            )
+                        }
+                    }
+                } else {
+                    SettingsPageGroup(
+                        entries = ledgerFeatureEntries,
+                        onNavigate = onNavigate,
+                    )
                     SettingsPageGroup(
                         entries = preferenceAndSecurityEntries,
                         onNavigate = onNavigate,
-                        modifier = Modifier.weight(1f),
                     )
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
-                    ) {
-                        SettingsCardGroup(
-                            entries = systemAndSupportEntries,
-                            onEvent = onEvent,
-                            onNavigate = onNavigate,
-                        )
-                        Text(
-                            text = stringResource(R.string.app_version_footer, versionName),
-                            color = colors.textTertiary.copy(alpha = 0.6f),
-                            fontSize = 11.5.sp,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 4.dp),
-                        )
-                    }
+                    SettingsCardGroup(
+                        entries = systemAndSupportEntries,
+                        versionName = versionName,
+                        onEvent = onEvent,
+                        onNavigate = onNavigate,
+                    )
                 }
-            } else {
-                SettingsPageGroup(
-                    entries = preferenceAndSecurityEntries,
-                    onNavigate = onNavigate,
-                )
-                SettingsCardGroup(
-                    entries = systemAndSupportEntries,
-                    onEvent = onEvent,
-                    onNavigate = onNavigate,
-                )
-                Text(
-                    text = stringResource(R.string.app_version_footer, versionName),
-                    color = colors.textTertiary.copy(alpha = 0.6f),
-                    fontSize = 11.5.sp,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp, bottom = 8.dp),
-                )
             }
         }
-    }
     }
 }
 
@@ -313,12 +329,6 @@ internal data class SettingsLayoutSpec(
     val horizontalPadding: Dp,
 )
 
-/**
- * 按这一页实际拿到的宽高决定栏数。
- *
- * 列表-详情并排时，列表窗格往往比整窗窄，不能再用窗口宽度。
- * 预览根节点有时没有上界，那时退回窗口尺寸。
- */
 @Composable
 internal fun settingsLayoutSpec(maxWidth: Dp, maxHeight: Dp): SettingsLayoutSpec {
     val windowSizeClass = LocalCogniBalScaffold.current?.windowAdaptiveInfo?.windowSizeClass
@@ -345,9 +355,8 @@ internal fun settingsLayoutSpec(maxWidth: Dp, maxHeight: Dp): SettingsLayoutSpec
         compactHeight = compactHeight,
         maxContentWidth = if (isWide) 1080.dp else Dp.Unspecified,
         horizontalPadding = when {
-            expandedWidth -> 24.dp
-            isWide -> 20.dp
-            else -> 16.dp
+            expandedWidth -> 28.dp
+            else -> 18.dp
         },
     )
 }
@@ -358,32 +367,56 @@ private val MediumHeight = WindowSizeClass.HEIGHT_DP_MEDIUM_LOWER_BOUND.dp
 
 private data class SettingsEntry(
     val icon: ImageVector,
-    @StringRes val titleRes: Int,
+    @param:StringRes val titleRes: Int,
     val event: SettingsUiEvent? = null,
     val destination: NavKey? = null,
+    val showsVersion: Boolean = false,
 )
 
 private data class SettingsPageEntry(
     val icon: ImageVector,
-    @StringRes val titleRes: Int,
+    @param:StringRes val titleRes: Int,
     val key: NavKey,
 )
 
+private val ledgerFeatureEntries = listOf(
+    SettingsPageEntry(
+        icon = Icons.Outlined.CalendarMonth,
+        titleRes = R.string.shortcut_overview,
+        key = Overview,
+    ),
+    SettingsPageEntry(
+        icon = Icons.Outlined.Savings,
+        titleRes = R.string.shortcut_budget,
+        key = Budget,
+    ),
+    SettingsPageEntry(
+        icon = Icons.AutoMirrored.Outlined.TrendingUp,
+        titleRes = R.string.shortcut_reports,
+        key = Reports,
+    ),
+)
+
 private val preferenceAndSecurityEntries = listOf(
+    SettingsPageEntry(
+        icon = Icons.Outlined.Palette,
+        titleRes = R.string.settings_appearance,
+        key = AppearanceSettings,
+    ),
     SettingsPageEntry(
         icon = Icons.Outlined.Backup,
         titleRes = R.string.settings_backup,
         key = BackupSettings,
     ),
     SettingsPageEntry(
+        icon = Icons.Outlined.Payments,
+        titleRes = R.string.settings_more,
+        key = MoreSettings,
+    ),
+    SettingsPageEntry(
         icon = Icons.Outlined.Security,
         titleRes = R.string.settings_security,
         key = SecuritySettings,
-    ),
-    SettingsPageEntry(
-        icon = Icons.Outlined.Palette,
-        titleRes = R.string.settings_appearance,
-        key = AppearanceSettings,
     ),
 )
 
@@ -397,19 +430,15 @@ private fun SettingsShortcut.page(): NavKey? = when (this) {
 
 private val systemAndSupportEntries = listOf(
     SettingsEntry(
-        icon = Icons.Outlined.Tune,
-        titleRes = R.string.settings_more,
-        destination = MoreSettings,
+        icon = Icons.Outlined.Mail,
+        titleRes = R.string.settings_feedback,
+        event = SettingsUiEvent.SendFeedback,
     ),
     SettingsEntry(
         icon = Icons.Outlined.Info,
         titleRes = R.string.settings_about,
         event = SettingsUiEvent.OpenAboutDialog,
-    ),
-    SettingsEntry(
-        icon = Icons.Outlined.Mail,
-        titleRes = R.string.settings_feedback,
-        event = SettingsUiEvent.SendFeedback,
+        showsVersion = true,
     ),
 )
 
@@ -434,6 +463,7 @@ private fun SettingsPageGroup(
 @Composable
 private fun SettingsCardGroup(
     entries: List<SettingsEntry>,
+    versionName: String,
     onEvent: (SettingsUiEvent) -> Unit,
     onNavigate: (NavKey) -> Unit,
     modifier: Modifier = Modifier,
@@ -445,6 +475,7 @@ private fun SettingsCardGroup(
             SettingActionItem(
                 icon = entry.icon,
                 title = stringResource(entry.titleRes),
+                valueText = if (entry.showsVersion) "v$versionName" else "",
                 onClick = if (destination != null) {
                     dropUnlessResumed { onNavigate(destination) }
                 } else {
@@ -455,10 +486,8 @@ private fun SettingsCardGroup(
     }
 }
 
-/** 与协议正文里的联系邮箱一致。改地址时两处一起改。 */
 private const val FEEDBACK_EMAIL = "lzm.cyr@gmail.com"
 
-/** 打开系统邮件的写信界面，收件人已填好。没有可处理的邮件应用时返回 false。 */
 private fun Context.composeFeedbackEmail(subject: String): Boolean {
     val intent = Intent(Intent.ACTION_SENDTO).apply {
         data = Uri.parse("mailto:$FEEDBACK_EMAIL?subject=${Uri.encode(subject)}")
@@ -471,10 +500,9 @@ private fun Context.composeFeedbackEmail(subject: String): Boolean {
     }
 }
 
-/** 底部注脚用的版本号，与安装包 versionName 一致。预览里没有包信息时回退到占位。 */
 @Composable
 private fun appVersionName(): String {
-    if (LocalInspectionMode.current) return "1.0"
+    if (LocalInspectionMode.current) return "1.0.0"
     val context = LocalContext.current
     return remember(context) {
         val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -486,7 +514,7 @@ private fun appVersionName(): String {
             @Suppress("DEPRECATION")
             context.packageManager.getPackageInfo(context.packageName, 0)
         }
-        info.versionName.orEmpty().ifEmpty { "1.0" }
+        info.versionName.orEmpty().ifEmpty { "1.0.0" }
     }
 }
 
@@ -496,7 +524,7 @@ private fun SettingsScreenWarmCreamPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
         PageBackgroundHost {
             SettingsScreen(
-                uiState = SettingsUiState(),
+                uiState = SettingsUiState(daysInUse = 128, totalRecordsCount = 342),
                 onEvent = {},
                 onOpenShortcut = {},
                 onOpenSourceLicenses = {},
@@ -507,14 +535,12 @@ private fun SettingsScreenWarmCreamPreview() {
 }
 
 @Preview(name = "Narrow", widthDp = 320, heightDp = 720, showBackground = true)
-@Preview(name = "Narrow el", widthDp = 320, heightDp = 720, locale = "el", showBackground = true)
-@Preview(name = "Cover", widthDp = 280, heightDp = 640, showBackground = true)
 @Composable
 private fun SettingsScreenNarrowPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.WarmCream, darkTheme = false) {
         PageBackgroundHost {
             SettingsScreen(
-                uiState = SettingsUiState(),
+                uiState = SettingsUiState(daysInUse = 128, totalRecordsCount = 342),
                 onEvent = {},
                 onOpenShortcut = {},
                 onOpenSourceLicenses = {},
@@ -530,7 +556,7 @@ private fun SettingsScreenMonochromeDarkPreview() {
     CogniBalTheme(themeStyle = AppThemeStyle.Monochrome, darkTheme = true) {
         PageBackgroundHost {
             SettingsScreen(
-                uiState = SettingsUiState(),
+                uiState = SettingsUiState(daysInUse = 128, totalRecordsCount = 342),
                 onEvent = {},
                 onOpenShortcut = {},
                 onOpenSourceLicenses = {},

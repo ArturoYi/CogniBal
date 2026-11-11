@@ -1,11 +1,24 @@
 package com.cyr.cognobal.widget
 
+import kotlin.math.ceil
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WidgetFitTest {
+    @Test
+    fun responsiveSizesStayInsideTheRemoteViewsLimit() {
+        assertTrue(LedgerWidgetSizes.isNotEmpty())
+        assertTrue(LedgerWidgetSizes.size <= 16)
+        val areas = LedgerWidgetSizes.map { it.width.value * it.height.value }
+        assertEquals(areas.size, areas.distinct().size)
+        LedgerWidgetSizes.forEach { size ->
+            assertTrue(size.width.value > 0f)
+            assertTrue(size.height.value > 0f)
+        }
+    }
+
     @Test
     fun wideCardKeepsEveryFigure() {
         val layout = fit(360f, 240f, sample())
@@ -14,7 +27,10 @@ class WidgetFitTest {
         assertTrue(layout.showMonth)
         assertTrue(layout.showLabels)
         assertTrue(layout.showAction)
-        assertEquals(WidgetArrange.Columns, layout.arrange)
+        assertTrue(layout.centered)
+        assertTrue(layout.balanceLabelInHeader)
+        assertEquals(WidgetArrange.Board, layout.arrange)
+        assertTrue(layout.balanceSp >= layout.amountSp)
         assertTrue(layout.contentWidth <= 360f)
         assertTrue(layout.contentHeight <= 240f)
     }
@@ -25,30 +41,51 @@ class WidgetFitTest {
         assertTrue(layout.fits)
         assertEquals(3, layout.slots.size)
         assertTrue(layout.showLabels)
-        assertTrue(layout.arrange != WidgetArrange.Columns)
+        assertEquals(WidgetArrange.Stack, layout.arrange)
         assertTrue(layout.contentWidth <= 140f)
     }
 
     @Test
-    fun tinyCardKeepsCompleteShortAmountsAndDropsTheMonth() {
+    fun tinyCardKeepsTheBalanceReadable() {
         val layout = fit(110f, 80f, sample())
         assertTrue(layout.fits)
-        assertEquals(3, layout.slots.size)
-        assertFalse(layout.showMonth)
+        assertTrue(WidgetSlot.Balance in layout.slots)
         assertFalse(layout.showAction)
         assertTrue(layout.contentWidth <= 110f)
         assertTrue(layout.contentHeight <= 80f)
     }
 
     @Test
-    fun tinyCardDropsSideFiguresWhenTheBalanceItselfIsWide() {
+    fun tinyCardShrinksAWideBalanceInsteadOfClippingIt() {
         val layout = fit(110f, 80f, sample(money = "¥9,999,999.99"))
         assertTrue(layout.fits)
-        assertEquals(listOf(WidgetSlot.Balance), layout.slots)
-        assertTrue(layout.showLabels)
-        assertFalse(layout.showMonth)
+        assertTrue(WidgetSlot.Balance in layout.slots)
         assertFalse(layout.showAction)
-        assertTrue(layout.amountSp <= 12f)
+        assertTrue(layout.balanceSp <= 16f)
+        assertTrue(layout.contentWidth <= 110f)
+        assertTrue(layout.contentHeight <= 80f)
+    }
+
+    @Test
+    fun phoneSizedCardLeadsWithTheBalance() {
+        val layout = fit(300f, 136f, sample(money = "¥11,431.10", balance = "¥10,973.03"))
+        assertTrue(layout.fits)
+        assertTrue(layout.centered)
+        assertTrue(layout.showMonth)
+        assertTrue(layout.showBalanceLabel)
+        assertTrue(layout.balanceLabelInHeader)
+        assertTrue(layout.showAction)
+        assertTrue(layout.balanceSp >= 28f)
+        assertEquals(listOf(WidgetSlot.Balance), layout.slots)
+    }
+
+    @Test
+    fun thisPhonePicksTheBreakpointClosestToItsCell() {
+        val chosen = LedgerWidgetSizes
+            .filter { size -> fitsIn(size.width.value, size.height.value, widgetWidth = 305f, widgetHeight = 144f) }
+            .maxBy { it.width.value * it.height.value }
+        assertEquals(300f, chosen.width.value)
+        assertEquals(136f, chosen.height.value)
     }
 
     @Test
@@ -58,7 +95,7 @@ class WidgetFitTest {
         assertTrue(layout.fits)
         assertTrue(WidgetSlot.Balance in layout.slots)
         val inner = 120f - layout.paddingH * 2f - 2f
-        val oneLine = estimate(copy.balance, layout.amountSp, bold = true).width
+        val oneLine = estimate(copy.balance, layout.balanceSp, bold = true).width
         if (oneLine > inner) assertTrue(layout.balanceLines > 1)
     }
 
@@ -81,9 +118,9 @@ class WidgetFitTest {
                 assertEquals(WidgetSlot.Income in layout.slots, WidgetSlot.Expense in layout.slots)
                 if (layout.showAction) {
                     assertTrue(layout.showMonth)
-                    assertEquals(3, layout.slots.size)
+                    assertTrue(layout.centered)
                 }
-                if (!layout.showLabels) {
+                if (!layout.showLabels && !layout.showBalanceLabel) {
                     assertEquals(listOf(WidgetSlot.Balance), layout.slots)
                     assertFalse(layout.showMonth)
                     assertFalse(layout.showAction)
@@ -156,13 +193,17 @@ private fun estimate(text: String, sizeSp: Float, bold: Boolean): WidgetTextSize
     return WidgetTextSize(width, sizeSp * 1.25f)
 }
 
+private fun fitsIn(layoutWidth: Float, layoutHeight: Float, widgetWidth: Float, widgetHeight: Float): Boolean =
+    ceil(widgetWidth) + 1f > layoutWidth && ceil(widgetHeight) + 1f > layoutHeight
+
 private fun score(layout: WidgetLayout): Int {
     var score = 0
     if (WidgetSlot.Income in layout.slots) score += 4
     if (WidgetSlot.Expense in layout.slots) score += 4
     if (WidgetSlot.Balance in layout.slots) score += 8
-    if (layout.showLabels) score += 1
+    if (layout.showLabels || layout.showBalanceLabel) score += 1
     if (layout.showMonth) score += 2
-    if (layout.showAction) score += 1
+    // 两个按钮代替一列收入、一列支出。更大的卡片如果两者都放下，分数更高。
+    if (layout.showAction) score += 8
     return score
 }

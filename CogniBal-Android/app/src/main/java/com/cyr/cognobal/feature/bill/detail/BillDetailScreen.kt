@@ -12,7 +12,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.SwapHoriz
@@ -21,7 +23,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -35,28 +36,23 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.text.TextAutoSize
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyr.cognobal.R
 import com.cyr.cognobal.data.database.model.BillType
-import com.cyr.cognobal.screen.feature.bill.model.accountColorValue
 import com.cyr.cognobal.screen.feature.bill.tool.formatMoney
 import com.cyr.cognobal.screen.feature.expense.model.categoryIcon
 import com.cyr.cognobal.screen.feature.settings.SettingsSectionCard
 import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
 import com.cyr.cognobal.ui.format.formatBillTime
 import com.cyr.cognobal.ui.theme.appColors
-import com.cyr.cognobal.ui.theme.asThemeIdentity
 import java.util.Locale
 
-/** 账单详情。编辑进入记一笔，删除前先确认。 */
 @Composable
 internal fun BillDetailRoute(
     billId: Long,
@@ -105,41 +101,46 @@ internal fun BillDetailScreen(
                 .weight(1f)
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(24.dp),
         ) {
-            AmountCard(uiState = uiState, locale = locale)
+            AmountStage(uiState = uiState, locale = locale)
             FactsCard(uiState = uiState, locale = locale)
             if (uiState.brokenTransfer) {
                 Text(
                     text = stringResource(R.string.bill_detail_broken),
                     color = colors.textSecondary,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
             if (uiState.failed) {
                 Text(
                     text = stringResource(R.string.bill_detail_failed),
                     color = colors.expense,
-                    fontSize = 14.sp,
-                    lineHeight = 20.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
-        DetailButton(
-            text = stringResource(R.string.bill_detail_edit),
-            container = colors.primary,
-            content = colors.onPrimary,
-            enabled = !uiState.deleting && !uiState.brokenTransfer,
-            onClick = onEdit,
-        )
-        DetailButton(
-            text = stringResource(R.string.bill_detail_delete),
-            container = colors.expense.copy(alpha = if (colors.isDark) 0.22f else 0.12f),
-            content = colors.expense,
-            enabled = !uiState.deleting,
-            onClick = { onEvent(BillDetailUiEvent.RequestDelete) },
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            DetailButton(
+                text = stringResource(R.string.bill_detail_delete),
+                container = colors.cardBackground,
+                content = colors.expense,
+                enabled = !uiState.deleting,
+                onClick = { onEvent(BillDetailUiEvent.RequestDelete) },
+                modifier = Modifier.weight(1f),
+            )
+            DetailButton(
+                text = stringResource(R.string.bill_detail_edit),
+                container = colors.inkStrong,
+                content = colors.onInkStrong,
+                enabled = !uiState.deleting && !uiState.brokenTransfer,
+                onClick = onEdit,
+                modifier = Modifier.weight(1f),
+            )
+        }
     }
     if (uiState.showDeleteConfirm) {
         AlertDialog(
@@ -148,14 +149,14 @@ internal fun BillDetailScreen(
                 Text(
                     text = stringResource(R.string.bill_detail_delete_title),
                     color = colors.textPrimary,
-                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.headlineSmall,
                 )
             },
             text = {
                 Text(
                     text = stringResource(R.string.bill_detail_delete_message),
                     color = colors.textSecondary,
-                    lineHeight = 20.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             confirmButton = {
@@ -173,7 +174,7 @@ internal fun BillDetailScreen(
                 }
             },
             containerColor = colors.cardBackground,
-            shape = RoundedCornerShape(24.dp),
+            shape = MaterialTheme.shapes.extraLarge,
         )
     }
 }
@@ -185,7 +186,7 @@ private fun DetailPlaceholder(missing: Boolean) {
         Text(
             text = stringResource(R.string.bill_detail_missing),
             color = colors.textSecondary,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium,
             textAlign = TextAlign.Center,
         )
     } else {
@@ -193,127 +194,94 @@ private fun DetailPlaceholder(missing: Boolean) {
         Text(
             text = "—",
             color = colors.textTertiary,
-            fontSize = 16.sp,
+            style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.clearAndSetSemantics { contentDescription = description },
         )
     }
 }
 
 @Composable
-private fun AmountCard(uiState: BillDetailUiState, locale: Locale) {
+private fun AmountStage(uiState: BillDetailUiState, locale: Locale) {
     val colors = MaterialTheme.appColors
     val title = when (uiState.type) {
         BillType.Transfer -> stringResource(R.string.bill_transfer)
         else -> uiState.categoryName ?: stringResource(R.string.bill_category_missing)
     }
-    val typeLabel = stringResource(
-        when (uiState.type) {
-            BillType.Expense -> R.string.bill_fab_expense
-            BillType.Income -> R.string.bill_fab_income
-            BillType.Transfer -> R.string.bill_fab_transfer
-        },
-    )
-    Surface(
-        color = colors.cardBackground,
-        shape = MaterialTheme.shapes.extraLarge,
-        shadowElevation = 0.dp,
-        modifier = Modifier.fillMaxWidth(),
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Column(
+        DetailMark(uiState)
+        Text(
+            text = title,
+            color = colors.textSecondary,
+            style = MaterialTheme.typography.titleMedium,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        Text(
+            text = formatMoney(uiState.currencySymbol, uiState.signedAmount, locale),
+            color = if (uiState.type == BillType.Income) colors.income else colors.textPrimary,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.displayLarge,
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 26.sp,
+                maxFontSize = 44.sp,
+                stepSize = 1.sp,
+            ),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            DetailMark(uiState)
-            Text(
-                text = title,
-                color = colors.textPrimary,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 16.dp),
-            )
-            Text(
-                text = typeLabel,
-                color = colors.textTertiary,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-            Text(
-                text = formatMoney(uiState.currencySymbol, uiState.signedAmount, locale),
-                color = if (uiState.type == BillType.Income) colors.income else colors.textPrimary,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                style = TextStyle(
-                    fontWeight = FontWeight.Bold,
-                    fontFeatureSettings = "tnum",
-                ),
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 20.sp,
-                    maxFontSize = 32.sp,
-                    stepSize = 1.sp,
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-            )
-        }
+                .padding(top = 8.dp),
+        )
     }
 }
 
 @Composable
 private fun DetailMark(uiState: BillDetailUiState) {
-    val colors = MaterialTheme.appColors
-    val tint = when {
-        uiState.type == BillType.Transfer -> colors.textSecondary
-        uiState.categoryColorKey != null -> accountColorValue(uiState.categoryColorKey).asThemeIdentity()
-        uiState.type == BillType.Income -> colors.income
-        else -> colors.textSecondary
-    }
     val icon = when (uiState.type) {
         BillType.Transfer -> Icons.Outlined.SwapHoriz
         else -> categoryIcon(uiState.categoryIconKey.orEmpty())
     }
+    val tone = com.cyr.cognobal.ui.theme.softBadgeTone(uiState.categoryColorKey.orEmpty())
     Box(
         modifier = Modifier
-            .size(40.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .background(tint.copy(alpha = if (colors.isDark) 0.22f else 0.12f)),
+            .size(56.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(tone.container),
         contentAlignment = Alignment.Center,
     ) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = tint,
-            modifier = Modifier.size(24.dp),
+            tint = tone.content,
+            modifier = Modifier.size(26.dp),
         )
     }
 }
 
 @Composable
 private fun FactsCard(uiState: BillDetailUiState, locale: Locale) {
+    val remark = uiState.remark.trim()
     SettingsSectionCard {
         if (uiState.type == BillType.Transfer) {
             FactRow(stringResource(R.string.bill_detail_from), uiState.accountName)
             FactRow(stringResource(R.string.bill_detail_to), uiState.counterpartyName.orEmpty())
         } else {
             FactRow(stringResource(R.string.bill_entry_account), uiState.accountName)
-            FactRow(
-                stringResource(R.string.bill_detail_category),
-                uiState.categoryName ?: stringResource(R.string.bill_category_missing),
-            )
         }
         val time = uiState.time
         if (time != null) {
             FactRow(stringResource(R.string.bill_entry_when), formatBillTime(time, locale))
         }
-        if (uiState.remark.isNotBlank()) {
-            FactRow(stringResource(R.string.account_field_remark), uiState.remark)
+        if (remark.isNotEmpty()) {
+            FactRow(stringResource(R.string.bill_detail_remark), remark)
         }
     }
 }
@@ -324,22 +292,22 @@ private fun FactRow(label: String, value: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp),
+            .heightIn(min = 48.dp)
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
             text = label,
             color = colors.textTertiary,
-            fontSize = 14.sp,
+            style = MaterialTheme.typography.bodyMedium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.widthIn(max = 96.dp),
         )
         Text(
-            text = value.ifBlank { stringResource(R.string.bill_detail_remark_empty) },
+            text = value,
             color = colors.textPrimary,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
             textAlign = TextAlign.End,
             modifier = Modifier
                 .weight(1f)
@@ -355,22 +323,24 @@ private fun DetailButton(
     content: Color,
     enabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.appColors
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp),
-        shape = RoundedCornerShape(16.dp),
+        modifier = modifier.height(52.dp),
+        shape = CircleShape,
         colors = ButtonDefaults.buttonColors(
             containerColor = container,
             contentColor = content,
-            disabledContainerColor = colors.tagBackground,
+            disabledContainerColor = colors.cardBackground,
             disabledContentColor = colors.textTertiary,
         ),
     ) {
-        Text(text = text, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+        )
     }
 }

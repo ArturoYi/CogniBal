@@ -5,11 +5,10 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -37,7 +36,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,7 +54,6 @@ import com.cyr.cognobal.ui.theme.AppThemeStyle
 import com.cyr.cognobal.ui.theme.CogniBalTheme
 import com.cyr.cognobal.ui.theme.appColors
 
-/** 安全与隐私。协议打开全文。退到后台可以盖住账本。 */
 @Composable
 internal fun SecuritySettingsRoute(
     onBack: () -> Unit,
@@ -107,7 +104,6 @@ internal fun SecuritySettingsScreen(
                 SettingActionItem(
                     icon = row.action.icon,
                     title = stringResource(row.titleRes),
-                    subtitle = stringResource(row.subtitleRes),
                     onClick = { onEvent(SecuritySettingsUiEvent.RowClicked(row.action)) },
                 )
             }
@@ -115,28 +111,25 @@ internal fun SecuritySettingsScreen(
     }
 }
 
-/**
- * 整行都能拨动。开关只负责外形，避免和这一行抢焦点、抢读屏。
- */
 @Composable
 private fun HideContentInBackgroundRow(
     checked: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val colors = MaterialTheme.appColors
-    val iconBackground = colors.primary.copy(alpha = if (colors.isDark) 0.18f else 0.12f)
     val interactionSource = remember { MutableInteractionSource() }
     val focused by interactionSource.collectIsFocusedAsState()
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
+            .heightIn(min = 56.dp)
+            .clip(MaterialTheme.shapes.medium)
             .then(
                 if (focused) {
                     Modifier.border(
                         width = 2.dp,
                         color = MaterialTheme.colorScheme.secondary,
-                        shape = MaterialTheme.shapes.small,
+                        shape = MaterialTheme.shapes.medium,
                     )
                 } else {
                     Modifier
@@ -150,38 +143,29 @@ private fun HideContentInBackgroundRow(
                 role = Role.Switch,
                 onValueChange = onCheckedChange,
             )
-            .padding(horizontal = 8.dp, vertical = 16.dp),
+            .padding(horizontal = 8.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Box(
             modifier = Modifier
-                .size(40.dp)
-                .background(iconBackground, MaterialTheme.shapes.small),
+                .size(36.dp)
+                .background(colors.tagBackground, androidx.compose.foundation.shape.RoundedCornerShape(11.dp)),
             contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector = Icons.Outlined.VisibilityOff,
                 contentDescription = null,
-                tint = colors.primary,
-                modifier = Modifier.size(24.dp),
+                tint = colors.textPrimary,
+                modifier = Modifier.size(19.dp),
             )
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = stringResource(R.string.security_hide_content),
-                color = colors.textPrimary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            Spacer(modifier = Modifier.height(2.dp))
-            Text(
-                text = stringResource(R.string.security_hide_content_subtitle),
-                color = colors.textTertiary,
-                fontSize = 12.sp,
-                lineHeight = 16.sp,
-            )
-        }
+        Text(
+            text = stringResource(R.string.security_hide_content),
+            color = colors.textPrimary,
+            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+            modifier = Modifier.weight(1f),
+        )
         Spacer(modifier = Modifier.width(8.dp))
         Switch(
             checked = checked,

@@ -46,7 +46,6 @@ internal sealed interface AddExpenseUiEvent {
     data class CreateCategory(
         val name: String,
         val iconKey: String,
-        val colorHex: String,
     ) : AddExpenseUiEvent
     data class CategorySelected(val categoryId: Long) : AddExpenseUiEvent
     data class AccountSelected(val accountId: Long) : AddExpenseUiEvent

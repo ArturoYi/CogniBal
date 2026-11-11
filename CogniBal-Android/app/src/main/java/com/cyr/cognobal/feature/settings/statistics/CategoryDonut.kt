@@ -24,20 +24,15 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
-import com.cyr.cognobal.screen.feature.bill.model.accountColorValue
 import com.cyr.cognobal.screen.feature.settings.statistics.state.StatisticsSliceRole
 import com.cyr.cognobal.screen.feature.settings.statistics.state.StatisticsSliceUi
 import com.cyr.cognobal.ui.theme.AppColors
+import com.cyr.cognobal.ui.theme.AppThemeStyle
+import com.cyr.cognobal.ui.theme.LocalAppThemeStyle
 import com.cyr.cognobal.ui.theme.appColors
-import com.cyr.cognobal.ui.theme.seatIdentityColor
+import com.cyr.cognobal.ui.theme.categorySliceColor
 import kotlin.math.min
 
-/**
- * 分类环和环旁的合计。合计由页面画在环外面，环就可以收小。
- *
- * 换月份时，同一块的占比和颜色按数值过渡到新值。新出现的块从 0 长出来，消失的块收到 0。
- * 每一帧各块占比加起来仍是一整圈，不做整图淡入淡出。
- */
 @Immutable
 internal data class CategoryDonutChart(
     val slices: List<StatisticsSliceUi>,
@@ -52,22 +47,23 @@ internal fun CategoryDonut(
     modifier: Modifier = Modifier.size(CHART_DIAMETER),
 ) {
     val colors = MaterialTheme.appColors
+    val monochrome = LocalAppThemeStyle.current == AppThemeStyle.Monochrome
     val rings = remember(
         chart.slices,
         colors.chartExpense,
         colors.chartIncome,
         colors.textTertiary,
-        colors.textSecondary,
+        colors.tagBackground,
         colors.isDark,
+        monochrome,
     ) {
-        ringTargets(chart.slices, colors)
+        ringTargets(chart.slices, colors, monochrome)
     }
     val motion = remember { DonutMotion(rings) }
     LaunchedEffect(rings) { motion.go(rings) }
     val frame = motion.frame().ifEmpty {
-        listOf(RingSlice(EMPTY_KEY, 1f, emptyRingColor(colors)))
+        listOf(RingSlice(EMPTY_KEY, 1f, colors.tagBackground))
     }
-    // 合计写在环旁边，图本身不再单独朗读。尺寸由调用方决定，默认是 [CHART_DIAMETER]。
     Box(modifier = modifier.clearAndSetSemantics {}) {
         DonutArcs(
             rings = frame,
@@ -85,7 +81,7 @@ private fun DonutArcs(
         val diameter = min(size.width, size.height)
         if (diameter <= 0f) return@Canvas
         val outerRadius = diameter / 2f
-        val innerRadius = min(diameter, INNER_DIAMETER.toPx()) / 2f
+        val innerRadius = min(diameter * 0.58f, INNER_DIAMETER.toPx() / 2f)
         val strokeWidth = outerRadius - innerRadius
         if (strokeWidth <= 0f) return@Canvas
         val center = Offset(size.width / 2f, size.height / 2f)
@@ -103,14 +99,15 @@ private fun DonutArcs(
             return@Canvas
         }
         var angle = START_ANGLE
-        val overlap = if (rings.size > 1) SEAM_OVERLAP else 0f
+        val gap = if (rings.size > 1) SLICE_GAP_DEGREES else 0f
         for (ring in rings) {
             val sweep = ring.fraction * 360f
+            val visibleSweep = (sweep - gap).coerceAtLeast(0.8f)
             if (sweep > 0f) {
                 drawArc(
                     color = ring.color,
-                    startAngle = angle,
-                    sweepAngle = sweep + overlap,
+                    startAngle = angle + gap / 2f,
+                    sweepAngle = visibleSweep,
                     useCenter = false,
                     topLeft = topLeft,
                     size = arcSize,
@@ -122,12 +119,15 @@ private fun DonutArcs(
     }
 }
 
-/** 没数据时是一整圈灰色，占比为 1，中间的数字仍是 0。 */
-private fun ringTargets(slices: List<StatisticsSliceUi>, colors: AppColors): List<RingSlice> {
-    if (slices.isEmpty()) return listOf(RingSlice(EMPTY_KEY, 1f, emptyRingColor(colors)))
+private fun ringTargets(
+    slices: List<StatisticsSliceUi>,
+    colors: AppColors,
+    monochrome: Boolean,
+): List<RingSlice> {
+    if (slices.isEmpty()) return listOf(RingSlice(EMPTY_KEY, 1f, colors.tagBackground))
     var total = 0.0
     for (slice in slices) total += slice.amount.toDouble()
-    if (total <= 0.0) return listOf(RingSlice(EMPTY_KEY, 1f, emptyRingColor(colors)))
+    if (total <= 0.0) return listOf(RingSlice(EMPTY_KEY, 1f, colors.tagBackground))
     var used = 0f
     return slices.mapIndexed { index, slice ->
         val fraction = if (index == slices.lastIndex) {
@@ -138,26 +138,30 @@ private fun ringTargets(slices: List<StatisticsSliceUi>, colors: AppColors): Lis
         RingSlice(
             key = slice.key,
             fraction = fraction,
-            color = sliceColor(slice, colors),
+            color = sliceColor(slice, index, slices.size, colors, monochrome),
         )
     }
 }
 
-private fun sliceColor(slice: StatisticsSliceUi, colors: AppColors): Color = when (slice.role) {
-    StatisticsSliceRole.Category -> seatIdentityColor(accountColorValue(slice.colorKey), colors.hero)
-    StatisticsSliceRole.Expense -> colors.chartExpense
-    StatisticsSliceRole.Income -> colors.chartIncome
+private fun sliceColor(
+    slice: StatisticsSliceUi,
+    index: Int,
+    total: Int,
+    colors: AppColors,
+    monochrome: Boolean,
+): Color = when (slice.role) {
+    StatisticsSliceRole.Category -> categorySliceColor(
+        colorKey = slice.colorKey,
+        index = index,
+        total = total,
+        colors = colors,
+        monochrome = monochrome,
+    )
+    StatisticsSliceRole.Expense -> if (monochrome) colors.chartExpense else Color(0xFFEA580C)
+    StatisticsSliceRole.Income -> if (monochrome) colors.chartIncome else colors.income
     StatisticsSliceRole.Other -> colors.textTertiary
 }
 
-/** 浅色用三级灰，深色改用二级灰，避免环和卡片底贴在一起。 */
-private fun emptyRingColor(colors: AppColors): Color =
-    if (colors.isDark) colors.textSecondary else colors.textTertiary
-
-/**
- * 按扇区身份对齐旧值和新值，再用同一个进度做插值。
- * 进度为 0 时是切换前的占比，为 1 时是切换后的占比。
- */
 private class DonutMotion(initial: List<RingSlice>) {
     private var started = false
     private var from by mutableStateOf(initial)
@@ -220,8 +224,8 @@ private data class RingSlice(
 private const val EMPTY_KEY = "empty"
 private const val START_ANGLE = -90f
 private const val FULL_RING = 0.999f
-private const val SEAM_OVERLAP = 0.6f
+private const val SLICE_GAP_DEGREES = 2.0f
 private const val VALUE_MILLIS = 420
 
-internal val CHART_DIAMETER = 132.dp
-private val INNER_DIAMETER = 76.dp
+internal val CHART_DIAMETER = 114.dp
+private val INNER_DIAMETER = 66.dp

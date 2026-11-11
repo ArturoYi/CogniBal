@@ -1,13 +1,22 @@
 package com.cyr.cognobal.screen.feature.settings.assets
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
+import androidx.compose.material.icons.outlined.Add
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,10 +24,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -27,29 +41,31 @@ import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.cyr.cognobal.R
 import com.cyr.cognobal.data.database.model.AccountType
-import com.cyr.cognobal.screen.feature.bill.model.accountColorValue
-import com.cyr.cognobal.screen.feature.bill.model.accountIconImage
-import com.cyr.cognobal.screen.feature.bill.model.labelRes
+import com.cyr.cognobal.screen.feature.bill.AccountHeroSurface
+import com.cyr.cognobal.screen.feature.bill.AccountMark
+import com.cyr.cognobal.screen.feature.bill.PressFade
 import com.cyr.cognobal.screen.feature.settings.SettingsSubpage
 import com.cyr.cognobal.screen.feature.settings.assets.state.AssetAccountUi
 import com.cyr.cognobal.screen.feature.settings.assets.state.AssetsUiState
-import com.cyr.cognobal.screen.feature.settings.component.InsightCard
+import com.cyr.cognobal.screen.feature.settings.component.HeaderCircleButton
 import com.cyr.cognobal.screen.feature.settings.component.moneyText
 import com.cyr.cognobal.ui.background.PageBackgroundHost
-import com.cyr.cognobal.ui.interaction.interactiveClick
 import com.cyr.cognobal.ui.loading.CogniBalLoadingIndicator
 import com.cyr.cognobal.ui.loading.LoadingIndicatorAppearDelayMillis
 import com.cyr.cognobal.ui.preview.FormFactorPreviews
+import com.cyr.cognobal.ui.privacy.AmountEyeToggle
+import com.cyr.cognobal.ui.privacy.LocalAmountVisibility
+import com.cyr.cognobal.ui.privacy.maskIfHidden
 import com.cyr.cognobal.ui.theme.AppThemeStyle
-import com.cyr.cognobal.ui.theme.asThemeIdentity
 import com.cyr.cognobal.ui.theme.CogniBalTheme
 import com.cyr.cognobal.ui.theme.appColors
 
-/** 资产入口。点一行去编辑那个账户，返回仍回到这一页。 */
 @Composable
 internal fun AssetsRoute(
     onBack: () -> Unit,
     onOpenAccount: (Long) -> Unit,
+    showBack: Boolean = false,
+    onCreateAccount: () -> Unit = {},
     modifier: Modifier = Modifier,
     viewModel: AssetsViewModel = viewModel(factory = AssetsViewModel.Factory),
 ) {
@@ -57,21 +73,39 @@ internal fun AssetsRoute(
     AssetsScreen(
         uiState = uiState,
         onBack = onBack,
+        showBack = showBack,
         onOpenAccount = onOpenAccount,
+        onCreateAccount = onCreateAccount,
         modifier = modifier,
     )
 }
 
+/**
+ * 资产页（参考设计重构）：
+ * 1. 顶部标题「资产」 + 右上角「+」新建账户按钮
+ * 2. 曜石深灰净资产主卡（带隐私显隐开关 + 香槟金流线波纹艺术线条）
+ * 3. 独立纯白圆角账户行列表（粉彩图标块 + 账户名 + 完整等宽余额 + 右向箭头）
+ */
 @Composable
 internal fun AssetsScreen(
     uiState: AssetsUiState,
     onBack: () -> Unit,
     onOpenAccount: (Long) -> Unit,
+    showBack: Boolean = false,
+    onCreateAccount: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     SettingsSubpage(
         title = stringResource(R.string.shortcut_assets),
         onBack = onBack,
+        showBackOverride = showBack,
+        trailing = {
+            HeaderCircleButton(
+                icon = Icons.Outlined.Add,
+                description = stringResource(R.string.bill_account_create),
+                onClick = dropUnlessResumed(block = onCreateAccount),
+            )
+        },
         modifier = modifier,
         placeholder = if (uiState.loading) {
             {
@@ -83,141 +117,25 @@ internal fun AssetsScreen(
             null
         },
     ) {
-        InsightCard {
-            AssetSummary(uiState)
-        }
-        if (uiState.assetAccounts.isNotEmpty()) {
-            AccountSection(
-                title = stringResource(R.string.assets_section_assets),
-                accounts = uiState.assetAccounts,
-                currencySymbol = uiState.currencySymbol,
-                debt = false,
-                onOpenAccount = onOpenAccount,
-            )
-        }
-        if (uiState.liabilityAccounts.isNotEmpty()) {
-            AccountSection(
-                title = stringResource(R.string.assets_section_liabilities),
-                accounts = uiState.liabilityAccounts,
-                currencySymbol = uiState.currencySymbol,
-                debt = true,
-                onOpenAccount = onOpenAccount,
-            )
-        }
-    }
-}
+        NetAssetsHeroCard(uiState)
 
-@Composable
-private fun AssetSummary(uiState: AssetsUiState) {
-    val colors = MaterialTheme.appColors
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Column {
-            Text(
-                text = stringResource(R.string.assets_net),
-                color = colors.textSecondary,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-            )
-            Text(
-                text = moneyText(uiState.currencySymbol, uiState.net, uiState.netOverflow),
-                color = amountColor(
-                    overflow = uiState.netOverflow,
-                    negative = uiState.net < 0L,
-                    debt = false,
-                ),
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.6).sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 4.dp),
-            )
-        }
-        Row(modifier = Modifier.fillMaxWidth()) {
-            AssetFigure(
-                label = stringResource(R.string.assets_assets),
-                amount = moneyText(uiState.currencySymbol, uiState.assets, uiState.assetsOverflow),
-                color = amountColor(
-                    overflow = uiState.assetsOverflow,
-                    negative = uiState.assets < 0L,
-                    debt = false,
-                ),
-                modifier = Modifier.weight(1f),
-            )
-            AssetFigure(
-                label = stringResource(R.string.assets_liabilities),
-                amount = moneyText(
-                    uiState.currencySymbol,
-                    uiState.liabilities,
-                    uiState.liabilitiesOverflow,
-                ),
-                color = amountColor(
-                    overflow = uiState.liabilitiesOverflow,
-                    negative = false,
-                    debt = uiState.liabilities > 0L,
-                ),
-                modifier = Modifier.weight(1f),
-            )
-        }
-    }
-}
-
-@Composable
-private fun AssetFigure(
-    label: String,
-    amount: String,
-    color: Color,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.padding(horizontal = 4.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Text(
-            text = label,
-            color = MaterialTheme.appColors.textSecondary,
-            fontSize = 12.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        Text(
-            text = amount,
-            color = color,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(top = 4.dp),
-        )
-    }
-}
-
-@Composable
-private fun AccountSection(
-    title: String,
-    accounts: List<AssetAccountUi>,
-    currencySymbol: String,
-    debt: Boolean,
-    onOpenAccount: (Long) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(
-            text = title,
-            color = MaterialTheme.appColors.textSecondary,
-            fontSize = 13.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 4.dp),
-        )
-        InsightCard(itemSpacing = 4.dp) {
-            accounts.forEach { account ->
-                AccountRow(
-                    account = account,
-                    currencySymbol = currencySymbol,
-                    debt = debt,
-                    onClick = dropUnlessResumed { onOpenAccount(account.id) },
+        if (uiState.assetAccounts.isEmpty() && uiState.liabilityAccounts.isEmpty()) {
+            EmptyAssetsRow(onCreate = dropUnlessResumed(block = onCreateAccount))
+        } else {
+            if (uiState.assetAccounts.isNotEmpty()) {
+                AccountListGroup(
+                    title = stringResource(R.string.assets_section_assets),
+                    accounts = uiState.assetAccounts,
+                    currencySymbol = uiState.currencySymbol,
+                    onOpenAccount = onOpenAccount,
+                )
+            }
+            if (uiState.liabilityAccounts.isNotEmpty()) {
+                AccountListGroup(
+                    title = stringResource(R.string.assets_section_liabilities),
+                    accounts = uiState.liabilityAccounts,
+                    currencySymbol = uiState.currencySymbol,
+                    onOpenAccount = onOpenAccount,
                 )
             }
         }
@@ -225,86 +143,261 @@ private fun AccountSection(
 }
 
 @Composable
-private fun AccountRow(
-    account: AssetAccountUi,
-    currencySymbol: String,
-    debt: Boolean,
-    onClick: () -> Unit,
-) {
-    val colors = MaterialTheme.appColors
-    val tint = accountColorValue(account.colorKey).asThemeIdentity()
-    val typeName = stringResource(account.type.labelRes())
-    val subtitle = if (account.enabled) {
-        typeName
-    } else {
-        stringResource(R.string.assets_disabled_type, typeName)
-    }
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .interactiveClick(onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+private fun NetAssetsHeroCard(uiState: AssetsUiState) {
+    val visibility = LocalAmountVisibility.current
+    val hidden = visibility.hidden
+    val netRaw = moneyText(uiState.currencySymbol, uiState.net, uiState.netOverflow)
+    val netText = maskIfHidden(netRaw, hidden, uiState.currencySymbol)
+    val hasLiabilities = uiState.liabilities != 0L || uiState.liabilityAccounts.isNotEmpty()
+
+    AccountHeroSurface { paint ->
         Box(
             modifier = Modifier
-                .size(36.dp)
-                .background(
-                    tint.copy(alpha = if (colors.isDark) 0.22f else 0.16f),
-                    MaterialTheme.shapes.small,
-                ),
-            contentAlignment = Alignment.Center,
+                .fillMaxWidth()
+                .heightIn(min = 132.dp),
         ) {
-            Icon(
-                imageVector = accountIconImage(account.iconKey),
-                contentDescription = null,
-                tint = tint,
-                modifier = Modifier.size(18.dp),
+            GoldenWaveArt(
+                accent = paint.identity,
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .width(152.dp)
+                    .height(68.dp),
             )
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.assets_net),
+                        color = paint.on.copy(alpha = 0.72f),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                    AmountEyeToggle(
+                        hidden = hidden,
+                        onToggle = visibility::toggle,
+                        tint = paint.on.copy(alpha = 0.72f),
+                    )
+                }
+
+                Text(
+                    text = netText,
+                    color = paint.on,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.displayMedium.copy(fontSize = 32.sp),
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 20.sp,
+                        maxFontSize = 32.sp,
+                        stepSize = 1.sp,
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+
+                if (hasLiabilities) {
+                    val assetsStr = maskIfHidden(
+                        moneyText(uiState.currencySymbol, uiState.assets, uiState.assetsOverflow),
+                        hidden,
+                        uiState.currencySymbol,
+                    )
+                    val liabStr = maskIfHidden(
+                        moneyText(uiState.currencySymbol, uiState.liabilities, uiState.liabilitiesOverflow),
+                        hidden,
+                        uiState.currencySymbol,
+                    )
+                    Text(
+                        text = "${stringResource(R.string.assets_assets)} $assetsStr  ·  ${stringResource(R.string.assets_liabilities)} $liabStr",
+                        color = paint.on.copy(alpha = 0.64f),
+                        style = MaterialTheme.typography.bodySmall.merge(
+                            TextStyle(fontFeatureSettings = "tnum"),
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
         }
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp),
-        ) {
-            Text(
-                text = account.name,
-                color = if (account.enabled) colors.textPrimary else colors.textTertiary,
-                fontSize = 15.sp,
-                fontWeight = FontWeight.Medium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text = subtitle,
-                color = colors.textTertiary,
-                fontSize = 12.sp,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(top = 2.dp),
-            )
+    }
+}
+
+@Composable
+private fun GoldenWaveArt(
+    accent: Color,
+    modifier: Modifier = Modifier,
+) {
+    Canvas(modifier = modifier) {
+        if (size.width <= 0f || size.height <= 0f) return@Canvas
+        val w = size.width
+        val h = size.height
+        val linePath = Path().apply {
+            moveTo(0f, h * 0.78f)
+            cubicTo(w * 0.22f, h * 0.52f, w * 0.36f, h * 0.82f, w * 0.56f, h * 0.46f)
+            cubicTo(w * 0.74f, h * 0.16f, w * 0.86f, h * 0.56f, w, h * 0.28f)
         }
-        Text(
-            text = moneyText(currencySymbol, account.amount, account.amountOverflow),
-            color = amountColor(
-                overflow = account.amountOverflow,
-                negative = account.amount < 0L,
-                debt = debt,
+        val fillPath = Path().apply {
+            addPath(linePath)
+            lineTo(w, h)
+            lineTo(0f, h)
+            close()
+        }
+        drawPath(
+            path = fillPath,
+            brush = Brush.verticalGradient(
+                colors = listOf(accent.copy(alpha = 0.20f), Color.Transparent),
+                startY = h * 0.15f,
+                endY = h,
             ),
-            fontSize = 15.sp,
-            fontWeight = FontWeight.SemiBold,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
+        )
+        drawPath(
+            path = linePath,
+            color = accent.copy(alpha = 0.72f),
+            style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Round),
         )
     }
 }
 
 @Composable
-private fun amountColor(overflow: Boolean, negative: Boolean, debt: Boolean): Color {
+private fun AccountListGroup(
+    title: String,
+    accounts: List<AssetAccountUi>,
+    currencySymbol: String,
+    onOpenAccount: (Long) -> Unit,
+) {
     val colors = MaterialTheme.appColors
-    return when {
-        overflow -> colors.textSecondary
-        debt || negative -> colors.textPrimary
-        else -> colors.textPrimary
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            text = title,
+            color = colors.textPrimary,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 4.dp),
+        )
+        accounts.forEach { account ->
+            AssetAccountRow(
+                account = account,
+                currencySymbol = currencySymbol,
+                onClick = dropUnlessResumed { onOpenAccount(account.id) },
+            )
+        }
+    }
+}
+
+@Composable
+private fun AssetAccountRow(
+    account: AssetAccountUi,
+    currencySymbol: String,
+    onClick: () -> Unit,
+) {
+    val colors = MaterialTheme.appColors
+    val hidden = LocalAmountVisibility.current.hidden
+    val shape = RoundedCornerShape(18.dp)
+    val amountStr = maskIfHidden(
+        moneyText(currencySymbol, account.amount, account.amountOverflow),
+        hidden,
+        currencySymbol,
+    )
+
+    PressFade(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 66.dp)
+            .clip(shape)
+            .background(colors.cardBackground),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AccountMark(
+                iconKey = account.iconKey,
+                colorKey = account.colorKey,
+                tileSize = 40.dp,
+                iconSize = 20.dp,
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 14.dp),
+            ) {
+                Text(
+                    text = account.name,
+                    color = if (account.enabled) colors.textPrimary else colors.textTertiary,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontSize = 15.5.sp,
+                        fontWeight = FontWeight.SemiBold,
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (!account.enabled) {
+                    Text(
+                        text = stringResource(R.string.account_status_disabled),
+                        color = colors.textTertiary,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 1,
+                    )
+                }
+            }
+            Text(
+                text = amountStr,
+                color = if (account.enabled) colors.textPrimary else colors.textTertiary,
+                style = MaterialTheme.typography.titleMedium.merge(
+                    TextStyle(fontWeight = FontWeight.Bold, fontFeatureSettings = "tnum"),
+                ),
+                maxLines = 1,
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Outlined.KeyboardArrowRight,
+                contentDescription = null,
+                tint = colors.textTertiary.copy(alpha = 0.65f),
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .size(18.dp),
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmptyAssetsRow(onCreate: () -> Unit) {
+    val colors = MaterialTheme.appColors
+    PressFade(
+        onClick = onCreate,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(colors.cardBackground),
+        contentAlignment = Alignment.CenterStart,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 18.dp, vertical = 16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Text(
+                text = stringResource(R.string.bill_account_create),
+                color = colors.textPrimary,
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+            )
+            Icon(
+                imageVector = Icons.Outlined.Add,
+                contentDescription = null,
+                tint = colors.primary,
+                modifier = Modifier.size(20.dp),
+            )
+        }
     }
 }
 
@@ -316,16 +409,13 @@ private fun AssetsScreenPreview() {
             AssetsScreen(
                 uiState = AssetsUiState(
                     loading = false,
-                    net = 1_271_000L,
-                    assets = 1_357_000L,
-                    liabilities = 86_000L,
+                    net = 8_888_800L,
+                    assets = 8_888_800L,
+                    liabilities = 0L,
                     assetAccounts = listOf(
-                        AssetAccountUi(1, "现金", AccountType.Cash, "cash", "teal", 32_000L, false, true),
-                        AssetAccountUi(2, "工资卡", AccountType.DebitCard, "bank", "blue", 1_280_000L, false, true),
-                        AssetAccountUi(3, "支付宝", AccountType.EWallet, "phone", "sand", 45_000L, false, false),
-                    ),
-                    liabilityAccounts = listOf(
-                        AssetAccountUi(4, "信用卡", AccountType.CreditCard, "card", "clay", 86_000L, false, true),
+                        AssetAccountUi(1, "现金", AccountType.Cash, "cash", "teal", 688_800L, false, true),
+                        AssetAccountUi(2, "银行卡", AccountType.DebitCard, "bank", "blue", 3_256_000L, false, true),
+                        AssetAccountUi(3, "电子钱包", AccountType.EWallet, "phone", "sand", 832_000L, false, true),
                     ),
                 ),
                 onBack = {},
