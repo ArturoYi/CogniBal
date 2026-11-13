@@ -129,7 +129,7 @@ internal class AddExpenseViewModel(
                         category.type == type &&
                         (category.isEnable || draft.editing)
                 }
-            } ?: if (!draft.editing) matching.firstOrNull()?.id else null
+            }
         }
         AddExpenseUiState(
             ready = isLoaded,

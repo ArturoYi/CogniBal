@@ -1,9 +1,14 @@
 package com.cyr.cognobal.screen.feature.expense
 
 import android.text.format.DateFormat
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -128,10 +133,11 @@ import java.util.Locale
 
 /**
  * 记一笔（参考设计重构）：
- * 1. 顶部：左侧关闭 ✕ · 居中「支出 / 收入 / 转账」轻指示栏 · 右侧「完成」
+ * 1. 顶部：左侧关闭 ✕ · 居中「支出 / 收入 / 转账」轻指示栏
  * 2. 金额舞台：大号等宽金额 + 选中分类与入账账户胶囊（点按可切换账户）
- * 3. 中部：4 列粉彩圆角分类矩阵（选中态包裹温润浅底卡片）或双账户转账卡
- * 4. 底部：紧凑单行备注 + 日期时间条 + 3×4 大圆角自定义数字键盘
+ * 3. 中部：分类矩阵（进入时不预选）或双账户转账卡
+ * 4. 底部：备注 + 日期时间。支出/收入在选中分类后才展开数字键盘，转账直接展开。
+ *    键盘右侧上为退格，右下为贯通的「完成」
  */
 @Composable
 internal fun AddExpenseRoute(
@@ -272,11 +278,6 @@ internal fun AddExpenseScreen(
             onBack = onBack,
             onType = { onEvent(AddExpenseUiEvent.TypeSelected(it)) },
             onDelete = onDelete,
-            onSave = {
-                focusManager.clearFocus()
-                keyboard?.hide()
-                onEvent(AddExpenseUiEvent.Save)
-            },
         )
 
         BoxWithConstraints(
@@ -360,12 +361,13 @@ internal fun AddExpenseScreen(
                         }
                     }
 
+                    val keypadReady = transfer || uiState.categoryId != null
                     EntryMetaAndKeypad(
                         remark = uiState.remark,
                         billTime = uiState.billTime,
                         amountText = uiState.amountText,
                         enabled = !uiState.saving,
-                        showKeypad = !imeVisible,
+                        showKeypad = keypadReady && !imeVisible,
                         compactKeypad = compactHeight,
                         onRemarkChange = { onEvent(AddExpenseUiEvent.RemarkChanged(it)) },
                         onRemarkFocus = { remarkFocused = it },
@@ -384,6 +386,11 @@ internal fun AddExpenseScreen(
                             onShowTime()
                         },
                         onKey = { next -> onEvent(AddExpenseUiEvent.AmountChanged(next)) },
+                        onDone = {
+                            focusManager.clearFocus()
+                            keyboard?.hide()
+                            onEvent(AddExpenseUiEvent.Save)
+                        },
                     )
                 }
             }
@@ -547,7 +554,6 @@ private fun TypeHeaderBar(
     onBack: () -> Unit,
     onType: (BillType) -> Unit,
     onDelete: () -> Unit,
-    onSave: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
     Box(
@@ -609,7 +615,7 @@ private fun TypeHeaderBar(
             if (isEdit) {
                 Box(
                     modifier = Modifier
-                        .size(44.dp)
+                        .size(48.dp)
                         .interactiveClick(enabled = actionEnabled, onClick = onDelete),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -620,22 +626,8 @@ private fun TypeHeaderBar(
                         modifier = Modifier.size(20.dp),
                     )
                 }
-            }
-
-            Box(
-                modifier = Modifier
-                    .heightIn(min = 48.dp)
-                    .clip(CircleShape)
-                    .interactiveClick(enabled = actionEnabled, onClick = onSave)
-                    .padding(horizontal = 12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = stringResource(R.string.done),
-                    color = if (actionEnabled) colors.textPrimary else colors.textTertiary,
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    maxLines = 1,
-                )
+            } else {
+                Spacer(Modifier.size(48.dp))
             }
         }
     }
@@ -1104,8 +1096,11 @@ private fun EntryMetaAndKeypad(
     onPickDate: () -> Unit,
     onPickTime: () -> Unit,
     onKey: (String) -> Unit,
+    onDone: () -> Unit,
 ) {
     val colors = MaterialTheme.appColors
+    val density = LocalDensity.current
+    val imeVisible = WindowInsets.ime.getBottom(density) > 0
     val bottomInset = navigationBottomInset()
     val remarkPlaceholder = stringResource(R.string.account_field_remark)
 
@@ -1119,15 +1114,15 @@ private fun EntryMetaAndKeypad(
             modifier = Modifier
                 .fillMaxWidth()
                 .then(
-                    if (showKeypad) {
+                    if (imeVisible) {
+                        Modifier
+                    } else {
                         Modifier
                             .windowInsetsPadding(bottomInset)
                             .consumeWindowInsets(bottomInset)
-                    } else {
-                        Modifier
                     },
                 )
-                .padding(horizontal = 14.dp, vertical = 10.dp),
+                .padding(horizontal = 14.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             BasicTextField(
@@ -1224,12 +1219,17 @@ private fun EntryMetaAndKeypad(
                 }
             }
 
-            if (showKeypad) {
+            AnimatedVisibility(
+                visible = showKeypad,
+                enter = expandVertically(expandFrom = Alignment.Bottom) + fadeIn(),
+                exit = shrinkVertically(shrinkTowards = Alignment.Bottom) + fadeOut(),
+            ) {
                 NumericKeypad(
                     amountText = amountText,
                     enabled = enabled,
-                    keyHeight = if (compactKeypad) 40.dp else 50.dp,
+                    keyHeight = if (compactKeypad) 48.dp else 56.dp,
                     onKey = onKey,
+                    onDone = onDone,
                 )
             }
         }
@@ -1242,6 +1242,7 @@ private fun NumericKeypad(
     enabled: Boolean,
     keyHeight: Dp,
     onKey: (String) -> Unit,
+    onDone: () -> Unit,
 ) {
     val haptic = LocalHapticFeedback.current
     val rows = listOf(
@@ -1249,53 +1250,67 @@ private fun NumericKeypad(
         listOf("4", "5", "6"),
         listOf("7", "8", "9"),
     )
-    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
-        rows.forEach { row ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                row.forEach { digit ->
-                    KeypadDigitButton(
-                        label = digit,
-                        contentDesc = digit,
-                        enabled = enabled,
-                        height = keyHeight,
-                        onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            onKey(amountText + digit)
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
+    val doneHeight = keyHeight * 3 + KeypadGap * 2
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(KeypadGap),
+    ) {
+        Column(
+            modifier = Modifier.weight(3f),
+            verticalArrangement = Arrangement.spacedBy(KeypadGap),
+        ) {
+            rows.forEach { row ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(KeypadGap),
+                ) {
+                    row.forEach { digit ->
+                        KeypadDigitButton(
+                            label = digit,
+                            contentDesc = digit,
+                            enabled = enabled,
+                            height = keyHeight,
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                onKey(amountText + digit)
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
                 }
             }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(KeypadGap),
+            ) {
+                KeypadDigitButton(
+                    label = ".",
+                    contentDesc = stringResource(R.string.bill_entry_key_decimal),
+                    enabled = enabled,
+                    height = keyHeight,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onKey(if (amountText.isEmpty()) "0." else "$amountText.")
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+                KeypadDigitButton(
+                    label = "0",
+                    contentDesc = "0",
+                    enabled = enabled,
+                    height = keyHeight,
+                    onClick = {
+                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                        onKey(amountText + "0")
+                    },
+                    modifier = Modifier.weight(2f),
+                )
+            }
         }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(KeypadGap),
         ) {
-            KeypadDigitButton(
-                label = ".",
-                contentDesc = stringResource(R.string.bill_entry_key_decimal),
-                enabled = enabled,
-                height = keyHeight,
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onKey(if (amountText.isEmpty()) "0." else "$amountText.")
-                },
-                modifier = Modifier.weight(1f),
-            )
-            KeypadDigitButton(
-                label = "0",
-                contentDesc = "0",
-                enabled = enabled,
-                height = keyHeight,
-                onClick = {
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                    onKey(amountText + "0")
-                },
-                modifier = Modifier.weight(1f),
-            )
             KeypadBackspaceButton(
                 enabled = enabled,
                 height = keyHeight,
@@ -1307,7 +1322,16 @@ private fun NumericKeypad(
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                     onKey("")
                 },
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            KeypadDoneButton(
+                enabled = enabled,
+                height = doneHeight,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onDone()
+                },
+                modifier = Modifier.fillMaxWidth(),
             )
         }
     }
@@ -1360,6 +1384,71 @@ private fun KeypadDigitButton(
                 fontSize = 21.sp,
                 fontWeight = FontWeight.SemiBold,
                 fontFeatureSettings = "tnum",
+            ),
+        )
+    }
+}
+
+@Composable
+private fun KeypadDoneButton(
+    enabled: Boolean,
+    height: Dp,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.appColors
+    val label = stringResource(R.string.done)
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (pressed && enabled) 0.98f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessHigh,
+        ),
+        label = "doneScale",
+    )
+    val shape = RoundedCornerShape(13.dp)
+    val background = when {
+        !enabled -> colors.tagBackground
+        pressed -> colors.inkStrong.copy(alpha = 0.86f)
+        else -> colors.inkStrong
+    }
+    val content = if (enabled) colors.onInkStrong else colors.textTertiary
+
+    Box(
+        modifier = modifier
+            .height(height)
+            .scale(scale)
+            .clip(shape)
+            .background(background)
+            .semantics {
+                role = Role.Button
+                contentDescription = label
+            }
+            .interactiveClick(
+                enabled = enabled,
+                interactionSource = interaction,
+                onClick = onClick,
+            ),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            color = content,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.padding(horizontal = 4.dp),
+            style = TextStyle(
+                fontSize = 16.sp,
+                lineHeight = 20.sp,
+                fontWeight = FontWeight.Bold,
+            ),
+            autoSize = TextAutoSize.StepBased(
+                minFontSize = 11.sp,
+                maxFontSize = 16.sp,
+                stepSize = 1.sp,
             ),
         )
     }
@@ -1438,6 +1527,21 @@ private fun navigationBottomInset() = screenContentWindowInsets()
     .only(WindowInsetsSides.Bottom)
 
 private val FormMaxWidth = 600.dp
+private val KeypadGap = 8.dp
+
+@FormFactorPreviews
+@Composable
+private fun AddExpenseAwaitCategoryPreview() {
+    CogniBalTheme {
+        PageBackgroundHost {
+            AddExpenseScreen(
+                uiState = previewState(categoryId = null, amountText = ""),
+                onEvent = {},
+                onBack = {},
+            )
+        }
+    }
+}
 
 @FormFactorPreviews
 @Composable
